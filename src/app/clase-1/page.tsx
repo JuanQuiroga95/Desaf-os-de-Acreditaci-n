@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Zap, ArrowRight, ShieldCheck, HelpCircle, Terminal, ExternalLink } from "lucide-react";
+import { Zap, ArrowRight, ShieldCheck, HelpCircle, Terminal, ExternalLink, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
