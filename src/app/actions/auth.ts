@@ -34,3 +34,12 @@ export async function loginAction(email: string, pass: string) {
     return { success: false, message: "Error en el servidor" };
   }
 }
+
+export async function validateUserAction(userId: string) {
+  try {
+    const user = await db.user.findUnique({ where: { id: userId } });
+    return { success: !!user };
+  } catch (error) {
+    return { success: false };
+  }
+}

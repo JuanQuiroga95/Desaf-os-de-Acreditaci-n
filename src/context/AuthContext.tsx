@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { loginAction } from "@/app/actions/auth";
+import { loginAction, validateUserAction } from "@/app/actions/auth";
 
 type Role = "student" | "teacher" | "admin" | null;
 
@@ -26,11 +26,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("videla_user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
+    const initAuth = async () => {
+      const savedUser = localStorage.getItem("videla_user");
+      if (savedUser) {
+        const parsedUser = JSON.parse(savedUser);
+        // Verificar si el usuario aún existe en la DB (por si hubo un reset)
+        try {
+          const validation = await validateUserAction(parsedUser.id);
+          if (validation.success) {
+            setUser(parsedUser);
+          } else {
+            localStorage.removeItem("videla_user");
+            setUser(null);
+          }
+        } catch (e) {
+          console.error("Error validando sesión:", e);
+        }
+      }
+      setIsLoading(false);
+    };
+    initAuth();
   }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
