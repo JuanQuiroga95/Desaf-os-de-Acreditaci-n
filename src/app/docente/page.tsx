@@ -3,10 +3,9 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { PlusCircle, BookOpen, Clock, ArrowRight, CheckCircle2, TrendingUp, Users, X, Send, Award } from "lucide-react";
-import { getTeacherDashboard, gradeSubmission } from "@/app/actions/teacher";
-import { createChallenge } from "@/app/actions/admin";
-import { motion, AnimatePresence } from "framer-motion";
+import { PlusCircle, BookOpen, Clock, CheckCircle2, TrendingUp, HelpCircle } from "lucide-react";
+import { getTeacherDashboard } from "@/app/actions/teacher";
+import { motion } from "framer-motion";
 import Link from "next/link";
 
 export default function TeacherPage() {
@@ -15,15 +14,6 @@ export default function TeacherPage() {
   const [data, setData] = useState<{ subjects: any[], pendingSubmissions: any[] } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Modals state
-  const [isChallengeModalOpen, setIsChallengeModalOpen] = useState(false);
-  const [isGradingModalOpen, setIsGradingModalOpen] = useState(false);
-  const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
-  
-  // Form states
-  const [newChallenge, setNewChallenge] = useState({ title: "", objective: "", subjectId: "" });
-  const [gradingData, setGradingData] = useState({ score: "", feedback: "" });
-
   useEffect(() => {
     if (user?.id) {
       loadData();
@@ -36,9 +26,6 @@ export default function TeacherPage() {
       const result = await getTeacherDashboard(user!.id);
       if (result.success && result.subjects) {
         setData({ subjects: result.subjects || [], pendingSubmissions: result.pendingSubmissions || [] });
-        if (result.subjects.length > 0) {
-          setNewChallenge(prev => ({ ...prev, subjectId: result.subjects![0].id }));
-        }
       }
     } catch (error) {
       console.error("Error al cargar datos del docente:", error);
@@ -47,31 +34,11 @@ export default function TeacherPage() {
     }
   };
 
-  const handleCreateChallenge = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const result = await createChallenge(newChallenge.subjectId, newChallenge.title, newChallenge.objective, {});
-    if (result.success) {
-      setIsChallengeModalOpen(false);
-      loadData();
-    }
-  };
-
-  const handleGrade = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const result = await gradeSubmission(selectedSubmission.id, parseFloat(gradingData.score), gradingData.feedback);
-    if (result.success) {
-      setIsGradingModalOpen(false);
-      loadData();
-    }
-  };
-
-  if (authLoading) return <div className="p-20 text-center font-bold animate-pulse uppercase tracking-[0.3em] text-primary">Sincronizando con el Aula Virtual...</div>;
+  if (authLoading || isLoading) return <div className="p-20 text-center font-bold animate-pulse uppercase tracking-[0.3em] text-primary">Sincronizando con el Aula Virtual...</div>;
 
   if (!user) { router.push("/login"); return null; }
 
   if (user?.role !== "teacher") return <div className="p-20 text-center font-bold">Acceso Denegado</div>;
-
-  if (isLoading) return <div className="p-20 text-center font-bold animate-pulse uppercase tracking-[0.3em] text-primary">Sincronizando con el Aula Virtual...</div>;
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -91,7 +58,6 @@ export default function TeacherPage() {
         </Link>
       </header>
 
-      {/* Stats and Lists same as before but dynamic... */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
         <div className="lg:col-span-8 space-y-8">
           {/* Subjects Section */}
@@ -116,6 +82,12 @@ export default function TeacherPage() {
                   </div>
                 </div>
               ))}
+              {data?.subjects.length === 0 && (
+                <div className="col-span-2 p-16 text-center border-2 border-dashed border-border rounded-[2.5rem] bg-secondary/5">
+                  <HelpCircle className="mx-auto mb-6 text-muted-foreground opacity-20" size={48} />
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">No tienes materias asignadas aún.</p>
+                </div>
+              )}
             </div>
           </section>
 
@@ -132,7 +104,7 @@ export default function TeacherPage() {
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">¡Todo al día!</p>
                 </div>
               ) : (
-                data?.pendingSubmissions.map((entry, i) => (
+                data?.pendingSubmissions.slice(0, 5).map((entry, i) => (
                   <div key={i} className="flex items-center justify-between p-8 bg-secondary/10 rounded-[2rem] border border-border/50 hover:bg-secondary/30 transition-all group">
                     <div className="flex items-center gap-8">
                       <div className="w-16 h-16 rounded-[1.25rem] bg-primary/10 text-primary flex items-center justify-center font-black text-2xl">
@@ -152,12 +124,16 @@ export default function TeacherPage() {
                   </div>
                 ))
               )}
+              {data?.pendingSubmissions && data.pendingSubmissions.length > 5 && (
+                <Link href="/docente/reviews" className="block text-center text-[10px] font-black uppercase tracking-widest text-primary hover:underline pt-4">
+                  Ver todas las entregas ({data.pendingSubmissions.length})
+                </Link>
+              )}
             </div>
           </section>
         </div>
 
         <aside className="lg:col-span-4 space-y-8">
-          {/* Stats Sidebar same as before... */}
           <div className="bg-secondary/20 border border-border rounded-[2.5rem] p-8 shadow-sm">
             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-8 flex items-center gap-3">
               <TrendingUp size={16} />
@@ -177,79 +153,6 @@ export default function TeacherPage() {
           </div>
         </aside>
       </div>
-
-      {/* MODAL: CREAR DESAFÍO */}
-      <AnimatePresence>
-        {isChallengeModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md">
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-card border border-border w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden">
-              <div className="p-8 border-b border-border flex justify-between items-center bg-secondary/30">
-                <h3 className="font-black uppercase italic tracking-tighter text-xl">Crear Nuevo Desafío</h3>
-                <button onClick={() => setIsChallengeModalOpen(false)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">✕</button>
-              </div>
-              <form onSubmit={handleCreateChallenge} className="p-8 space-y-6">
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Título del Desafío</label>
-                  <input required value={newChallenge.title} onChange={e => setNewChallenge({...newChallenge, title: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold focus:ring-2 focus:ring-primary/50 outline-none" placeholder="Ej: Balance de Situación" />
-                </div>
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Objetivo Pedagógico</label>
-                  <textarea required value={newChallenge.objective} onChange={e => setNewChallenge({...newChallenge, objective: e.target.value})} className="w-full h-32 bg-secondary/30 border border-border rounded-xl p-4 font-bold focus:ring-2 focus:ring-primary/50 outline-none resize-none" placeholder="Describe qué debe aprender el alumno..." />
-                </div>
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Materia</label>
-                  <select value={newChallenge.subjectId} onChange={e => setNewChallenge({...newChallenge, subjectId: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none">
-                    {data?.subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
-                </div>
-                <button type="submit" className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] shadow-xl hover:scale-[1.02] transition-transform">Publicar Desafío</button>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* MODAL: CALIFICAR ENTREGA */}
-      <AnimatePresence>
-        {isGradingModalOpen && selectedSubmission && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden">
-              <div className="p-8 border-b border-border flex justify-between items-center bg-secondary/30">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/20 text-primary flex items-center justify-center font-black">
-                    {selectedSubmission.studentName.charAt(0)}
-                  </div>
-                  <div>
-                    <h3 className="font-black uppercase italic text-xl">{selectedSubmission.studentName}</h3>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase">{selectedSubmission.challengeTitle}</p>
-                  </div>
-                </div>
-                <button onClick={() => setIsGradingModalOpen(false)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">✕</button>
-              </div>
-              <form onSubmit={handleGrade} className="p-8 space-y-6">
-                <div className="p-6 bg-secondary/20 rounded-2xl border border-border">
-                  <h4 className="text-[10px] font-black uppercase text-primary mb-3">Bitácora del Alumno</h4>
-                  <p className="text-sm text-muted-foreground italic leading-relaxed font-medium">"No hay bitácora disponible para esta entrega."</p>
-                </div>
-                <div className="grid grid-cols-3 gap-6">
-                  <div className="col-span-1">
-                    <label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block">Calificación (1-10)</label>
-                    <input required type="number" min="1" max="10" step="0.5" value={gradingData.score} onChange={e => setGradingData({...gradingData, score: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-black text-2xl text-center focus:ring-2 focus:ring-primary/50 outline-none" />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block">Feedback Pedagógico</label>
-                    <textarea required value={gradingData.feedback} onChange={e => setGradingData({...gradingData, feedback: e.target.value})} className="w-full h-24 bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none resize-none" placeholder="Escribe tus observaciones..." />
-                  </div>
-                </div>
-                <button type="submit" className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] shadow-xl flex items-center justify-center gap-3">
-                  <Award size={18} />
-                  Confirmar Calificación
-                </button>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

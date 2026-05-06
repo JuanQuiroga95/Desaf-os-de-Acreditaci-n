@@ -7,9 +7,11 @@ import { Plus, Users, BookOpen, ShieldCheck, X, UserPlus, GraduationCap, Briefca
 import { motion, AnimatePresence } from "framer-motion";
 import { createUser, createSubject, getAllUsers, getAllSubjects, deleteUser } from "@/app/actions/admin";
 import Link from "next/link";
+import { useToast } from "@/context/ToastContext";
 
 export default function AdminPage() {
   const { user, isLoading: authLoading } = useAuth();
+  const { showToast } = useToast();
   const router = useRouter();
   const [users, setUsers] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
@@ -49,27 +51,50 @@ export default function AdminPage() {
     e.preventDefault();
     const res = await createUser(newUser.name, newUser.email, newUser.pass, newUser.role as any);
     if (res.success) {
+      showToast("Usuario creado con éxito", "success");
       setIsUserModalOpen(false);
+      setNewUser({ name: "", email: "", pass: "", role: "STUDENT" });
       loadData();
+    } else {
+      showToast(res.message || "Error al crear usuario", "error");
     }
   };
 
   const handleCreateSubject = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newSubject.teacherId) {
+      showToast("Debes seleccionar un docente", "error");
+      return;
+    }
     const res = await createSubject(newSubject.name, newSubject.description, newSubject.teacherId);
     if (res.success) {
+      showToast("Materia creada con éxito", "success");
       setIsSubjectModalOpen(false);
+      setNewSubject({ name: "", description: "", teacherId: "" });
       loadData();
+    } else {
+      showToast("Error al crear materia", "error");
     }
   };
 
-  if (authLoading) return <div className="p-20 text-center font-bold animate-pulse uppercase tracking-widest text-primary">Accediendo al Panel Maestro...</div>;
+  const handleDeleteUser = async (id: string, name: string) => {
+    if (id === user?.id) {
+      showToast("No puedes eliminarte a ti mismo", "error");
+      return;
+    }
+    if (confirm(`¿Eliminar a ${name}?`)) {
+      const res = await deleteUser(id);
+      if (res.success) {
+        showToast("Usuario eliminado", "success");
+        loadData();
+      } else {
+        showToast("Error al eliminar", "error");
+      }
+    }
+  };
 
-  if (!user) { router.push("/login"); return null; }
-
-  if (user?.role !== "admin") return <div className="p-20 text-center font-bold">Acceso Denegado</div>;
-
-  if (isLoading) return <div className="p-20 text-center font-bold animate-pulse uppercase tracking-widest text-primary">Accediendo al Panel Maestro...</div>;
+  if (authLoading || isLoading) return <div className="p-20 text-center font-bold animate-pulse uppercase tracking-widest text-primary">Accediendo al Panel Maestro...</div>;
+  if (!user || user?.role !== "admin") { router.push("/login"); return null; }
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -116,15 +141,18 @@ export default function AdminPage() {
               <BookOpen size={18} className="text-primary" />
               Gestión de Materias
             </h2>
+            <Link href="/admin/subjects" className="text-primary text-[10px] font-black uppercase tracking-widest hover:underline">Ver Todas</Link>
           </div>
           <div className="divide-y divide-border">
-            {subjects.map((sub) => (
+            {subjects.slice(0, 5).map((sub) => (
               <div key={sub.id} className="p-6 flex items-center justify-between hover:bg-secondary/20 transition-colors">
                 <div>
                   <p className="font-bold text-lg">{sub.name}</p>
                   <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Titular: {sub.teacher.name} • {sub._count.challenges} Desafíos</p>
                 </div>
-                <Link href="/admin/subjects" className="text-primary text-[10px] font-black uppercase tracking-widest hover:underline">Gestionar</Link>
+                <Link href="/admin/subjects" className="p-2 hover:bg-secondary rounded-lg transition-colors">
+                  <ArrowRight size={18} className="text-muted-foreground" />
+                </Link>
               </div>
             ))}
           </div>
@@ -137,9 +165,10 @@ export default function AdminPage() {
               <Users size={18} className="text-primary" />
               Usuarios Recientes
             </h2>
+            <Link href="/admin/teachers" className="text-primary text-[10px] font-black uppercase tracking-widest hover:underline">Ver Todos</Link>
           </div>
           <div className="divide-y divide-border">
-            {users.slice(0, 6).map((u) => (
+            {users.slice(0, 5).map((u) => (
               <div key={u.id} className="p-6 flex items-center justify-between hover:bg-secondary/20 transition-colors">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-muted-foreground">
@@ -151,15 +180,10 @@ export default function AdminPage() {
                   </div>
                 </div>
                 <button 
-                  onClick={async () => {
-                    if (confirm(`¿Eliminar a ${u.name}?`)) {
-                      await deleteUser(u.id);
-                      loadData();
-                    }
-                  }}
-                  className="text-muted-foreground hover:text-red-500 transition-colors"
+                  onClick={() => handleDeleteUser(u.id, u.name)}
+                  className="p-2 hover:bg-red-500 hover:text-white rounded-lg transition-all text-muted-foreground"
                 >
-                  ✕
+                  <X size={18} />
                 </button>
               </div>
             ))}
@@ -207,25 +231,30 @@ export default function AdminPage() {
         </div>
       </section>
 
-      {/* MODALS: USER & SUBJECT CREATION */}
+      {/* MODALS */}
       <AnimatePresence>
         {isUserModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md">
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-card border border-border w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden">
               <div className="p-8 border-b border-border flex justify-between items-center bg-secondary/30">
                 <h3 className="font-black uppercase italic tracking-tighter text-xl">Nuevo Usuario</h3>
-                <button onClick={() => setIsUserModalOpen(false)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white">✕</button>
+                <button onClick={() => setIsUserModalOpen(false)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">✕</button>
               </div>
               <form onSubmit={handleCreateUser} className="p-8 space-y-6">
-                <input required value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none" placeholder="Nombre Completo" />
-                <input required type="email" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none" placeholder="Correo Electrónico" />
-                <input required type="password" value={newUser.pass} onChange={e => setNewUser({...newUser, pass: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none" placeholder="Contraseña Temporal" />
-                <select value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none">
-                  <option value="STUDENT">ALUMNO</option>
-                  <option value="TEACHER">DOCENTE</option>
-                  <option value="ADMIN">ADMINISTRADOR</option>
+                <input required value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all" placeholder="Nombre Completo" />
+                <input required type="email" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all" placeholder="Correo Electrónico" />
+                <input required type="password" value={newUser.pass} onChange={e => setNewUser({...newUser, pass: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all" placeholder="Contraseña Temporal" />
+                <select 
+                  value={newUser.role} 
+                  onChange={e => setNewUser({...newUser, role: e.target.value})} 
+                  className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
+                  style={{ colorScheme: 'dark' }}
+                >
+                  <option value="STUDENT" className="bg-background">ALUMNO</option>
+                  <option value="TEACHER" className="bg-background">DOCENTE</option>
+                  <option value="ADMIN" className="bg-background">ADMINISTRADOR</option>
                 </select>
-                <button type="submit" className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] shadow-xl">Crear Usuario</button>
+                <button type="submit" className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] shadow-xl hover:scale-[1.02] active:scale-95 transition-all">Crear Usuario</button>
               </form>
             </motion.div>
           </div>
@@ -236,21 +265,27 @@ export default function AdminPage() {
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-card border border-border w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden">
               <div className="p-8 border-b border-border flex justify-between items-center bg-secondary/30">
                 <h3 className="font-black uppercase italic tracking-tighter text-xl">Nueva Materia</h3>
-                <button onClick={() => setIsSubjectModalOpen(false)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white">✕</button>
+                <button onClick={() => setIsSubjectModalOpen(false)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">✕</button>
               </div>
               <form onSubmit={handleCreateSubject} className="p-8 space-y-6">
-                <input required value={newSubject.name} onChange={e => setNewSubject({...newSubject, name: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none" placeholder="Nombre de la Materia" />
-                <textarea required value={newSubject.description} onChange={e => setNewSubject({...newSubject, description: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none h-24" placeholder="Descripción..." />
+                <input required value={newSubject.name} onChange={e => setNewSubject({...newSubject, name: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all" placeholder="Nombre de la Materia" />
+                <textarea required value={newSubject.description} onChange={e => setNewSubject({...newSubject, description: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none h-24 focus:ring-2 focus:ring-primary/50 transition-all resize-none" placeholder="Descripción..." />
                 <div>
                   <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Docente Titular</label>
-                  <select required value={newSubject.teacherId} onChange={e => setNewSubject({...newSubject, teacherId: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none">
-                    <option value="">Seleccionar Docente</option>
+                  <select 
+                    required 
+                    value={newSubject.teacherId} 
+                    onChange={e => setNewSubject({...newSubject, teacherId: e.target.value})} 
+                    className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
+                    style={{ colorScheme: 'dark' }}
+                  >
+                    <option value="" className="bg-background">Seleccionar Docente</option>
                     {users.filter(u => u.role === "TEACHER").map(t => (
-                      <option key={t.id} value={t.id}>{t.name}</option>
+                      <option key={t.id} value={t.id} className="bg-background">{t.name}</option>
                     ))}
                   </select>
                 </div>
-                <button type="submit" className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] shadow-xl">Crear Materia</button>
+                <button type="submit" className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] shadow-xl hover:scale-[1.02] active:scale-95 transition-all">Crear Materia</button>
               </form>
             </motion.div>
           </div>

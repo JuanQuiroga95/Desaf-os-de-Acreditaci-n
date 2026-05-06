@@ -163,9 +163,15 @@ export default function AdminSubjectsPage() {
                 <textarea required value={editForm.description} onChange={e => setEditForm({...editForm, description: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none h-24" placeholder="Descripción..." />
                 <div>
                   <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Docente Titular</label>
-                  <select required value={editForm.teacherId} onChange={e => setEditForm({...editForm, teacherId: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none">
+                  <select 
+                    required 
+                    value={editForm.teacherId} 
+                    onChange={e => setEditForm({...editForm, teacherId: e.target.value})} 
+                    className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
+                    style={{ colorScheme: 'dark' }}
+                  >
                     {teachers.map(t => (
-                      <option key={t.id} value={t.id}>{t.name}</option>
+                      <option key={t.id} value={t.id} className="bg-background">{t.name}</option>
                     ))}
                   </select>
                 </div>
