@@ -1,0 +1,30 @@
+[
+  {
+    "temporada": 1,
+    "titulo": "El Flujo Invisible",
+    "objetivo_tecnico": "Dominar los fundamentos de Corriente Continua (Ley de Ohm y Kirchhoff) y el uso de instrumentos de medición.",
+    "simulador": "https://www.tinkercad.com/dashboard?type=circuits",
+    "situacion_problematica": "El banco de pruebas principal del taller está quemando los componentes. Cada vez que conectamos un LED indicador, se destruye instantáneamente. Debes calcular y simular la resistencia de protección adecuada para una fuente de 12V."
+  },
+  {
+    "temporada": 2,
+    "titulo": "Los Guardianes de la Señal",
+    "objetivo_tecnico": "Comprender el funcionamiento de diodos y transistores como elementos de conmutación y protección.",
+    "simulador": "https://www.tinkercad.com/dashboard?type=circuits",
+    "situacion_problematica": "Un motor de corriente continua de un ventilador de extracción debe activarse mediante un sensor de luz de baja potencia. El sensor no puede alimentar al motor directamente. Diseña un circuito con un transistor NPN que actúe como interruptor."
+  },
+  {
+    "temporada": 3,
+    "titulo": "El Código de Hierro",
+    "objetivo_tecnico": "Implementar funciones lógicas combinacionales utilizando compuertas integradas (AND, OR, NOT).",
+    "simulador": "https://www.tinkercad.com/dashboard?type=circuits",
+    "situacion_problematica": "La cortina metálica del taller necesita un sistema de seguridad: solo debe subir si el operario presiona el botón de 'Subir' Y el sensor de 'Obstrucción' no detecta nada en el camino. Simula la lógica usando compuertas 74HCxx."
+  },
+  {
+    "temporada": 4,
+    "titulo": "El Cerebro Electrónico",
+    "objetivo_tecnico": "Integrar sensores y actuadores mediante programación de microcontroladores (Arduino).",
+    "simulador": "https://www.tinkercad.com/dashboard?type=circuits",
+    "situacion_problematica": "El invernadero de la escuela necesita un riego automático. Si la humedad del suelo baja del 30%, se debe activar una bomba durante 10 segundos, siempre y cuando el tanque de agua no esté vacío. Programa y simula el sistema completo."
+  }
+]
