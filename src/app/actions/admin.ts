@@ -30,12 +30,15 @@ export async function createChallenge(subjectId: string, title: string, objectiv
   }
 }
 
+import bcrypt from "bcryptjs";
+
 // --- GESTIÓN DE USUARIOS (ADMIN) ---
 
 export async function createUser(name: string, email: string, pass: string, role: "ADMIN" | "TEACHER" | "STUDENT") {
   try {
+    const hashedPassword = await bcrypt.hash(pass, 10);
     const user = await db.user.create({
-      data: { name, email, password: pass, role }
+      data: { name, email, password: hashedPassword, role }
     });
     revalidatePath("/admin");
     return { success: true, user };

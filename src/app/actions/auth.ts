@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
+import bcrypt from "bcryptjs";
 
 export async function loginAction(email: string, pass: string) {
   try {
@@ -8,8 +9,14 @@ export async function loginAction(email: string, pass: string) {
       where: { email },
     });
 
-    if (!user || user.password !== pass) {
-      return { success: false, message: "Credenciales incorrectas" };
+    if (!user) {
+      return { success: false, message: "Usuario no encontrado" };
+    }
+
+    const isMatch = await bcrypt.compare(pass, user.password);
+
+    if (!isMatch) {
+      return { success: false, message: "Credenciales inválidas" };
     }
 
     // In a real app, you'd create a session here (e.g. via NextAuth or cookies)

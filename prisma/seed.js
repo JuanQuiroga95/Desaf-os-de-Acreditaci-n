@@ -1,22 +1,27 @@
 const { PrismaClient } = require("@prisma/client");
 const { PrismaPg } = require("@prisma/adapter-pg");
 const { Pool } = require("pg");
+const bcrypt = require("bcryptjs");
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("Seeding database...");
+  console.log("Seeding database with secure passwords...");
 
   // 1. Create Users
+  const adminPass = await bcrypt.hash("admin123", 10);
+  const teacherPass = await bcrypt.hash("docente123", 10);
+  const studentPass = await bcrypt.hash("alumno123", 10);
+
   const admin = await prisma.user.upsert({
     where: { email: "admin@videla.edu.ar" },
     update: {},
     create: {
       email: "admin@videla.edu.ar",
-      name: "Admin General",
-      password: "admin123", 
+      name: "Director Ricardo",
+      password: adminPass, 
       role: "ADMIN",
     },
   });
@@ -26,8 +31,8 @@ async function main() {
     update: {},
     create: {
       email: "juan@videla.edu.ar",
-      name: "Prof. Juan Quiroga",
-      password: "docente123",
+      name: "Juan Prof",
+      password: teacherPass,
       role: "TEACHER",
     },
   });
@@ -38,7 +43,7 @@ async function main() {
     create: {
       email: "pedro@videla.edu.ar",
       name: "Pedro Estudiante",
-      password: "alumno123",
+      password: studentPass,
       role: "STUDENT",
     },
   });

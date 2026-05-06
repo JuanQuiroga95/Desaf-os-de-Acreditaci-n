@@ -11,7 +11,8 @@ import {
   Users, 
   Settings, 
   PlusCircle, 
-  LogOut 
+  LogOut,
+  User 
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -125,6 +126,13 @@ export function Sidebar() {
             <p className="text-xs font-bold truncate leading-none mb-1">{user.name}</p>
             <p className="text-[10px] text-muted-foreground truncate uppercase">{user.role}</p>
           </div>
+          <Link 
+            href="/perfil"
+            className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
+            title="Mi Perfil"
+          >
+            <User size={16} />
+          </Link>
           <button 
             onClick={handleLogout}
             className="p-1.5 text-muted-foreground hover:text-red-500 transition-colors"

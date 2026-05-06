@@ -1,33 +1,45 @@
 "use client";
 
 import React, { useState } from "react";
-import { Calculator, ArrowRight, ShieldCheck, TrendingUp, CheckCircle2, AlertCircle } from "lucide-react";
+import { Calculator, ArrowRight, ShieldCheck, TrendingUp, CheckCircle2, AlertCircle, Upload, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "@/context/ToastContext";
 
 export default function MatematicaPage() {
+  const { showToast } = useToast();
   const [step, setStep] = useState(1);
   const [userInput, setUserInput] = useState("");
   const [resolution, setResolution] = useState("");
   const [feedback, setFeedback] = useState<"success" | "error" | null>(null);
   const [activeTool, setActiveTool] = useState<"calc" | "ipc" | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const checkCalculation = () => {
     const val = parseFloat(userInput.replace(",", "."));
     if (val >= 2280 && val <= 2285) {
       setFeedback("success");
+      showToast("¡Cálculo correcto! Acreditando competencia...", "success");
       setTimeout(() => setStep(2), 2000);
     } else {
       setFeedback("error");
+      showToast("El resultado no es correcto. Revisá tu planteo.", "error");
     }
+  };
+
+  const handleUpload = () => {
+    setIsUploading(true);
+    setTimeout(() => {
+      setIsUploading(false);
+      showToast("Evidencia subida correctamente. El docente podrá revisarla.", "success");
+    }, 1500);
   };
 
   const handleSaveResolution = async () => {
     setIsSaving(true);
-    // Simulating database save for now
     await new Promise(resolve => setTimeout(resolve, 1000));
     setIsSaving(false);
-    alert("Progreso guardado en tu Bitácora. El docente podrá revisar tu planteo.");
+    showToast("Progreso guardado en tu Bitácora.", "success");
   };
 
   return (
@@ -37,7 +49,7 @@ export default function MatematicaPage() {
           <Calculator size={16} />
           Matemática Aplicada - Nivel 1
         </div>
-        <h1 className="text-5xl font-black tracking-tighter italic uppercase">Análisis de Inflación y Precios</h1>
+        <h1 className="text-5xl font-black tracking-tighter italic uppercase text-foreground">Análisis de Inflación y Precios</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -85,11 +97,19 @@ export default function MatematicaPage() {
               placeholder="Escribí acá tu razonamiento paso a paso..."
               className="w-full h-48 bg-secondary/30 border border-border rounded-2xl p-6 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm leading-relaxed resize-none font-medium mb-4"
             />
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-4">
+              <button 
+                onClick={handleUpload}
+                disabled={isUploading}
+                className="bg-secondary hover:bg-border text-foreground px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border border-border shadow-sm"
+              >
+                {isUploading ? "Subiendo..." : "Cargar Evidencia"}
+                <Upload size={16} className={isUploading ? "animate-bounce" : ""} />
+              </button>
               <button 
                 onClick={handleSaveResolution}
                 disabled={isSaving}
-                className="bg-secondary hover:bg-border text-foreground px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2 border border-border shadow-sm"
+                className="bg-primary text-white hover:bg-primary/90 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
               >
                 {isSaving ? "Guardando..." : "Guardar Planteo"}
                 <CheckCircle2 size={16} className={isSaving ? "animate-pulse" : ""} />
@@ -97,15 +117,15 @@ export default function MatematicaPage() {
             </div>
           </section>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
+            {/* STEP 1 */}
             <div className={`p-8 rounded-[2.5rem] border transition-all duration-500 ${step === 1 ? "border-primary bg-primary/5 shadow-2xl shadow-primary/5" : "border-border opacity-50 bg-secondary/20"}`}>
-              {/* ... same step 1 content ... */}
               <div className="flex items-center gap-6 mb-6">
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-xl ${step === 1 ? "bg-primary text-white" : "bg-green-500 text-white"}`}>
                   {step > 1 ? "✓" : "1"}
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-lg">Cálculo de Costo Proyectado y Precio Final</h3>
+                  <h3 className="font-bold text-lg uppercase italic tracking-tighter">Cálculo de Costo Proyectado</h3>
                   <p className="text-sm text-muted-foreground">Calculá el precio de venta final aplicando el interés compuesto (3 meses) y el margen de utilidad.</p>
                 </div>
               </div>
@@ -135,35 +155,52 @@ export default function MatematicaPage() {
                     {feedback === "success" && (
                       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 text-green-500 text-sm font-bold bg-green-500/10 p-3 rounded-xl border border-green-500/20">
                         <CheckCircle2 size={16} />
-                        ¡Cálculo correcto! Acreditando paso...
-                      </motion.div>
-                    )}
-                    {feedback === "error" && (
-                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 text-red-500 text-sm font-bold bg-red-500/10 p-3 rounded-xl border border-red-500/20">
-                        <AlertCircle size={16} />
-                        El resultado no es correcto. Revisá la fórmula del interés compuesto.
+                        ¡Cálculo correcto! Acreditando competencia...
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
               )}
             </div>
-
-            <div className={`p-6 rounded-[2rem] border transition-all duration-500 ${step === 2 ? "border-primary bg-primary/5 shadow-xl shadow-primary/5" : "border-border opacity-50 bg-secondary/20"}`}>
-              <div className="flex items-center gap-6">
+            
+            {/* STEP 2: Quiz */}
+            <div className={`p-8 rounded-[2.5rem] border transition-all duration-500 ${step === 2 ? "border-primary bg-primary/5 shadow-2xl shadow-primary/5" : "border-border opacity-50 bg-secondary/20"}`}>
+              <div className="flex items-center gap-6 mb-8">
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-xl ${step === 2 ? "bg-primary text-white" : step > 2 ? "bg-green-500 text-white" : "bg-muted"}`}>
                   {step > 2 ? "✓" : "2"}
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-lg">Informe de Viabilidad</h3>
-                  <p className="text-sm text-muted-foreground">Compará tu precio con el promedio de mercado de $2.500.</p>
+                  <h3 className="font-black text-lg uppercase italic tracking-tighter">Toma de Decisión Estratégica</h3>
+                  <p className="text-sm text-muted-foreground">Basado en tu cálculo anterior, ¿cuál es la mejor recomendación para la empresa?</p>
                 </div>
-                {step === 2 && (
-                  <button onClick={() => setStep(3)} className="p-3 bg-primary text-white rounded-xl shadow-lg shadow-primary/20">
-                    <ArrowRight size={20} />
-                  </button>
-                )}
               </div>
+
+              {step === 2 && (
+                <div className="pl-16 space-y-4">
+                  {[
+                    "Aumentar el margen al 30% para cubrir riesgos.",
+                    "Mantener el precio proyectado y buscar eficiencia en costos.",
+                    "Bajar el precio para ganar mercado rápidamente.",
+                  ].map((option, i) => (
+                    <button 
+                      key={i}
+                      onClick={() => {
+                        showToast("Respuesta registrada. Evaluando criterio...", "info");
+                        setTimeout(() => {
+                          showToast("¡Criterio aprobado! Has completado el reto.", "success");
+                          setStep(3);
+                        }, 2000);
+                      }}
+                      className="w-full text-left p-6 bg-card border border-border rounded-2xl hover:border-primary hover:bg-primary/5 transition-all flex items-center gap-4 group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-[10px] font-black group-hover:bg-primary group-hover:text-white transition-all">
+                        {String.fromCharCode(65 + i)}
+                      </div>
+                      <span className="text-sm font-medium">{option}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
