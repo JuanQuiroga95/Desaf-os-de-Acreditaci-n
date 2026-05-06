@@ -7,6 +7,7 @@ import { PlusCircle, BookOpen, Clock, ArrowRight, CheckCircle2, TrendingUp, User
 import { getTeacherDashboard, gradeSubmission } from "@/app/actions/teacher";
 import { createChallenge } from "@/app/actions/admin";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
 export default function TeacherPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -81,13 +82,13 @@ export default function TeacherPage() {
             Gestión Académica • <span className="text-foreground">{user.name}</span>
           </p>
         </div>
-        <button 
-          onClick={() => setIsChallengeModalOpen(true)}
+        <Link 
+          href="/docente/new-challenge"
           className="bg-primary text-primary-foreground px-8 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-2xl shadow-primary/30"
         >
           <PlusCircle size={20} />
           Nuevo Desafío
-        </button>
+        </Link>
       </header>
 
       {/* Stats and Lists same as before but dynamic... */}
@@ -142,12 +143,12 @@ export default function TeacherPage() {
                         <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em]">{entry.challengeTitle}</p>
                       </div>
                     </div>
-                    <button 
-                      onClick={() => { setSelectedSubmission(entry); setIsGradingModalOpen(true); }}
+                    <Link 
+                      href="/docente/reviews"
                       className="bg-primary/10 text-primary px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-[0.3em] hover:bg-primary hover:text-white transition-all shadow-sm"
                     >
                       Corregir Ahora
-                    </button>
+                    </Link>
                   </div>
                 ))
               )}

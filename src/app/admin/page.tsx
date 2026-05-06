@@ -5,7 +5,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { Plus, Users, BookOpen, ShieldCheck, X, UserPlus, GraduationCap, Briefcase, TrendingUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { createUser, createSubject, getAllUsers, getAllSubjects } from "@/app/actions/admin";
+import { createUser, createSubject, getAllUsers, getAllSubjects, deleteUser } from "@/app/actions/admin";
+import Link from "next/link";
 
 export default function AdminPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -123,7 +124,7 @@ export default function AdminPage() {
                   <p className="font-bold text-lg">{sub.name}</p>
                   <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Titular: {sub.teacher.name} • {sub._count.challenges} Desafíos</p>
                 </div>
-                <button className="text-primary text-[10px] font-black uppercase tracking-widest hover:underline">Editar</button>
+                <Link href="/admin/subjects" className="text-primary text-[10px] font-black uppercase tracking-widest hover:underline">Gestionar</Link>
               </div>
             ))}
           </div>
@@ -149,7 +150,17 @@ export default function AdminPage() {
                     <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">{u.role} • {u.email}</p>
                   </div>
                 </div>
-                <button className="text-muted-foreground hover:text-red-500 transition-colors">✕</button>
+                <button 
+                  onClick={async () => {
+                    if (confirm(`¿Eliminar a ${u.name}?`)) {
+                      await deleteUser(u.id);
+                      loadData();
+                    }
+                  }}
+                  className="text-muted-foreground hover:text-red-500 transition-colors"
+                >
+                  ✕
+                </button>
               </div>
             ))}
           </div>

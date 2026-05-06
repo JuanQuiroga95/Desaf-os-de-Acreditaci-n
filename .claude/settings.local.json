@@ -6,7 +6,8 @@
       "PowerShell(head *)",
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Docente\\\\Desktop\\\\Proyectos\\\\previas\\\\src\" -Recurse | Select-Object -ExpandProperty FullName | Where-Object { -not $_.Contains\\('\\\\node_modules'\\) })",
       "mcp__plugin_claude-mem_mcp-search__get_observations",
-      "mcp__plugin_claude-mem_mcp-search__smart_outline"
+      "mcp__plugin_claude-mem_mcp-search__smart_outline",
+      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && head -30 {}')"
     ]
   }
 }

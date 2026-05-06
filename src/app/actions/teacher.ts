@@ -62,3 +62,51 @@ export async function gradeSubmission(progressId: string, score: number, feedbac
     return { success: false };
   }
 }
+
+export async function getTeacherStudents(teacherId: string) {
+  try {
+    const subjects = await db.subject.findMany({
+      where: { teacherId },
+      include: {
+        challenges: {
+          include: {
+            progress: {
+              include: {
+                user: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const studentsMap = new Map();
+    subjects.forEach(subject => {
+      subject.challenges.forEach(challenge => {
+        challenge.progress.forEach(p => {
+          if (!studentsMap.has(p.user.id)) {
+            studentsMap.set(p.user.id, {
+              id: p.user.id,
+              name: p.user.name,
+              email: p.user.email,
+              subjects: new Set([subject.name])
+            });
+          } else {
+            studentsMap.get(p.user.id).subjects.add(subject.name);
+          }
+        });
+      });
+    });
+
+    return { 
+      success: true, 
+      students: Array.from(studentsMap.values()).map(s => ({
+        ...s,
+        subjects: Array.from(s.subjects)
+      }))
+    };
+  } catch (error) {
+    console.error("Error getting teacher students:", error);
+    return { success: false, message: "Error al cargar alumnos" };
+  }
+}
