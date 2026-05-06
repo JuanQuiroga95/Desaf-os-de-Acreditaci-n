@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  subjects  Subject[]  @relation("TeacherSubjects")
+  progress  Progress[]
+}
+
+model Subject {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  teacherId   String
+  teacher     User      @relation("TeacherSubjects", fields: [teacherId], references: [id])
+  challenges  Challenge[]
+}
+
+model Challenge {
+  id          String   @id @default(cuid())
+  title       String
+  objective   String?
+  content     Json?    // For storing step-by-step logic
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  subjectId   String
+  subject     Subject   @relation(fields: [subjectId], references: [id])
+  progress    Progress[]
+}
+
+model Progress {
+  id          String   @id @default(cuid())
+  status      String   @default("PENDING") // PENDING, COMPLETED
+  score       Float?
+  feedback    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  challengeId String
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+
+  @@unique([userId, challengeId])
+}

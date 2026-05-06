@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { loginAction } from "@/app/actions/auth";
 
 type Role = "student" | "teacher" | "admin" | null;
 
@@ -13,7 +14,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (role: Role) => void;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -32,23 +33,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = (email: string, password: string): { success: boolean; message?: string } => {
-    const mockUsers = [
-      { id: "admin-1", name: "Admin General", role: "admin" as Role, email: "admin@videla.edu.ar", pass: "admin123" },
-      { id: "teacher-1", name: "Prof. Juan Quiroga", role: "teacher" as Role, email: "juan@videla.edu.ar", pass: "docente123" },
-      { id: "student-1", name: "Pedro Estudiante", role: "student" as Role, email: "pedro@videla.edu.ar", pass: "alumno123" },
-    ];
+  const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const result = await loginAction(email, password);
 
-    const foundUser = mockUsers.find(u => u.email === email && u.pass === password);
+      if (result.success && result.user) {
+        const userToSave = result.user as User;
+        setUser(userToSave);
+        localStorage.setItem("videla_user", JSON.stringify(userToSave));
+        return { success: true };
+      }
 
-    if (foundUser) {
-      const userToSave = { id: foundUser.id, name: foundUser.name, role: foundUser.role, email: foundUser.email };
-      setUser(userToSave);
-      localStorage.setItem("videla_user", JSON.stringify(userToSave));
-      return { success: true };
+      return { success: false, message: result.message };
+    } catch (err) {
+      console.error(err);
+      return { success: false, message: "Error de conexión" };
     }
-
-    return { success: false, message: "Credenciales incorrectas. Revisa el correo y la contraseña." };
   };
 
   const logout = () => {
