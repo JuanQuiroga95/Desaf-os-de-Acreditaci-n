@@ -30,9 +30,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const savedUser = localStorage.getItem("videla_user");
       if (savedUser) {
         const parsedUser = JSON.parse(savedUser);
-        // Verificar si el usuario aún existe en la DB (por si hubo un reset)
+        
+        // Timeout de 2 segundos para no trabar el inicio
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Timeout")), 2000)
+        );
+
         try {
-          const validation = await validateUserAction(parsedUser.id);
+          const validation = await Promise.race([
+            validateUserAction(parsedUser.id),
+            timeoutPromise
+          ]) as { success: boolean };
+
           if (validation.success) {
             setUser(parsedUser);
           } else {
@@ -40,7 +49,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(null);
           }
         } catch (e) {
-          console.error("Error validando sesión:", e);
+          console.error("Sesión lenta o inválida, re-ingresando...");
+          localStorage.removeItem("videla_user");
+          setUser(null);
         }
       }
       setIsLoading(false);
