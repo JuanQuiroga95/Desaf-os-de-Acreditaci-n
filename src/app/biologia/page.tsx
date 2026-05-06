@@ -24,19 +24,19 @@ export default function BiologiaPage() {
               Reto Bio-Económico
             </h2>
             <p className="text-muted-foreground leading-relaxed text-lg">
-              "Investiga el impacto de los residuos de la industria textil local. Tu objetivo es proponer un modelo de Economía Circular donde los desechos de tela se transformen en materia prima para otra industria, reduciendo costos y huella de carbono."
+              "Investigá el impacto de los residuos de la industria textil local. Tu objetivo es proponer un modelo de **Economía Circular** donde los desechos de tela se transformen en materia prima para otra industria, reduciendo costos y huella de carbono."
             </p>
           </section>
 
           <div className="space-y-4">
             {[
-              { id: 1, title: "Ciclo de Vida del Producto", desc: "Analiza desde la obtención de la fibra hasta el desecho final." },
-              { id: 2, title: "Identificación de Biopolímeros", desc: "Diferencia entre fibras naturales degradables y sintéticas." },
-              { id: 3, title: "Propuesta de Valor Circular", desc: "Calcula el ahorro estimado al reutilizar el 40% de los descartes." },
+              { id: 1, title: "Ciclo de Vida del Producto", desc: "Analizá desde la obtención de la fibra hasta el desecho final." },
+              { id: 2, title: "Identificación de Biopolímeros", desc: "Diferenciá entre fibras naturales degradables y sintéticas." },
+              { id: 3, title: "Propuesta de Valor Circular", desc: "Calculá el ahorro estimado al reutilizar el 40% de los descartes." },
             ].map((s) => (
               <div key={s.id} className={`p-6 rounded-2xl border flex items-center gap-6 ${step === s.id ? "border-primary bg-primary/5" : "border-border opacity-50"}`}>
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black ${step === s.id ? "bg-primary text-white" : "bg-muted"}`}>
-                  {s.id}
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black ${step === s.id ? "bg-primary text-white" : "bg-green-500 text-white"}`}>
+                  {step > s.id ? "✓" : s.id}
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold">{s.title}</h3>

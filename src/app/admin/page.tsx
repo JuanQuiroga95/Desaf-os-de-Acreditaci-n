@@ -9,7 +9,6 @@ export default function AdminPage() {
   const { user } = useAuth();
 
   if (user?.role !== "admin") {
-    // In a real app we'd use middleware, but for demo:
     return <div className="p-20 text-center font-bold">Acceso Denegado</div>;
   }
 
@@ -17,8 +16,8 @@ export default function AdminPage() {
     <div className="p-8 max-w-7xl mx-auto">
       <header className="mb-12 flex justify-between items-end">
         <div>
-          <h1 className="text-4xl font-black tracking-tight mb-2">Panel de Control Admin</h1>
-          <p className="text-muted-foreground text-lg uppercase text-xs font-bold tracking-widest">
+          <h1 className="text-4xl font-black tracking-tight mb-2 uppercase italic">Panel de Control Admin</h1>
+          <p className="text-muted-foreground text-lg uppercase text-xs font-bold tracking-widest leading-relaxed">
             Escuela Ricardo Videla - Gestión de Infraestructura Educativa
           </p>
         </div>
@@ -45,20 +44,20 @@ export default function AdminPage() {
                 </div>
                 <span className="text-3xl font-black">{stat.value}</span>
               </div>
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{stat.label}</p>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest leading-none">{stat.label}</p>
             </div>
           );
         })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <section className="bg-card border border-border rounded-3xl overflow-hidden">
+        <section className="bg-card border border-border rounded-3xl overflow-hidden shadow-sm">
           <div className="p-6 border-b border-border flex justify-between items-center">
-            <h2 className="font-bold flex items-center gap-2">
+            <h2 className="font-bold flex items-center gap-2 italic uppercase text-sm">
               <BookOpen size={18} className="text-primary" />
               Gestión de Materias
             </h2>
-            <button className="text-xs font-bold text-primary hover:underline uppercase tracking-widest">Ver Todas</button>
+            <button className="text-[10px] font-black text-primary hover:underline uppercase tracking-widest">Ver Todas</button>
           </div>
           <div className="divide-y divide-border">
             {[

@@ -32,17 +32,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = (role: Role) => {
-    let mockUser: User;
-    if (role === "admin") {
-      mockUser = { id: "admin-1", name: "Admin General", role: "admin", email: "admin@videla.edu.ar" };
-    } else if (role === "teacher") {
-      mockUser = { id: "teacher-1", name: "Prof. Juan Quiroga", role: "teacher", email: "juan@videla.edu.ar" };
-    } else {
-      mockUser = { id: "student-1", name: "Pedro Estudiante", role: "student", email: "pedro@videla.edu.ar" };
+  const login = (email: string, password: string): { success: boolean; message?: string } => {
+    const mockUsers = [
+      { id: "admin-1", name: "Admin General", role: "admin" as Role, email: "admin@videla.edu.ar", pass: "admin123" },
+      { id: "teacher-1", name: "Prof. Juan Quiroga", role: "teacher" as Role, email: "juan@videla.edu.ar", pass: "docente123" },
+      { id: "student-1", name: "Pedro Estudiante", role: "student" as Role, email: "pedro@videla.edu.ar", pass: "alumno123" },
+    ];
+
+    const foundUser = mockUsers.find(u => u.email === email && u.pass === password);
+
+    if (foundUser) {
+      const userToSave = { id: foundUser.id, name: foundUser.name, role: foundUser.role, email: foundUser.email };
+      setUser(userToSave);
+      localStorage.setItem("videla_user", JSON.stringify(userToSave));
+      return { success: true };
     }
-    setUser(mockUser);
-    localStorage.setItem("videla_user", JSON.stringify(mockUser));
+
+    return { success: false, message: "Credenciales incorrectas. Revisa el correo y la contraseña." };
   };
 
   const logout = () => {

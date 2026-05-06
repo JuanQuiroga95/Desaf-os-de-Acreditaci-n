@@ -24,19 +24,19 @@ export default function LenguaPage() {
               Reto de Comunicación
             </h2>
             <p className="text-muted-foreground leading-relaxed text-lg">
-              "Has sido asignado como asistente de comunicación en una cooperativa vitivinícola. Debes redactar un informe ejecutivo dirigido a la asamblea de socios, explicando de manera formal y persuasiva la necesidad de invertir en nuevas tecnologías de riego."
+              "Has sido asignado como asistente de comunicación en una cooperativa vitivinícola. Debés redactar un informe ejecutivo dirigido a la asamblea de socios, explicando de manera formal y persuasiva la necesidad de invertir en nuevas tecnologías de riego."
             </p>
           </section>
 
           <div className="space-y-4">
             {[
-              { id: 1, title: "Análisis de Destinatario", desc: "Define el tono y el registro adecuado para una asamblea de socios." },
-              { id: 2, title: "Estructura del Informe", desc: "Organiza la información: Título, Introducción, Desarrollo y Conclusión." },
-              { id: 3, title: "Uso de Tecnicismos", desc: "Incorpora términos como 'ROI', 'Eficiencia hídrica' y 'Sustentabilidad'." },
+              { id: 1, title: "Análisis de Destinatario", desc: "Definí el tono y el registro adecuado para una asamblea de socios." },
+              { id: 2, title: "Estructura del Informe", desc: "Organizá la información: Título, Introducción, Desarrollo y Conclusión." },
+              { id: 3, title: "Uso de Tecnicismos", desc: "Incorporá términos como 'ROI', 'Eficiencia hídrica' y 'Sustentabilidad'." },
             ].map((s) => (
               <div key={s.id} className={`p-6 rounded-2xl border flex items-center gap-6 ${step === s.id ? "border-primary bg-primary/5" : "border-border opacity-50"}`}>
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black ${step === s.id ? "bg-primary text-white" : "bg-muted"}`}>
-                  {s.id}
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black ${step === s.id ? "bg-primary text-white" : "bg-green-500 text-white"}`}>
+                  {step > s.id ? "✓" : s.id}
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold">{s.title}</h3>
