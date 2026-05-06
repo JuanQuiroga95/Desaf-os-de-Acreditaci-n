@@ -71,12 +71,16 @@ export function Sidebar() {
   return (
     <aside className="w-64 h-screen border-r border-border bg-card flex flex-col fixed left-0 top-0 z-50">
       <div className="p-6 flex items-center gap-3">
-        <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/20">
-          <GraduationCap size={24} />
+        <div className="w-12 h-12 relative overflow-hidden rounded-full border border-border shadow-sm bg-white flex items-center justify-center p-1">
+          <img 
+            src="/logo.png" 
+            alt="Escuela Ricardo Videla" 
+            className="w-full h-full object-contain"
+          />
         </div>
         <div className="flex flex-col">
-          <span className="font-bold text-lg tracking-tight leading-none mb-1">Videla-Acredita</span>
-          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Portal {user.role}</span>
+          <span className="font-black text-sm tracking-tighter leading-none mb-1 uppercase italic">Videla-Acredita</span>
+          <span className="text-[9px] text-muted-foreground uppercase tracking-[0.3em] font-black">Esc. N° 4-012</span>
         </div>
       </div>
 

@@ -39,10 +39,10 @@ export default function LoginPage() {
       >
         <div className="flex flex-col justify-center space-y-8">
           <div>
-            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-primary-foreground mb-6 shadow-xl shadow-primary/20">
-              <GraduationCap size={32} />
+            <div className="w-24 h-24 bg-white border border-border rounded-full flex items-center justify-center p-2 mb-8 shadow-2xl relative z-10">
+              <img src="/logo.png" alt="Logo Escuela" className="w-full h-full object-contain" />
             </div>
-            <h1 className="text-5xl font-black tracking-tight leading-none">Videla<br /><span className="text-primary">Acredita</span></h1>
+            <h1 className="text-6xl font-black tracking-tight leading-none uppercase italic">Videla<br /><span className="text-primary">Acredita</span></h1>
             <p className="text-muted-foreground mt-4 uppercase text-xs font-bold tracking-widest leading-relaxed">
               SISTEMA DE GESTIÓN ACADÉMICA<br />
               ESCUELA N° 4-012 "ING. RICARDO VIDELA"<br />
