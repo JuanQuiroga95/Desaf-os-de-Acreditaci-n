@@ -1,29 +1,78 @@
 "use client";
 
-import React from "react";
-import { BookOpen, Users, Plus, ArrowRight, ShieldCheck, Settings } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { redirect } from "next/navigation";
+import { Plus, Users, BookOpen, ShieldCheck, X, UserPlus, GraduationCap, Briefcase } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { createUser, createSubject, getAllUsers, getAllSubjects } from "@/app/actions/admin";
 
 export default function AdminPage() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
+  const [users, setUsers] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (user?.role !== "admin") {
-    return <div className="p-20 text-center font-bold">Acceso Denegado</div>;
-  }
+  // Modals
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
+
+  // Forms
+  const [newUser, setNewUser] = useState({ name: "", email: "", pass: "", role: "STUDENT" });
+  const [newSubject, setNewSubject] = useState({ name: "", description: "", teacherId: "" });
+
+  useEffect(() => {
+    if (user?.role === "admin") {
+      loadData();
+    }
+  }, [user]);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    const [u, s] = await Promise.all([getAllUsers(), getAllSubjects()]);
+    setUsers(u);
+    setSubjects(s);
+    if (u.filter(usr => usr.role === "TEACHER").length > 0) {
+      setNewSubject(prev => ({ ...prev, teacherId: u.find(usr => usr.role === "TEACHER")?.id || "" }));
+    }
+    setIsLoading(false);
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await createUser(newUser.name, newUser.email, newUser.pass, newUser.role as any);
+    if (res.success) {
+      setIsUserModalOpen(false);
+      loadData();
+    }
+  };
+
+  const handleCreateSubject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await createSubject(newSubject.name, newSubject.description, newSubject.teacherId);
+    if (res.success) {
+      setIsSubjectModalOpen(false);
+      loadData();
+    }
+  };
+
+  if (authLoading || isLoading) return <div className="p-20 text-center font-bold animate-pulse uppercase tracking-widest text-primary">Accediendo al Panel Maestro...</div>;
+
+  if (user?.role !== "admin") return <div className="p-20 text-center font-bold">Acceso Denegado</div>;
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <header className="mb-12 flex justify-between items-end">
         <div>
-          <h1 className="text-4xl font-black tracking-tight mb-2 uppercase italic">Panel de Control Admin</h1>
-          <p className="text-muted-foreground text-lg uppercase text-xs font-bold tracking-widest leading-relaxed">
-            Escuela Ricardo Videla - Gestión de Infraestructura Educativa
-          </p>
+          <h1 className="text-6xl font-black tracking-tighter mb-2 uppercase italic leading-none">Control <span className="text-primary">Admin</span></h1>
+          <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-[0.4em]">Gestión Centralizada • Ciclo 2026</p>
         </div>
         <div className="flex gap-4">
-          <button className="bg-primary text-primary-foreground px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
-            <Plus size={20} />
+          <button onClick={() => setIsUserModalOpen(true)} className="bg-secondary text-foreground px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 border border-border hover:bg-border transition-all shadow-sm">
+            <UserPlus size={18} />
+            Nuevo Usuario
+          </button>
+          <button onClick={() => setIsSubjectModalOpen(true)} className="bg-primary text-primary-foreground px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-xl shadow-primary/20">
+            <Plus size={18} />
             Nueva Materia
           </button>
         </div>
@@ -31,87 +80,95 @@ export default function AdminPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         {[
-          { label: "Docentes Activos", value: "24", icon: Users, color: "text-blue-500" },
-          { label: "Materias Creadas", value: "12", icon: BookOpen, color: "text-green-500" },
-          { label: "Alumnos Registrados", value: "450", icon: ShieldCheck, color: "text-purple-500" },
-        ].map((stat, i) => {
-          const Icon = stat.icon;
-          return (
-            <div key={i} className="bg-card border border-border p-6 rounded-3xl shadow-sm">
-              <div className="flex justify-between items-start mb-4">
-                <div className={`p-3 rounded-2xl bg-secondary ${stat.color}`}>
-                  <Icon size={24} />
-                </div>
-                <span className="text-3xl font-black">{stat.value}</span>
+          { label: "Docentes Activos", value: users.filter(u => u.role === "TEACHER").length, icon: Briefcase, color: "text-blue-500" },
+          { label: "Materias Creadas", value: subjects.length, icon: BookOpen, color: "text-green-500" },
+          { label: "Alumnos Registrados", value: users.filter(u => u.role === "STUDENT").length, icon: GraduationCap, color: "text-purple-500" },
+        ].map((stat, i) => (
+          <div key={i} className="bg-card border border-border p-8 rounded-[2.5rem] shadow-sm relative overflow-hidden group">
+            <div className="flex justify-between items-start mb-6">
+              <div className={`p-4 rounded-2xl bg-secondary ${stat.color}`}>
+                <stat.icon size={24} />
               </div>
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest leading-none">{stat.label}</p>
+              <span className="text-5xl font-black tracking-tighter group-hover:scale-110 transition-transform">{stat.value}</span>
             </div>
-          );
-        })}
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">{stat.label}</p>
+          </div>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <section className="bg-card border border-border rounded-3xl overflow-hidden shadow-sm">
-          <div className="p-6 border-b border-border flex justify-between items-center">
-            <h2 className="font-bold flex items-center gap-2 italic uppercase text-sm">
+        {/* Materias List */}
+        <section className="bg-card border border-border rounded-[2.5rem] overflow-hidden shadow-sm">
+          <div className="p-8 border-b border-border flex justify-between items-center bg-secondary/10">
+            <h2 className="font-black flex items-center gap-2 italic uppercase text-xs tracking-widest">
               <BookOpen size={18} className="text-primary" />
               Gestión de Materias
             </h2>
-            <button className="text-[10px] font-black text-primary hover:underline uppercase tracking-widest">Ver Todas</button>
           </div>
           <div className="divide-y divide-border">
-            {[
-              { name: "Matemática Aplicada", doc: "Juan Quiroga", status: "Activo" },
-              { name: "Lengua y Comunicación", doc: "Sin Asignar", status: "Pendiente" },
-              { name: "Biología y Desarrollo", doc: "Ana Martínez", status: "Activo" },
-            ].map((item, i) => (
-              <div key={i} className="p-4 px-6 flex justify-between items-center hover:bg-secondary/30 transition-colors">
+            {subjects.map((sub) => (
+              <div key={sub.id} className="p-6 flex items-center justify-between hover:bg-secondary/20 transition-colors">
                 <div>
-                  <p className="font-bold text-sm">{item.name}</p>
-                  <p className="text-[10px] text-muted-foreground uppercase font-medium">Docente: {item.doc}</p>
+                  <p className="font-bold text-lg">{sub.name}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Titular: {sub.teacher.name} • {sub._count.challenges} Desafíos</p>
                 </div>
-                <div className="flex items-center gap-4">
-                  <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-md ${item.status === "Activo" ? "bg-green-500/10 text-green-500" : "bg-yellow-500/10 text-yellow-500"}`}>
-                    {item.status}
-                  </span>
-                  <button className="p-2 hover:bg-secondary rounded-lg transition-colors">
-                    <Settings size={16} className="text-muted-foreground" />
-                  </button>
-                </div>
+                <button className="text-primary text-[10px] font-black uppercase tracking-widest hover:underline">Editar</button>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="bg-card border border-border rounded-3xl overflow-hidden">
-          <div className="p-6 border-b border-border flex justify-between items-center">
-            <h2 className="font-bold flex items-center gap-2">
+        {/* Usuarios List */}
+        <section className="bg-card border border-border rounded-[2.5rem] overflow-hidden shadow-sm">
+          <div className="p-8 border-b border-border flex justify-between items-center bg-secondary/10">
+            <h2 className="font-black flex items-center gap-2 italic uppercase text-xs tracking-widest">
               <Users size={18} className="text-primary" />
-              Docentes Recientes
+              Usuarios Recientes
             </h2>
-            <button className="text-xs font-bold text-primary hover:underline uppercase tracking-widest">Gestionar</button>
           </div>
-          <div className="p-6 space-y-4">
-             {[
-              { name: "Prof. Juan Quiroga", mail: "juan@videla.edu.ar", initial: "J" },
-              { name: "Dra. Ana Martínez", mail: "ana@videla.edu.ar", initial: "A" },
-            ].map((doc, i) => (
-              <div key={i} className="flex items-center gap-4 p-3 bg-secondary/30 rounded-2xl border border-border/50">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                  {doc.initial}
+          <div className="divide-y divide-border">
+            {users.slice(0, 6).map((u) => (
+              <div key={u.id} className="p-6 flex items-center justify-between hover:bg-secondary/20 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-muted-foreground">
+                    {u.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="font-bold">{u.name}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">{u.role} • {u.email}</p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold">{doc.name}</p>
-                  <p className="text-xs text-muted-foreground">{doc.mail}</p>
-                </div>
-                <button className="text-primary hover:bg-primary/10 p-2 rounded-xl transition-all">
-                  <ArrowRight size={18} />
-                </button>
+                <button className="text-muted-foreground hover:text-red-500 transition-colors">✕</button>
               </div>
             ))}
           </div>
         </section>
       </div>
+
+      {/* MODALS: USER & SUBJECT CREATION same style as Teacher dashboard... */}
+      <AnimatePresence>
+        {isUserModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-card border border-border w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden">
+              <div className="p-8 border-b border-border flex justify-between items-center bg-secondary/30">
+                <h3 className="font-black uppercase italic tracking-tighter text-xl">Nuevo Usuario</h3>
+                <button onClick={() => setIsUserModalOpen(false)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white">✕</button>
+              </div>
+              <form onSubmit={handleCreateUser} className="p-8 space-y-6">
+                <input required value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none" placeholder="Nombre Completo" />
+                <input required type="email" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none" placeholder="Correo Electrónico" />
+                <input required type="password" value={newUser.pass} onChange={e => setNewUser({...newUser, pass: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none" placeholder="Contraseña Temporal" />
+                <select value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none">
+                  <option value="STUDENT">ALUMNO</option>
+                  <option value="TEACHER">DOCENTE</option>
+                  <option value="ADMIN">ADMINISTRADOR</option>
+                </select>
+                <button type="submit" className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] shadow-xl">Crear Usuario</button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

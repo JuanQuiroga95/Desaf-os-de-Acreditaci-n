@@ -60,6 +60,26 @@ async function main() {
     },
   });
 
+  // 3. Create Challenges
+  const mathChallenge = await prisma.challenge.create({
+    data: {
+      title: "Cálculo de Inflación Trimestral",
+      objective: "Calcular el precio final considerando interés compuesto.",
+      subjectId: math.id,
+    }
+  });
+
+  // 4. Create Progress (Mock Submissions)
+  await prisma.progress.create({
+    data: {
+      userId: student.id,
+      challengeId: mathChallenge.id,
+      status: "COMPLETED",
+      score: 8.5,
+      feedback: "Excelente planteo de la fórmula.",
+    }
+  });
+
   console.log("Seeding completed successfully!");
 }
 

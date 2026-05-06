@@ -1,0 +1,47 @@
+"use server";
+
+import { db } from "@/lib/db";
+
+export async function getStudentDashboard(userId: string) {
+  try {
+    const subjects = await db.subject.findMany({
+      include: {
+        challenges: {
+          include: {
+            progress: {
+              where: { userId }
+            }
+          }
+        }
+      }
+    });
+
+    const formattedSubjects = subjects.map(s => {
+      const totalChallenges = s.challenges.length;
+      const completedChallenges = s.challenges.filter(c => c.progress.length > 0 && c.progress[0].status === "COMPLETED").length;
+      const progressPercent = totalChallenges > 0 ? Math.round((completedChallenges / totalChallenges) * 100) : 0;
+
+      return {
+        id: s.id,
+        name: s.name,
+        description: s.description,
+        progress: progressPercent,
+        status: progressPercent > 0 ? "active" : "locked" // Just an example logic
+      };
+    });
+
+    // Calculate total global progress
+    const totalPossible = subjects.reduce((acc, s) => acc + s.challenges.length, 0);
+    const totalDone = subjects.reduce((acc, s) => acc + s.challenges.filter(c => c.progress.length > 0 && c.progress[0].status === "COMPLETED").length, 0);
+    const globalProgress = totalPossible > 0 ? Math.round((totalDone / totalPossible) * 100) : 0;
+
+    return { 
+      success: true, 
+      subjects: formattedSubjects,
+      globalProgress
+    };
+  } catch (error) {
+    console.error("Student dashboard error:", error);
+    return { success: false, message: "Error al cargar dashboard" };
+  }
+}

@@ -1,50 +1,40 @@
 "use client";
 
-import React from "react";
-import { BookOpen, ExternalLink, Play, Lock, Calculator, MessageSquare, Leaf } from "lucide-react";
-import Link from "next/link";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-
-const subjects = [
-  {
-    id: "matematica",
-    titulo: "Matemática Aplicada",
-    objetivo_tecnico: "Análisis de proyecciones financieras y cálculo de interés real vs inflación.",
-    simulador: "https://www.google.com/finance",
-    icon: Calculator,
-    status: "active"
-  },
-  {
-    id: "lengua",
-    titulo: "Lengua y Comunicación",
-    objetivo_tecnico: "Desarrollo de redacción comercial y análisis crítico de discursos económicos.",
-    simulador: "#",
-    icon: MessageSquare,
-    status: "active"
-  },
-  {
-    id: "biologia",
-    titulo: "Biología y Desarrollo",
-    objetivo_tecnico: "Impacto ambiental de modelos económicos y sustentabilidad regional.",
-    simulador: "#",
-    icon: Leaf,
-    status: "locked"
-  }
-];
+import Link from "next/link";
+import { Play, BookOpen, GraduationCap, TrendingUp, Lock } from "lucide-react";
+import { getStudentDashboard } from "@/app/actions/student";
 
 export default function StudentDashboard() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const [data, setData] = useState<{ subjects: any[], globalProgress: number } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (isLoading) return null;
+  useEffect(() => {
+    if (user?.id && user?.role === "student") {
+      loadData();
+    }
+  }, [user]);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    const result = await getStudentDashboard(user!.id);
+    if (result.success) {
+      setData({ subjects: result.subjects || [], globalProgress: result.globalProgress || 0 });
+    }
+    setIsLoading(false);
+  };
+
+  if (authLoading || isLoading) return <div className="p-20 text-center font-bold animate-pulse uppercase tracking-[0.3em] text-primary">Cargando tu Aula Virtual...</div>;
   
   if (!user) {
     router.push("/login");
     return null;
   }
 
-  // Redirect teachers and admins to their respective dashboards
   if (user.role === "admin") {
     router.push("/admin");
     return null;
@@ -57,78 +47,64 @@ export default function StudentDashboard() {
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <header className="mb-12">
-        <h1 className="text-5xl font-black tracking-tighter mb-3 italic uppercase leading-none">
+        <h1 className="text-6xl font-black tracking-tighter mb-4 italic uppercase leading-none">
           Mis Materias <br /><span className="text-primary">Asignadas</span>
         </h1>
-        <div className="flex items-center gap-4">
-          <p className="text-muted-foreground text-sm uppercase font-bold tracking-[0.2em]">
-            Orientación Economía y Administración
+        <div className="flex items-center gap-6">
+          <p className="text-muted-foreground text-xs uppercase font-bold tracking-[0.3em]">
+            Orientación Economía y Administración • Ciclo 2026
           </p>
-          <div className="h-px flex-1 bg-border" />
-          <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">
-            Ciclo 2026
-          </p>
+          <div className="h-px flex-1 bg-border/50" />
         </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {subjects.map((sub, index) => {
-          const Icon = sub.icon;
+        {data?.subjects.map((sub, index) => {
           const isLocked = sub.status === "locked";
           return (
             <div 
               key={sub.id}
-              className={`group relative overflow-hidden rounded-[2.5rem] border transition-all duration-500 ${
+              className={`group relative overflow-hidden rounded-[3rem] border transition-all duration-500 ${
                 isLocked 
                   ? "border-border/50 bg-secondary/10 grayscale" 
-                  : "border-border bg-card hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/5 shadow-sm"
+                  : "border-border bg-card hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 shadow-sm"
               }`}
             >
               <div className="p-10 flex flex-col h-full relative z-10">
                 <div className="flex justify-between items-start mb-8">
-                  <div className="w-14 h-14 bg-primary/10 rounded-[1.25rem] flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                    <Icon size={28} />
+                  <div className="w-14 h-14 bg-primary/10 rounded-[1.25rem] flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                    <BookOpen size={28} />
                   </div>
-                  {isLocked ? (
-                    <div className="px-3 py-1 rounded-full bg-muted text-[10px] font-bold uppercase text-muted-foreground border border-border">
-                      Bloqueado
+                  <div className="text-right">
+                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">{sub.progress}% Completado</span>
+                    <div className="w-24 h-1.5 bg-secondary rounded-full mt-2 overflow-hidden">
+                      <div className="bg-primary h-full transition-all duration-1000" style={{ width: `${sub.progress}%` }} />
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest">Disponible</span>
-                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    </div>
-                  )}
+                  </div>
                 </div>
 
-                <h2 className="text-2xl font-bold tracking-tight mb-3 group-hover:text-primary transition-colors">{sub.titulo}</h2>
-                <p className="text-muted-foreground text-sm mb-8 leading-relaxed opacity-80">
-                  {sub.objetivo_tecnico}
+                <h2 className="text-2xl font-black tracking-tight mb-4 group-hover:text-primary transition-colors leading-tight">{sub.name}</h2>
+                <p className="text-muted-foreground text-sm mb-10 leading-relaxed opacity-80 font-medium h-12 overflow-hidden line-clamp-2">
+                  {sub.description || "Iniciando ciclo de acreditación técnica."}
                 </p>
 
                 <div className="mt-auto space-y-6">
                   <div className="flex gap-2">
-                    <span className="px-3 py-1 rounded-lg bg-secondary text-[10px] font-bold text-muted-foreground uppercase tracking-widest border border-border">
+                    <span className="px-3 py-1.5 rounded-xl bg-secondary text-[9px] font-black text-muted-foreground uppercase tracking-widest border border-border/50">
                       Econ-Plus
                     </span>
-                    <span className="px-3 py-1 rounded-lg bg-secondary text-[10px] font-bold text-muted-foreground uppercase tracking-widest border border-border">
+                    <span className="px-3 py-1.5 rounded-xl bg-secondary text-[9px] font-black text-muted-foreground uppercase tracking-widest border border-border/50">
                       Trimestre I
                     </span>
                   </div>
 
-                  {isLocked ? (
-                    <button disabled className="w-full bg-muted/50 text-muted-foreground py-4 rounded-2xl font-bold text-xs uppercase tracking-widest cursor-not-allowed border border-border/50">
-                      Pendiente de Asignación
-                    </button>
-                  ) : (
-                    <Link 
-                      href={`/${sub.id}`}
-                      className="w-full bg-primary text-primary-foreground py-4 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
-                    >
-                      <Play size={14} fill="currentColor" />
-                      Ingresar a la Sala
-                    </Link>
-                  )}
+                  <Link 
+                    href={sub.name.toLowerCase().includes("matemática") ? "/matematica" : sub.name.toLowerCase().includes("lengua") ? "/lengua" : "/biologia"}
+                    className="w-full bg-primary text-primary-foreground py-5 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:scale-[1.02] transition-all shadow-xl shadow-primary/20"
+                  >
+                    <Play size={16} fill="currentColor" />
+                    Ingresar a la Sala
+                  </Link>
                 </div>
               </div>
             </div>

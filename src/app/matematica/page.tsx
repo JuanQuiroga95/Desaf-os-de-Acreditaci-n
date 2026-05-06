@@ -7,11 +7,12 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function MatematicaPage() {
   const [step, setStep] = useState(1);
   const [userInput, setUserInput] = useState("");
+  const [resolution, setResolution] = useState("");
   const [feedback, setFeedback] = useState<"success" | "error" | null>(null);
+  const [activeTool, setActiveTool] = useState<"calc" | "ipc" | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const checkCalculation = () => {
-    // Cálculo: Costo mes 3 = 1200 * (1.15)^3 = 1825.05
-    // Precio final = 1825.05 * 1.25 = 2281.31
     const val = parseFloat(userInput.replace(",", "."));
     if (val >= 2280 && val <= 2285) {
       setFeedback("success");
@@ -21,40 +22,84 @@ export default function MatematicaPage() {
     }
   };
 
+  const handleSaveResolution = async () => {
+    setIsSaving(true);
+    // Simulating database save for now
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setIsSaving(false);
+    alert("Progreso guardado en tu Bitácora. El docente podrá revisar tu planteo.");
+  };
+
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="p-8 max-w-7xl mx-auto pb-24">
       <div className="mb-12">
         <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-widest mb-2">
           <Calculator size={16} />
           Matemática Aplicada - Nivel 1
         </div>
-        <h1 className="text-4xl font-black tracking-tighter italic uppercase">Análisis de Inflación y Precios</h1>
+        <h1 className="text-5xl font-black tracking-tighter italic uppercase">Análisis de Inflación y Precios</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          <section className="bg-card border border-border rounded-3xl p-8 relative overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-8 space-y-8">
+          <section className="bg-card border border-border rounded-3xl p-8 relative overflow-hidden shadow-sm">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <TrendingUp size={120} />
+            </div>
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-foreground">
               <ShieldCheck className="text-primary" />
               Reto Económico
             </h2>
-            <p className="text-muted-foreground leading-relaxed text-lg mb-6">
+            <p className="text-muted-foreground leading-relaxed text-lg mb-8 relative z-10">
               "Una empresa mendocina de conservas necesita proyectar sus precios para el próximo trimestre. Debés calcular el **Precio de Venta Sugerido** considerando una inflación proyectada del **15% mensual** y un margen de ganancia del **25%** sobre el costo total proyectado al mes 3."
             </p>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-secondary/50 rounded-2xl border border-border flex flex-col">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Costo Base (Mes 0)</span>
-                <span className="text-xl font-bold font-mono">$1.200,00</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10">
+              <div className="p-6 bg-secondary/30 rounded-2xl border border-border flex flex-col shadow-inner">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-2">Costo Base (Mes 0)</span>
+                <span className="text-3xl font-black font-mono">$ 1.200,00</span>
               </div>
-              <div className="p-4 bg-secondary/50 rounded-2xl border border-border flex flex-col">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Inflación Proyectada</span>
-                <span className="text-xl font-bold font-mono">15% mensual</span>
+              <div className="p-6 bg-secondary/30 rounded-2xl border border-border flex flex-col shadow-inner">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-2">Inflación Estimada</span>
+                <span className="text-3xl font-black font-mono">15% <span className="text-xs text-muted-foreground uppercase">Mensual</span></span>
               </div>
             </div>
           </section>
 
+          {/* Panel de Resolución */}
+          <section className="bg-card border border-border rounded-[2.5rem] p-8 shadow-sm">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <CheckCircle2 size={20} className="text-primary" />
+                Bitácora de Resolución
+              </h2>
+              <span className="text-[10px] font-bold text-muted-foreground uppercase bg-secondary px-3 py-1 rounded-full">
+                Documentación Técnica
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Explicá acá tu planteo, las fórmulas que usaste y los supuestos económicos que considerás para este caso.
+            </p>
+            <textarea 
+              value={resolution}
+              onChange={(e) => setResolution(e.target.value)}
+              placeholder="Escribí acá tu razonamiento paso a paso..."
+              className="w-full h-48 bg-secondary/30 border border-border rounded-2xl p-6 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm leading-relaxed resize-none font-medium mb-4"
+            />
+            <div className="flex justify-end">
+              <button 
+                onClick={handleSaveResolution}
+                disabled={isSaving}
+                className="bg-secondary hover:bg-border text-foreground px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2 border border-border shadow-sm"
+              >
+                {isSaving ? "Guardando..." : "Guardar Planteo"}
+                <CheckCircle2 size={16} className={isSaving ? "animate-pulse" : ""} />
+              </button>
+            </div>
+          </section>
+
           <div className="space-y-4">
-            <div className={`p-6 rounded-[2rem] border transition-all duration-500 ${step === 1 ? "border-primary bg-primary/5 shadow-xl shadow-primary/5" : "border-border opacity-50 bg-secondary/20"}`}>
+            <div className={`p-8 rounded-[2.5rem] border transition-all duration-500 ${step === 1 ? "border-primary bg-primary/5 shadow-2xl shadow-primary/5" : "border-border opacity-50 bg-secondary/20"}`}>
+              {/* ... same step 1 content ... */}
               <div className="flex items-center gap-6 mb-6">
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-xl ${step === 1 ? "bg-primary text-white" : "bg-green-500 text-white"}`}>
                   {step > 1 ? "✓" : "1"}
@@ -123,32 +168,115 @@ export default function MatematicaPage() {
           </div>
         </div>
 
-        <aside className="space-y-6">
-          <div className="bg-secondary/50 border border-border rounded-[2rem] p-6 shadow-sm">
-            <h3 className="font-bold flex items-center gap-2 mb-4 uppercase text-xs tracking-widest text-primary">
+        <aside className="lg:col-span-4 space-y-6">
+          <div className="bg-secondary/50 border border-border rounded-[2rem] p-8 shadow-sm sticky top-8">
+            <h3 className="font-bold flex items-center gap-2 mb-6 uppercase text-[10px] tracking-[0.2em] text-primary">
               <TrendingUp size={16} />
               Caja de Herramientas
             </h3>
-            <div className="space-y-3">
-              <button className="w-full p-4 bg-card border border-border rounded-2xl text-xs font-bold uppercase hover:border-primary/50 transition-all text-left flex items-center justify-between group">
+            <div className="space-y-4">
+              <button 
+                onClick={() => setActiveTool("calc")}
+                className="w-full p-5 bg-card border border-border rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest hover:border-primary/50 hover:shadow-xl hover:shadow-primary/5 transition-all text-left flex items-center justify-between group"
+              >
                 Calculadora Financiera
-                <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 transition-all" />
+                <Calculator size={18} className="text-muted-foreground group-hover:text-primary transition-colors" />
               </button>
-              <button className="w-full p-4 bg-card border border-border rounded-2xl text-xs font-bold uppercase hover:border-primary/50 transition-all text-left flex items-center justify-between group">
+              <button 
+                onClick={() => setActiveTool("ipc")}
+                className="w-full p-5 bg-card border border-border rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest hover:border-primary/50 hover:shadow-xl hover:shadow-primary/5 transition-all text-left flex items-center justify-between group"
+              >
                 Tabla de Índices IPC
-                <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 transition-all" />
+                <TrendingUp size={18} className="text-muted-foreground group-hover:text-primary transition-colors" />
               </button>
             </div>
-          </div>
-          
-          <div className="bg-primary/5 border border-primary/10 rounded-[2rem] p-6">
-            <h4 className="text-sm font-bold mb-2 italic">Dato Útil</h4>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Recordá que para 3 meses el factor es (1 + i)³. Usá 0.15 como tasa decimal.
-            </p>
+
+            <div className="mt-10 bg-primary/5 border border-primary/10 rounded-2xl p-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-2 opacity-10">
+                <AlertCircle size={40} />
+              </div>
+              <h4 className="text-xs font-black uppercase tracking-widest mb-3 italic">Dato Útil</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Recordá que para 3 meses el factor de capitalización es <span className="font-mono font-bold text-primary">(1 + i)³</span>. <br /><br />
+                Usá <span className="font-mono font-bold">0.15</span> como tasa decimal para el cálculo.
+              </p>
+            </div>
           </div>
         </aside>
       </div>
+
+      {/* MODALES DE HERRAMIENTAS */}
+      <AnimatePresence>
+        {activeTool && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-card border border-border w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden"
+            >
+              <div className="p-8 border-b border-border flex justify-between items-center bg-secondary/30">
+                <h3 className="font-black uppercase italic tracking-tighter text-xl">
+                  {activeTool === "calc" ? "Calculadora Pro" : "Índices IPC Mendoza"}
+                </h3>
+                <button onClick={() => setActiveTool(null)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                  ✕
+                </button>
+              </div>
+
+              <div className="p-8">
+                {activeTool === "calc" ? (
+                  <div className="space-y-6">
+                    <div className="bg-background border border-border p-6 rounded-2xl text-right">
+                      <span className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Resultado</span>
+                      <div className="text-4xl font-black font-mono tracking-tighter">1.825,05</div>
+                    </div>
+                    <div className="grid grid-cols-4 gap-3">
+                      {["7","8","9","/", "4","5","6","*", "1","2","3","-", "0",".","=","+"].map(btn => (
+                        <button key={btn} className="h-14 bg-secondary/50 rounded-xl font-bold hover:bg-primary hover:text-white transition-all">
+                          {btn}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <table className="w-full text-sm">
+                      <thead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground border-b border-border">
+                        <tr>
+                          <th className="pb-4 text-left">Mes</th>
+                          <th className="pb-4 text-right">Variación</th>
+                        </tr>
+                      </thead>
+                      <tbody className="font-mono">
+                        {[
+                          { m: "Enero", v: "+12.4%" },
+                          { m: "Febrero", v: "+15.2%" },
+                          { m: "Marzo (Proj)", v: "+15.0%" },
+                        ].map((row, i) => (
+                          <tr key={i} className="border-b border-border/50">
+                            <td className="py-4 font-bold">{row.m}</td>
+                            <td className="py-4 text-right text-red-500 font-black">{row.v}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-8 bg-secondary/10 border-t border-border">
+                <button 
+                  onClick={() => setActiveTool(null)}
+                  className="w-full py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20"
+                >
+                  Cerrar Herramienta
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

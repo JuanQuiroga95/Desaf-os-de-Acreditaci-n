@@ -16,12 +16,21 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { getStudentDashboard } from "@/app/actions/student";
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
-  const progress = 45;
+  const [progress, setProgress] = React.useState(0);
+
+  React.useEffect(() => {
+    if (user?.role === "student" && user?.id) {
+      getStudentDashboard(user.id).then(res => {
+        if (res.success) setProgress(res.globalProgress || 0);
+      });
+    }
+  }, [user]);
 
   if (isLoading || !user) return null;
 
