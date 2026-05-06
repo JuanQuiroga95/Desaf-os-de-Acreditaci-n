@@ -32,24 +32,32 @@ export function AITutor() {
     if (!input.trim() || isLoading) return;
 
     const userMsg: Message = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMsg]);
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
     setInput("");
     setIsLoading(true);
 
-    // Mock AI response for now - In a real app, this would call /api/chat
-    setTimeout(() => {
-      const assistantMsg: Message = {
-        role: "assistant",
-        content: "Interesante pregunta. Piénsalo como si estuvieras ajustando la presión de una manguera: si el flujo es demasiado fuerte para la boquilla (el LED), ¿qué tipo de válvula (resistencia) pondrías para que no explote? Revisa la Ley de Ohm.",
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
-      setIsLoading(true);
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: newMessages }),
+      });
+
+      const data = await response.json();
       
-      // Simulate another technical analogy
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 1000);
-    }, 1500);
+      if (data.error) throw new Error(data.error);
+
+      setMessages((prev) => [...prev, { role: "assistant", content: data.content }]);
+    } catch (error) {
+      console.error(error);
+      setMessages((prev) => [...prev, { 
+        role: "assistant", 
+        content: "Se cortó la luz en el taller (Error de conexión). Por favor, intenta de nuevo." 
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
