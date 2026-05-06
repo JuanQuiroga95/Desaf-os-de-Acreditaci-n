@@ -6,12 +6,19 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  console.error("❌ CRITICAL: DATABASE_URL is not defined in environment variables!");
+}
+
 const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL,
+  connectionString: databaseUrl,
   ssl: {
     rejectUnauthorized: false
   }
 });
+
 const adapter = new PrismaPg(pool);
 
 export const db =
