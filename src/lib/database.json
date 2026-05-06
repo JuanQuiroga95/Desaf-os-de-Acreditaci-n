@@ -1,0 +1,48 @@
+{
+  "subjects": [
+    {
+      "id": "mat",
+      "name": "Matemática Aplicada",
+      "orientation": "Economía",
+      "description": "Cálculo financiero y análisis de datos de mercado.",
+      "icon": "Calculator"
+    },
+    {
+      "id": "len",
+      "name": "Lengua y Comunicación",
+      "orientation": "Economía",
+      "description": "Redacción comercial y análisis de discursos económicos.",
+      "icon": "MessageSquare"
+    },
+    {
+      "id": "bio",
+      "name": "Biología y Desarrollo",
+      "orientation": "Economía",
+      "description": "Sustentabilidad y bio-economía regional.",
+      "icon": "Leaf"
+    }
+  ],
+  "users": [
+    {
+      "id": "admin-1",
+      "name": "Administrador Videla",
+      "role": "admin",
+      "email": "admin@videla.edu.ar"
+    },
+    {
+      "id": "docente-1",
+      "name": "Prof. Juan Quiroga",
+      "role": "teacher",
+      "email": "juan@videla.edu.ar",
+      "subjects": ["mat", "len"]
+    },
+    {
+      "id": "alumno-1",
+      "name": "Pedro Estudiante",
+      "role": "student",
+      "email": "pedro@videla.edu.ar",
+      "assigned_subjects": ["mat", "bio"],
+      "progress": 45
+    }
+  ]
+}

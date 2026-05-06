@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/Sidebar";
-import { AITutor } from "@/components/AITutor";
+import { AuthProvider } from "@/context/AuthContext";
+import { LayoutWrapper } from "@/components/LayoutWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
-// ... (omitted meta for brevity)
+
+export const metadata: Metadata = {
+  title: "Videla-Acredita | Escuela Ricardo Videla",
+  description: "Plataforma de acreditación técnica para alumnos de la Escuela N° 4-012 Ing. Ricardo Videla",
+};
 
 export default function RootLayout({
   children,
@@ -15,13 +19,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${inter.className} antialiased`}>
-        <div className="flex">
-          <Sidebar />
-          <main className="flex-1 ml-64 min-h-screen bg-background">
-            {children}
-          </main>
-          <AITutor />
-        </div>
+        <AuthProvider>
+          <LayoutWrapper>{children}</LayoutWrapper>
+        </AuthProvider>
       </body>
     </html>
   );
