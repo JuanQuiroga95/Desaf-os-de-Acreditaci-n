@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import { PlusCircle, BookOpen, Clock, ArrowRight, CheckCircle2, TrendingUp, Users, X, Send, Award } from "lucide-react";
 import { getTeacherDashboard, gradeSubmission } from "@/app/actions/teacher";
 import { createChallenge } from "@/app/actions/admin";
@@ -9,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export default function TeacherPage() {
   const { user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [data, setData] = useState<{ subjects: any[], pendingSubmissions: any[] } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -28,15 +30,20 @@ export default function TeacherPage() {
   }, [user]);
 
   const loadData = async () => {
-    setIsLoading(true);
-    const result = await getTeacherDashboard(user!.id);
-    if (result.success && result.subjects) {
-      setData({ subjects: result.subjects || [], pendingSubmissions: result.pendingSubmissions || [] });
-      if (result.subjects.length > 0) {
-        setNewChallenge(prev => ({ ...prev, subjectId: result.subjects![0].id }));
+    try {
+      setIsLoading(true);
+      const result = await getTeacherDashboard(user!.id);
+      if (result.success && result.subjects) {
+        setData({ subjects: result.subjects || [], pendingSubmissions: result.pendingSubmissions || [] });
+        if (result.subjects.length > 0) {
+          setNewChallenge(prev => ({ ...prev, subjectId: result.subjects![0].id }));
+        }
       }
+    } catch (error) {
+      console.error("Error al cargar datos del docente:", error);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleCreateChallenge = async (e: React.FormEvent) => {
@@ -57,9 +64,13 @@ export default function TeacherPage() {
     }
   };
 
-  if (authLoading || isLoading) return <div className="p-20 text-center font-bold animate-pulse uppercase tracking-[0.3em] text-primary">Sincronizando con el Aula Virtual...</div>;
+  if (authLoading) return <div className="p-20 text-center font-bold animate-pulse uppercase tracking-[0.3em] text-primary">Sincronizando con el Aula Virtual...</div>;
+
+  if (!user) { router.push("/login"); return null; }
 
   if (user?.role !== "teacher") return <div className="p-20 text-center font-bold">Acceso Denegado</div>;
+
+  if (isLoading) return <div className="p-20 text-center font-bold animate-pulse uppercase tracking-[0.3em] text-primary">Sincronizando con el Aula Virtual...</div>;
 
   return (
     <div className="p-8 max-w-7xl mx-auto">

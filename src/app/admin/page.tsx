@@ -2,12 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import { Plus, Users, BookOpen, ShieldCheck, X, UserPlus, GraduationCap, Briefcase, TrendingUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createUser, createSubject, getAllUsers, getAllSubjects } from "@/app/actions/admin";
 
 export default function AdminPage() {
   const { user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [users, setUsers] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,14 +29,19 @@ export default function AdminPage() {
   }, [user]);
 
   const loadData = async () => {
-    setIsLoading(true);
-    const [u, s] = await Promise.all([getAllUsers(), getAllSubjects()]);
-    setUsers(u);
-    setSubjects(s);
-    if (u.filter(usr => usr.role === "TEACHER").length > 0) {
-      setNewSubject(prev => ({ ...prev, teacherId: u.find(usr => usr.role === "TEACHER")?.id || "" }));
+    try {
+      setIsLoading(true);
+      const [u, s] = await Promise.all([getAllUsers(), getAllSubjects()]);
+      setUsers(u);
+      setSubjects(s);
+      if (u.filter(usr => usr.role === "TEACHER").length > 0) {
+        setNewSubject(prev => ({ ...prev, teacherId: u.find(usr => usr.role === "TEACHER")?.id || "" }));
+      }
+    } catch (error) {
+      console.error("Error al cargar datos del admin:", error);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -55,9 +62,13 @@ export default function AdminPage() {
     }
   };
 
-  if (authLoading || isLoading) return <div className="p-20 text-center font-bold animate-pulse uppercase tracking-widest text-primary">Accediendo al Panel Maestro...</div>;
+  if (authLoading) return <div className="p-20 text-center font-bold animate-pulse uppercase tracking-widest text-primary">Accediendo al Panel Maestro...</div>;
+
+  if (!user) { router.push("/login"); return null; }
 
   if (user?.role !== "admin") return <div className="p-20 text-center font-bold">Acceso Denegado</div>;
+
+  if (isLoading) return <div className="p-20 text-center font-bold animate-pulse uppercase tracking-widest text-primary">Accediendo al Panel Maestro...</div>;
 
   return (
     <div className="p-8 max-w-7xl mx-auto">

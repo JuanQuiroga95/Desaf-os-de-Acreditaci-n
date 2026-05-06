@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Play, BookOpen, GraduationCap, TrendingUp, Lock } from "lucide-react";
+import { Play, BookOpen } from "lucide-react";
 import { getStudentDashboard } from "@/app/actions/student";
 
 export default function StudentDashboard() {
@@ -14,8 +14,10 @@ export default function StudentDashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.id && user?.role === "student") {
+    if (user?.role === "student") {
       loadData();
+    } else if (user) {
+      setIsLoading(false);
     }
   }, [user]);
 
@@ -35,20 +37,16 @@ export default function StudentDashboard() {
     }
   };
 
-  if (authLoading || isLoading) return (
+  const Spinner = () => (
     <div className="p-20 text-center flex flex-col items-center justify-center min-h-[60vh]">
       <div className="font-black animate-pulse uppercase tracking-[0.3em] text-primary mb-8 text-xl italic">
         Cargando tu Aula Virtual...
       </div>
-      <button 
-        onClick={() => { localStorage.clear(); window.location.href = "/login"; }}
-        className="text-[10px] text-muted-foreground uppercase font-black tracking-widest hover:text-primary transition-colors"
-      >
-        ¿Demora mucho? Hacé click acá para reingresar
-      </button>
     </div>
   );
-  
+
+  if (authLoading) return <Spinner />;
+
   if (!user) {
     router.push("/login");
     return null;
@@ -58,10 +56,13 @@ export default function StudentDashboard() {
     router.push("/admin");
     return null;
   }
+
   if (user.role === "teacher") {
     router.push("/docente");
     return null;
   }
+
+  if (isLoading) return <Spinner />;
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -78,14 +79,14 @@ export default function StudentDashboard() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {data?.subjects.map((sub, index) => {
+        {data?.subjects.map((sub) => {
           const isLocked = sub.status === "locked";
           return (
-            <div 
+            <div
               key={sub.id}
               className={`group relative overflow-hidden rounded-[3rem] border transition-all duration-500 ${
-                isLocked 
-                  ? "border-border/50 bg-secondary/10 grayscale" 
+                isLocked
+                  ? "border-border/50 bg-secondary/10 grayscale"
                   : "border-border bg-card hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 shadow-sm"
               }`}
             >
@@ -117,8 +118,14 @@ export default function StudentDashboard() {
                     </span>
                   </div>
 
-                  <Link 
-                    href={sub.name.toLowerCase().includes("matemática") ? "/matematica" : sub.name.toLowerCase().includes("lengua") ? "/lengua" : "/biologia"}
+                  <Link
+                    href={
+                      sub.name.toLowerCase().includes("matem")
+                        ? "/matematica"
+                        : sub.name.toLowerCase().includes("lengua")
+                        ? "/lengua"
+                        : "/biologia"
+                    }
                     className="w-full bg-primary text-primary-foreground py-5 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:scale-[1.02] transition-all shadow-xl shadow-primary/20"
                   >
                     <Play size={16} fill="currentColor" />
