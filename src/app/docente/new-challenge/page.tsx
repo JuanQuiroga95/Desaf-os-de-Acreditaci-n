@@ -3,11 +3,12 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { PlusCircle, ArrowLeft, BookOpen, Target, Settings, HelpCircle, Save } from "lucide-react";
+import { PlusCircle, ArrowLeft, BookOpen, Target, Settings, HelpCircle, Save, Trash2, Plus } from "lucide-react";
 import { getTeacherDashboard } from "@/app/actions/teacher";
 import { createChallenge } from "@/app/actions/admin";
 import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function TeacherNewChallengePage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -21,9 +22,9 @@ export default function TeacherNewChallengePage() {
     objective: "",
     subjectId: "",
     content: {
-      steps: [
-        { type: "text", value: "" },
-        { type: "question", value: "", answer: "" }
+      theory: "",
+      questions: [
+        { id: Date.now(), question: "", answer: "" }
       ]
     }
   });
@@ -49,6 +50,37 @@ export default function TeacherNewChallengePage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const addQuestion = () => {
+    setForm({
+      ...form,
+      content: {
+        ...form.content,
+        questions: [...form.content.questions, { id: Date.now(), question: "", answer: "" }]
+      }
+    });
+  };
+
+  const removeQuestion = (id: number) => {
+    if (form.content.questions.length <= 1) return;
+    setForm({
+      ...form,
+      content: {
+        ...form.content,
+        questions: form.content.questions.filter(q => q.id !== id)
+      }
+    });
+  };
+
+  const updateQuestion = (id: number, field: "question" | "answer", value: string) => {
+    setForm({
+      ...form,
+      content: {
+        ...form.content,
+        questions: form.content.questions.map(q => q.id === id ? { ...q, [field]: value } : q)
+      }
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,9 +124,14 @@ export default function TeacherNewChallengePage() {
                 required 
                 value={form.subjectId} 
                 onChange={e => setForm({...form, subjectId: e.target.value})}
-                className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 text-foreground appearance-none cursor-pointer"
+                style={{ colorScheme: 'dark' }}
               >
-                {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                {subjects.map(s => (
+                  <option key={s.id} value={s.id} className="bg-background text-foreground py-2">
+                    {s.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -134,24 +171,68 @@ export default function TeacherNewChallengePage() {
               <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 block">Contenido Teórico / Contexto</label>
               <textarea 
                 required
+                value={form.content.theory}
+                onChange={e => setForm({...form, content: {...form.content, theory: e.target.value}})}
                 className="w-full h-32 bg-background border border-border rounded-xl p-4 font-medium outline-none focus:ring-2 focus:ring-primary/50 resize-none"
                 placeholder="Describe el escenario o la teoría necesaria..."
               />
             </div>
 
-            <div className="p-6 bg-secondary/10 border border-border rounded-2xl">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 block">Pregunta de Validación</label>
-              <input 
-                required
-                className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 mb-4"
-                placeholder="Pregunta crítica..."
-              />
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 block">Respuesta Correcta (Sistema)</label>
-              <input 
-                required
-                className="w-full bg-background border border-border rounded-xl p-4 font-mono font-bold outline-none focus:ring-2 focus:ring-primary/50"
-                placeholder="Valor o palabra exacta para auto-validación..."
-              />
+            <div className="space-y-4">
+              <div className="flex justify-between items-center px-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block">Preguntas de Validación</label>
+                <button 
+                  type="button" 
+                  onClick={addQuestion}
+                  className="flex items-center gap-2 text-[10px] font-black uppercase text-primary hover:underline"
+                >
+                  <Plus size={14} /> Añadir Pregunta
+                </button>
+              </div>
+
+              <AnimatePresence>
+                {form.content.questions.map((q, index) => (
+                  <motion.div 
+                    key={q.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="p-6 bg-secondary/10 border border-border rounded-2xl relative group"
+                  >
+                    {form.content.questions.length > 1 && (
+                      <button 
+                        type="button"
+                        onClick={() => removeQuestion(q.id)}
+                        className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Pregunta {index + 1}</label>
+                        <input 
+                          required
+                          value={q.question}
+                          onChange={e => updateQuestion(q.id, "question", e.target.value)}
+                          className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50"
+                          placeholder="Ej: ¿Cuál es el activo corriente total?"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Respuesta Esperada</label>
+                        <input 
+                          required
+                          value={q.answer}
+                          onChange={e => updateQuestion(q.id, "answer", e.target.value)}
+                          className="w-full bg-background border border-border rounded-xl p-4 font-mono font-bold outline-none focus:ring-2 focus:ring-primary/50"
+                          placeholder="Valor o concepto clave..."
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           </div>
         </section>

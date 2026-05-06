@@ -3,13 +3,15 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { Trophy, ArrowLeft, CheckCircle2, Award, Clock, Search, MessageSquare } from "lucide-react";
+import { Trophy, ArrowLeft, CheckCircle2, Award, Clock, Search, MessageSquare, HelpCircle, FileText } from "lucide-react";
 import { getTeacherDashboard, gradeSubmission } from "@/app/actions/teacher";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useToast } from "@/context/ToastContext";
 
 export default function TeacherReviewsPage() {
   const { user, isLoading: authLoading } = useAuth();
+  const { showToast } = useToast();
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -45,10 +47,15 @@ export default function TeacherReviewsPage() {
 
   const handleGrade = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!gradingData.score) return;
+    
     const res = await gradeSubmission(selectedSubmission.id, parseFloat(gradingData.score), gradingData.feedback);
     if (res.success) {
+      showToast("Calificación enviada", "success");
       setSelectedSubmission(null);
       loadData();
+    } else {
+      showToast("Error al calificar", "error");
     }
   };
 
@@ -62,7 +69,7 @@ export default function TeacherReviewsPage() {
   if (!user || user.role !== "teacher") return <div className="p-20 text-center font-black uppercase tracking-widest text-primary">Acceso Denegado</div>;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-8 max-w-7xl mx-auto pb-24">
       <header className="mb-12 flex justify-between items-end">
         <div>
           <Link href="/docente" className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest mb-4 hover:underline">
@@ -138,8 +145,12 @@ export default function TeacherReviewsPage() {
       <AnimatePresence>
         {selectedSubmission && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden">
-              <div className="p-8 border-b border-border flex justify-between items-center bg-secondary/30">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              className="bg-card border border-border w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              <div className="p-8 border-b border-border flex justify-between items-center bg-secondary/30 shrink-0">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-primary/20 text-primary flex items-center justify-center font-black">
                     {selectedSubmission.studentName.charAt(0)}
@@ -151,28 +162,77 @@ export default function TeacherReviewsPage() {
                 </div>
                 <button onClick={() => setSelectedSubmission(null)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">✕</button>
               </div>
-              <form onSubmit={handleGrade} className="p-8 space-y-6">
-                <div className="p-6 bg-secondary/20 rounded-2xl border border-border">
-                  <h4 className="text-[10px] font-black uppercase text-primary mb-3 flex items-center gap-2">
-                    <MessageSquare size={14} /> Bitácora del Alumno
-                  </h4>
-                  <p className="text-sm text-muted-foreground italic leading-relaxed font-medium">"El alumno ha completado el desafío correctamente. Se adjunta evidencia digital en el repositorio."</p>
-                </div>
-                <div className="grid grid-cols-3 gap-6">
-                  <div className="col-span-1">
-                    <label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block tracking-widest">Nota (1-10)</label>
-                    <input required type="number" min="1" max="10" step="0.5" value={gradingData.score} onChange={e => setGradingData({...gradingData, score: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-black text-2xl text-center focus:ring-2 focus:ring-primary/50 outline-none" />
+
+              <div className="p-8 space-y-8 overflow-y-auto">
+                <div className="space-y-6">
+                  {/* Student Answers */}
+                  <div className="p-6 bg-secondary/20 rounded-2xl border border-border">
+                    <h4 className="text-[10px] font-black uppercase text-primary mb-6 flex items-center gap-2">
+                      <MessageSquare size={14} /> Respuestas del Alumno
+                    </h4>
+                    
+                    <div className="space-y-6">
+                      {selectedSubmission.challengeContent?.questions?.map((q: any, index: number) => (
+                        <div key={q.id} className="space-y-2">
+                          <p className="text-[10px] font-black uppercase text-muted-foreground">{index + 1}. {q.question}</p>
+                          <div className="p-4 bg-background border border-border rounded-xl font-bold text-sm">
+                            {selectedSubmission.answers?.[q.id] || "Sin respuesta"}
+                          </div>
+                          <p className="text-[9px] font-bold text-primary uppercase tracking-tighter">Esperado: {q.answer}</p>
+                        </div>
+                      ))}
+
+                      {(!selectedSubmission.challengeContent?.questions || selectedSubmission.challengeContent.questions.length === 0) && (
+                        <div className="p-4 bg-background border border-border rounded-xl italic text-sm text-muted-foreground">
+                          {selectedSubmission.answers?.default || "Sin respuesta detallada"}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="col-span-2">
-                    <label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block tracking-widest">Feedback Pedagógico</label>
-                    <textarea required value={gradingData.feedback} onChange={e => setGradingData({...gradingData, feedback: e.target.value})} className="w-full h-24 bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none resize-none" placeholder="Escribe tus observaciones..." />
-                  </div>
+
+                  {/* Challenge Theory (for teacher context) */}
+                  {selectedSubmission.challengeContent?.theory && (
+                    <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl">
+                      <h4 className="text-[10px] font-black uppercase text-primary mb-3 flex items-center gap-2">
+                        <FileText size={14} /> Contexto del Desafío
+                      </h4>
+                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">{selectedSubmission.challengeContent.theory}</p>
+                    </div>
+                  )}
                 </div>
-                <button type="submit" className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] shadow-xl flex items-center justify-center gap-3">
-                  <Award size={18} />
-                  Confirmar Calificación
-                </button>
-              </form>
+
+                <form onSubmit={handleGrade} className="space-y-6 pt-4 border-t border-border">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="col-span-1">
+                      <label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block tracking-widest">Nota (1-10)</label>
+                      <input 
+                        required 
+                        type="number" 
+                        min="1" 
+                        max="10" 
+                        step="0.5" 
+                        value={gradingData.score} 
+                        onChange={e => setGradingData({...gradingData, score: e.target.value})} 
+                        className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-black text-2xl text-center focus:ring-2 focus:ring-primary/50 outline-none" 
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block tracking-widest">Feedback Pedagógico</label>
+                      <textarea 
+                        required 
+                        value={gradingData.feedback} 
+                        onChange={e => setGradingData({...gradingData, feedback: e.target.value})} 
+                        className="w-full h-24 bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none resize-none" 
+                        placeholder="Escribe tus observaciones..." 
+                      />
+                    </div>
+                  </div>
+                  <button type="submit" className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] shadow-xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all">
+                    <Award size={18} />
+                    Confirmar Calificación
+                  </button>
+                </form>
+              </div>
             </motion.div>
           </div>
         )}

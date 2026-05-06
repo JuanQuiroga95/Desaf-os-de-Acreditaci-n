@@ -71,7 +71,7 @@ export async function getSubjectChallenges(subjectId: string, userId: string) {
   }
 }
 
-export async function submitChallengeResponse(challengeId: string, userId: string, score: number = 0) {
+export async function submitChallengeResponse(challengeId: string, userId: string, answers: any = null) {
   try {
     const progress = await db.progress.upsert({
       where: {
@@ -79,13 +79,13 @@ export async function submitChallengeResponse(challengeId: string, userId: strin
       },
       update: {
         status: "COMPLETED",
-        score: score > 0 ? score : undefined
+        answers: answers
       },
       create: {
         userId,
         challengeId,
         status: "COMPLETED",
-        score: score > 0 ? score : undefined
+        answers: answers
       }
     });
 

@@ -62,3 +62,19 @@ export async function validateUserAction(userId: string) {
   return { success: true }; // Bypass total para evitar bloqueos
 }
 
+export async function updateUserAction(id: string, data: { name?: string, email?: string }) {
+  try {
+    const user = await db.user.update({
+      where: { id },
+      data
+    });
+    return { 
+      success: true, 
+      user: { id: user.id, name: user.name, role: user.role.toLowerCase(), email: user.email } 
+    };
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return { success: false, message: "Error al actualizar perfil" };
+  }
+}
+

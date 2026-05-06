@@ -28,7 +28,9 @@ export async function getTeacherDashboard(teacherId: string) {
           id: p.id,
           studentName: p.user.name,
           challengeTitle: c.title,
+          challengeContent: c.content,
           subjectName: s.name,
+          answers: p.answers,
           createdAt: p.createdAt
         }))
       )

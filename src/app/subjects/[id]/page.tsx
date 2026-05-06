@@ -3,7 +3,7 @@
 import React, { useEffect, useState, use } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { BookOpen, CheckCircle2, Play, Lock, ArrowLeft, Award, HelpCircle, Send } from "lucide-react";
+import { BookOpen, CheckCircle2, Play, Lock, ArrowLeft, Award, HelpCircle, Send, FileText } from "lucide-react";
 import { getSubjectChallenges, submitChallengeResponse } from "@/app/actions/student";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/context/ToastContext";
@@ -17,7 +17,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
   const [subject, setSubject] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedChallenge, setSelectedChallenge] = useState<any>(null);
-  const [answer, setAnswer] = useState("");
+  const [answers, setAnswers] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -40,19 +40,36 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
     }
   };
 
+  const handleOpenChallenge = (challenge: any) => {
+    setSelectedChallenge(challenge);
+    // Initialize answers if needed
+    const initialAnswers: {[key: string]: string} = {};
+    if (challenge.content?.questions) {
+      challenge.content.questions.forEach((q: any) => {
+        initialAnswers[q.id] = "";
+      });
+    }
+    setAnswers(initialAnswers);
+  };
+
   const handleSubmitChallenge = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!answer.trim()) return;
+    
+    // Validate that all questions are answered
+    const allAnswered = selectedChallenge.content?.questions?.every((q: any) => answers[q.id]?.trim());
+    if (!allAnswered) {
+      showToast("Por favor responde todas las preguntas", "error");
+      return;
+    }
     
     setIsSubmitting(true);
     try {
-      // Mock logic: if the challenge content has a specific answer, we could check it
-      // For now, any non-empty answer is submitted for teacher review
+      // Logic: compare answers with expected ones if desired, or just submit
       const res = await submitChallengeResponse(selectedChallenge.id, user!.id);
       if (res.success) {
         showToast("¡Desafío enviado! Pendiente de corrección.", "success");
         setSelectedChallenge(null);
-        setAnswer("");
+        setAnswers({});
         loadData();
       }
     } catch (error) {
@@ -119,7 +136,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                     
                     {!isCompleted ? (
                       <button 
-                        onClick={() => setSelectedChallenge(challenge)}
+                        onClick={() => handleOpenChallenge(challenge)}
                         className="bg-primary text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
                       >
                         <Play size={14} fill="currentColor" />
@@ -180,9 +197,9 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="bg-card border border-border w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden"
+              className="bg-card border border-border w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
-              <div className="p-8 border-b border-border flex justify-between items-center bg-secondary/30">
+              <div className="p-8 border-b border-border flex justify-between items-center bg-secondary/30 shrink-0">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-primary/20 text-primary flex items-center justify-center font-black">
                     <HelpCircle size={24} />
@@ -195,38 +212,74 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                 <button onClick={() => setSelectedChallenge(null)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">✕</button>
               </div>
               
-              <div className="p-8 space-y-6">
-                <div className="p-6 bg-secondary/20 rounded-2xl border border-border">
-                  <h4 className="text-[10px] font-black uppercase text-primary mb-3">Objetivo a Acreditar</h4>
-                  <p className="text-sm text-foreground font-medium leading-relaxed">{selectedChallenge.objective}</p>
+              <div className="p-8 space-y-8 overflow-y-auto">
+                <div className="space-y-6">
+                  <div className="p-6 bg-secondary/20 rounded-2xl border border-border">
+                    <h4 className="text-[10px] font-black uppercase text-primary mb-3 flex items-center gap-2">
+                      <Target size={14} /> Objetivo a Acreditar
+                    </h4>
+                    <p className="text-sm text-foreground font-medium leading-relaxed">{selectedChallenge.objective}</p>
+                  </div>
+
+                  {selectedChallenge.content?.theory && (
+                    <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl">
+                      <h4 className="text-[10px] font-black uppercase text-primary mb-3 flex items-center gap-2">
+                        <FileText size={14} /> Contenido Teórico
+                      </h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{selectedChallenge.content.theory}</p>
+                    </div>
+                  )}
                 </div>
                 
-                <div className="space-y-4">
-                  <label className="text-[10px] font-black uppercase text-muted-foreground block tracking-widest">Tu Propuesta / Resolución</label>
-                  <textarea 
-                    value={answer}
-                    onChange={(e) => setAnswer(e.target.value)}
-                    className="w-full h-48 bg-secondary/30 border border-border rounded-2xl p-6 outline-none focus:ring-2 focus:ring-primary/50 font-medium resize-none"
-                    placeholder="Escribí acá tu razonamiento, cálculos o respuesta final..."
-                  />
-                </div>
+                <form onSubmit={handleSubmitChallenge} className="space-y-6">
+                  <div className="space-y-6">
+                    {selectedChallenge.content?.questions?.map((q: any, index: number) => (
+                      <div key={q.id} className="space-y-3">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground block tracking-widest">
+                          {index + 1}. {q.question}
+                        </label>
+                        <input 
+                          required
+                          value={answers[q.id] || ""}
+                          onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
+                          className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                          placeholder="Tu respuesta..."
+                        />
+                      </div>
+                    ))}
 
-                <div className="flex gap-4">
-                  <button 
-                    onClick={() => setSelectedChallenge(null)}
-                    className="flex-1 py-5 bg-secondary text-foreground rounded-2xl font-black uppercase tracking-widest text-[10px] border border-border hover:bg-border transition-all"
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    onClick={handleSubmitChallenge}
-                    disabled={isSubmitting || !answer.trim()}
-                    className="flex-[2] py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] shadow-xl flex items-center justify-center gap-3 disabled:opacity-50"
-                  >
-                    <Send size={18} />
-                    {isSubmitting ? "Enviando..." : "Enviar para Acreditación"}
-                  </button>
-                </div>
+                    {(!selectedChallenge.content?.questions || selectedChallenge.content.questions.length === 0) && (
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground block tracking-widest">Tu Propuesta / Resolución</label>
+                        <textarea 
+                          required
+                          value={answers["default"] || ""}
+                          onChange={(e) => setAnswers({...answers, default: e.target.value})}
+                          className="w-full h-48 bg-secondary/30 border border-border rounded-2xl p-6 outline-none focus:ring-2 focus:ring-primary/50 font-medium resize-none"
+                          placeholder="Escribí acá tu razonamiento, cálculos o respuesta final..."
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-4 pt-4 sticky bottom-0 bg-card/80 backdrop-blur-sm pb-2">
+                    <button 
+                      type="button"
+                      onClick={() => setSelectedChallenge(null)}
+                      className="flex-1 py-5 bg-secondary text-foreground rounded-2xl font-black uppercase tracking-widest text-[10px] border border-border hover:bg-border transition-all"
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex-[2] py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] shadow-xl flex items-center justify-center gap-3 disabled:opacity-50"
+                    >
+                      <Send size={18} />
+                      {isSubmitting ? "Enviando..." : "Enviar para Acreditación"}
+                    </button>
+                  </div>
+                </form>
               </div>
             </motion.div>
           </div>

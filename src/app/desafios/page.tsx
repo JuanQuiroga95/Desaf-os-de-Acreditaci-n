@@ -50,7 +50,7 @@ export default function DesafiosPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {subjects.flatMap(s => s.challenges).map((challenge, i) => (
+        {subjects.map(s => s.challenges.map((challenge: any) => (
           <div key={challenge.id} className="group bg-card border border-border p-10 rounded-[2.5rem] hover:border-primary/50 transition-all shadow-sm hover:shadow-2xl hover:shadow-primary/5 flex flex-col">
             <div className="flex justify-between items-start mb-8">
               <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
@@ -72,7 +72,7 @@ export default function DesafiosPage() {
               </Link>
             </div>
           </div>
-        ))}
+        )))}
         {subjects.flatMap(s => s.challenges).length === 0 && !isLoading && (
           <div className="col-span-full p-20 text-center border-2 border-dashed border-border rounded-[3rem] opacity-50">
             <BookOpen className="mx-auto mb-6 opacity-20" size={60} />
