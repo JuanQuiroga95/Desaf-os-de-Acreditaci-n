@@ -3,18 +3,18 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { Users, Search, BookOpen, GraduationCap, Mail, ArrowRight } from "lucide-react";
+import { GraduationCap, ArrowLeft, Search, Mail, BookOpen, TrendingUp, CheckCircle2 } from "lucide-react";
 import { getTeacherStudents } from "@/app/actions/teacher";
+import Link from "next/link";
 
 export default function TeacherStudentsPage() {
   const { user, isLoading: authLoading } = useAuth();
-  const router = useRouter();
   const [students, setStudents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    if (user?.id) {
+    if (user?.role === "teacher") {
       loadData();
     }
   }, [user]);
@@ -27,7 +27,7 @@ export default function TeacherStudentsPage() {
         setStudents(res.students || []);
       }
     } catch (error) {
-      console.error("Error al cargar alumnos:", error);
+      console.error("Error cargando alumnos:", error);
     } finally {
       setIsLoading(false);
     }
@@ -38,73 +38,82 @@ export default function TeacherStudentsPage() {
     s.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (authLoading || isLoading) return <div className="p-20 text-center font-bold animate-pulse uppercase tracking-widest text-primary">Cargando Lista de Alumnos...</div>;
-
-  if (!user || user?.role !== "teacher") { router.push("/login"); return null; }
+  if (authLoading || isLoading) return <div className="p-20 text-center font-black animate-pulse uppercase tracking-widest text-primary">Cargando Alumnos...</div>;
+  if (!user || user.role !== "teacher") return <div className="p-20 text-center font-black uppercase tracking-widest text-primary">Acceso Denegado</div>;
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      <header className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+      <header className="mb-12 flex justify-between items-end">
         <div>
-          <h1 className="text-6xl font-black tracking-tighter mb-2 uppercase italic leading-none">Tus <span className="text-primary">Alumnos</span></h1>
-          <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-[0.4em]">Seguimiento de Trayectorias Escolares</p>
+          <Link href="/docente" className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest mb-4 hover:underline">
+            <ArrowLeft size={14} /> Volver al Panel
+          </Link>
+          <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">Tus <span className="text-primary">Alumnos</span></h1>
         </div>
-        <div className="relative w-full md:w-96">
+        
+        <div className="relative w-64">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
           <input 
             type="text" 
-            placeholder="Buscar por nombre o email..." 
+            placeholder="Buscar por nombre o correo..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-card border border-border rounded-2xl py-4 pl-12 pr-6 font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-sm"
+            className="w-full bg-secondary/30 border border-border rounded-2xl py-4 pl-12 pr-4 font-bold outline-none focus:ring-2 focus:ring-primary/50"
           />
         </div>
       </header>
 
-      {filteredStudents.length === 0 ? (
-        <div className="p-20 text-center border-2 border-dashed border-border rounded-[3rem] bg-secondary/10">
-          <Users className="mx-auto mb-6 text-muted-foreground opacity-30" size={64} />
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">No se encontraron alumnos vinculados</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredStudents.map((student) => (
-            <div key={student.id} className="bg-card border border-border p-8 rounded-[2.5rem] shadow-sm hover:border-primary/50 transition-all group relative overflow-hidden">
-              <div className="flex items-center gap-6 mb-8">
-                <div className="w-16 h-16 rounded-[1.5rem] bg-secondary flex items-center justify-center font-black text-2xl text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all">
-                  {student.name.charAt(0)}
-                </div>
-                <div>
-                  <h3 className="text-xl font-black leading-tight group-hover:text-primary transition-colors">{student.name}</h3>
-                  <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest flex items-center gap-2 mt-1">
-                    <GraduationCap size={12} className="text-primary" />
-                    Estudiante Técnico
-                  </p>
-                </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredStudents.map((s) => (
+          <div key={s.id} className="bg-card border border-border rounded-[2.5rem] p-8 hover:border-primary/50 transition-all group shadow-sm flex flex-col">
+            <div className="flex justify-between items-start mb-6">
+              <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center text-primary font-black text-2xl group-hover:bg-primary group-hover:text-white transition-all">
+                {s.name.charAt(0)}
               </div>
-
-              <div className="space-y-4 mb-8">
-                <div className="flex items-center gap-3 text-muted-foreground">
-                  <Mail size={16} />
-                  <span className="text-xs font-medium truncate">{student.email}</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {student.subjects.map((sub: string, i: number) => (
-                    <span key={i} className="text-[8px] font-black uppercase tracking-widest bg-secondary px-3 py-1.5 rounded-full border border-border">
-                      {sub}
-                    </span>
-                  ))}
-                </div>
+              <div className="bg-green-500/10 text-green-500 p-2 rounded-xl">
+                <TrendingUp size={20} />
               </div>
-
-              <button className="w-full flex items-center justify-between p-4 bg-secondary/30 rounded-2xl border border-border/50 hover:bg-primary hover:text-white transition-all group/btn">
-                <span className="text-[10px] font-black uppercase tracking-widest">Ver Expediente</span>
-                <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
-              </button>
             </div>
-          ))}
-        </div>
-      )}
+            
+            <h3 className="text-xl font-black mb-1 group-hover:text-primary transition-colors">{s.name}</h3>
+            <div className="flex items-center gap-2 text-muted-foreground mb-6">
+              <Mail size={14} />
+              <span className="text-xs font-bold truncate">{s.email}</span>
+            </div>
+
+            <div className="space-y-4 mb-8">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Materias en común</p>
+              <div className="flex flex-wrap gap-2">
+                {s.subjects.map((sub: string, i: number) => (
+                  <span key={i} className="px-3 py-1 bg-secondary rounded-lg text-[9px] font-black uppercase tracking-widest border border-border">
+                    {sub}
+                  </span>
+                ))}
+              </div>
+            </div>
+            
+            <div className="mt-auto pt-6 border-t border-border flex justify-between items-center">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Progreso Global</p>
+                <p className="text-xl font-black">78%</p>
+              </div>
+              <Link 
+                href={`/docente/students/${s.id}`}
+                className="text-primary text-[10px] font-black uppercase tracking-widest hover:underline flex items-center gap-1"
+              >
+                Ver Legajo <ArrowLeft size={12} className="rotate-180" />
+              </Link>
+            </div>
+          </div>
+        ))}
+        
+        {filteredStudents.length === 0 && (
+          <div className="col-span-full p-20 text-center">
+            <GraduationCap size={48} className="mx-auto mb-4 text-muted-foreground opacity-20" />
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">No se encontraron alumnos</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

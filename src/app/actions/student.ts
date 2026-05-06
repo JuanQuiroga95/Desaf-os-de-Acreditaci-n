@@ -45,3 +45,53 @@ export async function getStudentDashboard(userId: string) {
     return { success: false, message: "Error al cargar dashboard" };
   }
 }
+
+export async function getSubjectChallenges(subjectId: string, userId: string) {
+  try {
+    const subject = await db.subject.findFirst({
+      where: { id: subjectId },
+      include: {
+        teacher: true,
+        challenges: {
+          include: {
+            progress: {
+              where: { userId }
+            }
+          }
+        }
+      }
+    });
+
+    if (!subject) return { success: false, message: "Materia no encontrada" };
+
+    return { success: true, subject };
+  } catch (error) {
+    console.error("Error fetching subject challenges:", error);
+    return { success: false, message: "Error de conexión" };
+  }
+}
+
+export async function submitChallengeResponse(challengeId: string, userId: string, score: number = 0) {
+  try {
+    const progress = await db.progress.upsert({
+      where: {
+        userId_challengeId: { userId, challengeId }
+      },
+      update: {
+        status: "COMPLETED",
+        score: score > 0 ? score : undefined
+      },
+      create: {
+        userId,
+        challengeId,
+        status: "COMPLETED",
+        score: score > 0 ? score : undefined
+      }
+    });
+
+    return { success: true, progress };
+  } catch (error) {
+    console.error("Error submitting challenge:", error);
+    return { success: false, message: "Error al enviar respuesta" };
+  }
+}

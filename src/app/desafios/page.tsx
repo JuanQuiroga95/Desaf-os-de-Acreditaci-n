@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { BookOpen, Search, Filter, ArrowRight, TrendingUp } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getAllSubjects } from "@/app/actions/admin";
+import Link from "next/link";
 
 export default function DesafiosPage() {
   const { user } = useAuth();
@@ -62,10 +63,13 @@ export default function DesafiosPage() {
             
             <div className="mt-auto pt-8 border-t border-border/50 flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-widest text-primary">Disponible</span>
-              <button className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] group-hover:translate-x-2 transition-transform">
+              <Link 
+                href={`/subjects/${s.id}`}
+                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] group-hover:translate-x-2 transition-transform"
+              >
                 Comenzar Reto
                 <ArrowRight size={14} />
-              </button>
+              </Link>
             </div>
           </div>
         ))}

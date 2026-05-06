@@ -207,7 +207,7 @@ export default function AdminPage() {
         </div>
       </section>
 
-      {/* MODALS: USER & SUBJECT CREATION same style as Teacher dashboard... */}
+      {/* MODALS: USER & SUBJECT CREATION */}
       <AnimatePresence>
         {isUserModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md">
@@ -226,6 +226,31 @@ export default function AdminPage() {
                   <option value="ADMIN">ADMINISTRADOR</option>
                 </select>
                 <button type="submit" className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] shadow-xl">Crear Usuario</button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {isSubjectModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-card border border-border w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden">
+              <div className="p-8 border-b border-border flex justify-between items-center bg-secondary/30">
+                <h3 className="font-black uppercase italic tracking-tighter text-xl">Nueva Materia</h3>
+                <button onClick={() => setIsSubjectModalOpen(false)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white">✕</button>
+              </div>
+              <form onSubmit={handleCreateSubject} className="p-8 space-y-6">
+                <input required value={newSubject.name} onChange={e => setNewSubject({...newSubject, name: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none" placeholder="Nombre de la Materia" />
+                <textarea required value={newSubject.description} onChange={e => setNewSubject({...newSubject, description: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none h-24" placeholder="Descripción..." />
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Docente Titular</label>
+                  <select required value={newSubject.teacherId} onChange={e => setNewSubject({...newSubject, teacherId: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none">
+                    <option value="">Seleccionar Docente</option>
+                    {users.filter(u => u.role === "TEACHER").map(t => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <button type="submit" className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] shadow-xl">Crear Materia</button>
               </form>
             </motion.div>
           </div>

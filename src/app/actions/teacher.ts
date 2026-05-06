@@ -36,12 +36,19 @@ export async function getTeacherDashboard(teacherId: string) {
 
     return { 
       success: true, 
-      subjects: subjects.map(s => ({
-        id: s.id,
-        name: s.name,
-        studentsCount: 25, // Mocking student count for now
-        challengesCount: s._count.challenges
-      })),
+      subjects: subjects.map(s => {
+        const uniqueStudents = new Set();
+        s.challenges.forEach(c => {
+          c.progress.forEach(p => uniqueStudents.add(p.userId));
+        });
+        
+        return {
+          id: s.id,
+          name: s.name,
+          studentsCount: uniqueStudents.size || 0,
+          challengesCount: s._count.challenges
+        };
+      }),
       pendingSubmissions
     };
   } catch (error) {

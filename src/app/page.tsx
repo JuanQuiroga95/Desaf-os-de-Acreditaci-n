@@ -119,13 +119,7 @@ export default function StudentDashboard() {
                   </div>
 
                   <Link
-                    href={
-                      sub.name.toLowerCase().includes("matem")
-                        ? "/matematica"
-                        : sub.name.toLowerCase().includes("lengua")
-                        ? "/lengua"
-                        : "/biologia"
-                    }
+                    href={`/subjects/${sub.id}`}
                     className="w-full bg-primary text-primary-foreground py-5 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:scale-[1.02] transition-all shadow-xl shadow-primary/20"
                   >
                     <Play size={16} fill="currentColor" />
