@@ -27,9 +27,11 @@ export function Sidebar() {
 
   React.useEffect(() => {
     if (user?.role === "student" && user?.id) {
-      getStudentDashboard(user.id).then(res => {
-        if (res.success) setProgress(res.globalProgress || 0);
-      });
+      getStudentDashboard(user.id)
+        .then(res => {
+          if (res.success) setProgress(res.globalProgress || 0);
+        })
+        .catch(err => console.error("Error cargando progreso sidebar:", err));
     }
   }, [user]);
 

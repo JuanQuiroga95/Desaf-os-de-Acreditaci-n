@@ -20,15 +20,34 @@ export default function StudentDashboard() {
   }, [user]);
 
   const loadData = async () => {
-    setIsLoading(true);
-    const result = await getStudentDashboard(user!.id);
-    if (result.success) {
-      setData({ subjects: result.subjects || [], globalProgress: result.globalProgress || 0 });
+    try {
+      setIsLoading(true);
+      const result = await getStudentDashboard(user!.id);
+      if (result.success) {
+        setData({ subjects: result.subjects || [], globalProgress: result.globalProgress || 0 });
+      } else {
+        console.error("Error al cargar dashboard:", result);
+      }
+    } catch (error) {
+      console.error("Falla crítica en loadData:", error);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
-  if (authLoading || isLoading) return <div className="p-20 text-center font-bold animate-pulse uppercase tracking-[0.3em] text-primary">Cargando tu Aula Virtual...</div>;
+  if (authLoading || isLoading) return (
+    <div className="p-20 text-center flex flex-col items-center justify-center min-h-[60vh]">
+      <div className="font-black animate-pulse uppercase tracking-[0.3em] text-primary mb-8 text-xl italic">
+        Cargando tu Aula Virtual...
+      </div>
+      <button 
+        onClick={() => { localStorage.clear(); window.location.href = "/login"; }}
+        className="text-[10px] text-muted-foreground uppercase font-black tracking-widest hover:text-primary transition-colors"
+      >
+        ¿Demora mucho? Hacé click acá para reingresar
+      </button>
+    </div>
+  );
   
   if (!user) {
     router.push("/login");
