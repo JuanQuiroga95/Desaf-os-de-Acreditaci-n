@@ -197,7 +197,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="bg-card border border-border w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-card border border-border w-full max-w-5xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
               <div className="p-8 border-b border-border flex justify-between items-center bg-secondary/30 shrink-0">
                 <div className="flex items-center gap-4">
@@ -212,8 +212,9 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                 <button onClick={() => setSelectedChallenge(null)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">✕</button>
               </div>
               
-              <div className="p-8 space-y-8 overflow-y-auto">
-                <div className="space-y-6">
+              <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
+                {/* Left Side: Questions */}
+                <div className="flex-1 p-8 space-y-8 overflow-y-auto border-r border-border/50 bg-secondary/10">
                   <div className="p-6 bg-secondary/20 rounded-2xl border border-border">
                     <h4 className="text-[10px] font-black uppercase text-primary mb-3 flex items-center gap-2">
                       <Target size={14} /> Objetivo a Acreditar
@@ -229,10 +230,9 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                       <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{selectedChallenge.content.theory}</p>
                     </div>
                   )}
-                </div>
-                
-                <form onSubmit={handleSubmitChallenge} className="space-y-6">
-                  <div className="space-y-6">
+
+                  <div className="space-y-6 pb-8">
+                    <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Cuestionario de Validación</h4>
                     {selectedChallenge.content?.questions?.map((q: any, index: number) => (
                       <div key={q.id} className="space-y-3">
                         <label className="text-[10px] font-black uppercase text-muted-foreground block tracking-widest">
@@ -242,56 +242,52 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                           required
                           value={answers[q.id] || ""}
                           onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
-                          className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                          className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-inner"
                           placeholder="Tu respuesta..."
                         />
                       </div>
                     ))}
+                  </div>
+                </div>
 
-                    <div className="pt-6 border-t border-border/50 space-y-4">
-                      <label className="text-[10px] font-black uppercase text-primary block tracking-widest flex items-center gap-2">
-                        <FileText size={14} /> Desarrollo, Cálculos y Observaciones
-                      </label>
-                      <textarea 
-                        value={answers["notes"] || ""}
-                        onChange={(e) => setAnswers({...answers, notes: e.target.value})}
-                        className="w-full h-32 bg-secondary/10 border border-dashed border-border rounded-2xl p-6 outline-none focus:ring-2 focus:ring-primary/50 font-medium resize-none text-sm italic"
-                        placeholder="Escribí acá tu razonamiento, cuentas auxiliares o aclaraciones para el docente..."
-                      />
+                {/* Right Side: Notepad / Desarrollo */}
+                <div className="w-full md:w-[40%] p-8 bg-card flex flex-col space-y-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-[10px] font-black uppercase text-primary tracking-[0.2em] flex items-center gap-2">
+                      <FileText size={16} /> Block de Notas y Cálculos
+                    </h4>
+                  </div>
+                  
+                  <div className="flex-1 relative group">
+                    <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:20px_20px] opacity-[0.03] pointer-events-none" />
+                    <textarea 
+                      value={answers["notes"] || ""}
+                      onChange={(e) => setAnswers({...answers, notes: e.target.value})}
+                      className="w-full h-full min-h-[300px] bg-secondary/20 border border-dashed border-border rounded-2xl p-8 outline-none focus:ring-2 focus:ring-primary/50 font-mono text-sm leading-relaxed resize-none shadow-xl"
+                      placeholder="Escribí acá tu razonamiento, cálculos auxiliares o justificaciones..."
+                    />
+                  </div>
+
+                  <div className="pt-4 space-y-4">
+                    <div className="flex gap-4">
+                      <button 
+                        type="button"
+                        onClick={() => setSelectedChallenge(null)}
+                        className="flex-1 py-4 bg-secondary text-foreground rounded-2xl font-black uppercase tracking-widest text-[9px] border border-border hover:bg-border transition-all"
+                      >
+                        Cerrar
+                      </button>
+                      <button 
+                        onClick={handleSubmitChallenge}
+                        disabled={isSubmitting}
+                        className="flex-[2] py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[9px] shadow-xl flex items-center justify-center gap-3 disabled:opacity-50"
+                      >
+                        <Send size={16} />
+                        {isSubmitting ? "Enviando..." : "Enviar para Acreditación"}
+                      </button>
                     </div>
-
-                    {(!selectedChallenge.content?.questions || selectedChallenge.content.questions.length === 0) && (
-                      <div className="space-y-3">
-                        <label className="text-[10px] font-black uppercase text-muted-foreground block tracking-widest">Tu Propuesta / Resolución</label>
-                        <textarea 
-                          required
-                          value={answers["default"] || ""}
-                          onChange={(e) => setAnswers({...answers, default: e.target.value})}
-                          className="w-full h-48 bg-secondary/30 border border-border rounded-2xl p-6 outline-none focus:ring-2 focus:ring-primary/50 font-medium resize-none"
-                          placeholder="Escribí acá tu razonamiento, cálculos o respuesta final..."
-                        />
-                      </div>
-                    )}
                   </div>
-
-                  <div className="flex gap-4 pt-4 sticky bottom-0 bg-card/80 backdrop-blur-sm pb-2">
-                    <button 
-                      type="button"
-                      onClick={() => setSelectedChallenge(null)}
-                      className="flex-1 py-5 bg-secondary text-foreground rounded-2xl font-black uppercase tracking-widest text-[10px] border border-border hover:bg-border transition-all"
-                    >
-                      Cancelar
-                    </button>
-                    <button 
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="flex-[2] py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] shadow-xl flex items-center justify-center gap-3 disabled:opacity-50"
-                    >
-                      <Send size={18} />
-                      {isSubmitting ? "Enviando..." : "Enviar para Acreditación"}
-                    </button>
-                  </div>
-                </form>
+                </div>
               </div>
             </motion.div>
           </div>
