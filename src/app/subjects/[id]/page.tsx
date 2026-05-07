@@ -3,7 +3,7 @@
 import React, { useEffect, useState, use } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { BookOpen, CheckCircle2, Play, Lock, ArrowLeft, Award, HelpCircle, Send, FileText } from "lucide-react";
+import { BookOpen, CheckCircle2, Play, Lock, ArrowLeft, Award, HelpCircle, Send, FileText, Target } from "lucide-react";
 import { getSubjectChallenges, submitChallengeResponse } from "@/app/actions/student";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/context/ToastContext";
@@ -90,8 +90,8 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
         </Link>
         <div className="flex justify-between items-end">
           <div>
-            <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">{subject?.name}</h1>
-            <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-[0.4em] mt-2">Docente: {subject?.teacher.name}</p>
+            <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">{subject?.name || "Materia no encontrada"}</h1>
+            <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-[0.4em] mt-2">Docente: {subject?.teacher?.name || "Desconocido"}</p>
           </div>
           <div className="text-right">
             <span className="text-[10px] font-black text-primary uppercase tracking-widest">Estado Académico</span>
@@ -109,9 +109,9 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
             </h2>
             
             <div className="space-y-4">
-              {subject?.challenges.map((challenge: any, i: number) => {
-                const isCompleted = challenge.progress.length > 0 && challenge.progress[0].status === "COMPLETED";
-                const isGraded = isCompleted && challenge.progress[0].score !== null;
+              {subject?.challenges?.map((challenge: any, i: number) => {
+                const isCompleted = (challenge.progress?.length || 0) > 0 && challenge.progress[0].status === "COMPLETED";
+                const isGraded = isCompleted && (challenge.progress[0]?.score !== null && challenge.progress[0]?.score !== undefined);
                 
                 return (
                   <div 
@@ -129,7 +129,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                       <div>
                         <h3 className="font-bold text-lg">{challenge.title}</h3>
                         <p className="text-xs text-muted-foreground uppercase font-black tracking-widest">
-                          {isGraded ? `Calificación: ${challenge.progress[0].score}/10` : isCompleted ? "Pendiente de Calificación" : "Sin Iniciar"}
+                          {isGraded ? `Calificación: ${challenge.progress[0]?.score}/10` : isCompleted ? "Pendiente de Calificación" : "Sin Iniciar"}
                         </p>
                       </div>
                     </div>
@@ -151,7 +151,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                 );
               })}
               
-              {subject?.challenges.length === 0 && (
+              {(!subject?.challenges || subject?.challenges.length === 0) && (
                 <div className="p-16 text-center border-2 border-dashed border-border rounded-[2.5rem] bg-secondary/5">
                   <HelpCircle className="mx-auto mb-4 text-muted-foreground opacity-20" size={48} />
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">No hay desafíos publicados todavía.</p>
