@@ -7,7 +7,18 @@
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Docente\\\\Desktop\\\\Proyectos\\\\previas\\\\src\" -Recurse | Select-Object -ExpandProperty FullName | Where-Object { -not $_.Contains\\('\\\\node_modules'\\) })",
       "mcp__plugin_claude-mem_mcp-search__get_observations",
       "mcp__plugin_claude-mem_mcp-search__smart_outline",
-      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && head -30 {}')"
+      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && head -30 {}')",
+      "Bash(git fetch *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git commit --allow-empty -m ' *)",
+      "mcp__claude_ai_Vercel__list_teams",
+      "mcp__claude_ai_Vercel__list_projects",
+      "mcp__claude_ai_Vercel__list_deployments",
+      "mcp__claude_ai_Vercel__deploy_to_vercel",
+      "Bash(vercel --version)",
+      "Bash(vercel deploy *)"
     ]
   }
 }
