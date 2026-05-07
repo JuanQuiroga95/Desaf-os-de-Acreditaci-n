@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
 import { db } from "@/lib/db";
@@ -71,7 +72,7 @@ export async function getSubjectChallenges(subjectId: string, userId: string) {
   }
 }
 
-export async function submitChallengeResponse(challengeId: string, userId: string, answers: any = null) {
+export async function submitChallengeResponse(challengeId: string, userId: string, answers: Record<string, any> | null = null) {
   try {
     const progress = await db.progress.upsert({
       where: {

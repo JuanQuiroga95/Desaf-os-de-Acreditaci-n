@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
@@ -22,17 +23,16 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Carga inmediata desde localStorage sin validación bloqueante
-    const savedUser = localStorage.getItem("videla_user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("videla_user");
+      return saved ? JSON.parse(saved) : null;
     }
-    setIsLoading(false);
-  }, []);
+    return null;
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  // No effect needed for initial load anymore as it is handled by state initializer
 
   const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     try {

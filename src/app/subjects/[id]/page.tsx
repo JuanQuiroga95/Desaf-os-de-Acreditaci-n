@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useEffect, useState, use } from "react";
@@ -45,18 +46,22 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
     // Initialize answers if needed
     const initialAnswers: {[key: string]: string} = {};
     if (challenge.content?.questions) {
-      challenge.content.questions.forEach((q: any) => {
+      challenge.content.questions.forEach((q: { id: string }) => {
         initialAnswers[q.id] = "";
       });
     }
     setAnswers(initialAnswers);
   };
 
-  const handleSubmitChallenge = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmitChallenge = async (e?: React.FormEvent | React.MouseEvent) => {
+    if (e) e.preventDefault();
     
+    if (!selectedChallenge) return;
+
     // Validate that all questions are answered
-    const allAnswered = selectedChallenge.content?.questions?.every((q: any) => answers[q.id]?.trim());
+    const questions = selectedChallenge.content?.questions || [];
+    const allAnswered = questions.every((q: { id: string }) => answers[q.id]?.trim());
+    
     if (!allAnswered) {
       showToast("Por favor responde todas las preguntas", "error");
       return;
@@ -109,7 +114,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
             </h2>
             
             <div className="space-y-4">
-              {subject?.challenges?.map((challenge: any, i: number) => {
+              {subject?.challenges?.map((challenge: { id: string; title: string; progress: any[] }, i: number) => {
                 const isCompleted = (challenge.progress?.length || 0) > 0 && challenge.progress[0].status === "COMPLETED";
                 const isGraded = isCompleted && (challenge.progress[0]?.score !== null && challenge.progress[0]?.score !== undefined);
                 
@@ -234,7 +239,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
 
                   <div className="space-y-6 pb-8">
                     <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Cuestionario de Validación</h4>
-                    {selectedChallenge.content?.questions?.map((q: any, index: number) => (
+                    {selectedChallenge.content?.questions?.map((q: { id: string; question: string }, index: number) => (
                       <div key={q.id} className="space-y-3">
                         <label className="text-[10px] font-black uppercase text-muted-foreground block tracking-widest">
                           {index + 1}. {q.question}
