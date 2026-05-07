@@ -30,9 +30,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     return null;
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // No effect needed for initial load anymore as it is handled by state initializer
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     try {

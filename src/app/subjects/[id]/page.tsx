@@ -84,8 +84,14 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
     }
   };
 
+  useEffect(() => {
+    if (!authLoading && !isLoading && !user && typeof window !== "undefined") {
+      router.push("/login");
+    }
+  }, [authLoading, isLoading, user, router]);
+
   if (authLoading || isLoading) return <div className="p-20 text-center font-black animate-pulse uppercase tracking-widest text-primary">Cargando Materia...</div>;
-  if (!user) { router.push("/login"); return null; }
+  if (!user) return null;
 
   return (
     <div className="p-8 max-w-7xl mx-auto pb-24">
