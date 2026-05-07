@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { Plus, Users, BookOpen, ShieldCheck, X, UserPlus, GraduationCap, Briefcase, TrendingUp } from "lucide-react";
+import { Plus, Users, BookOpen, X, UserPlus, GraduationCap, Briefcase, TrendingUp, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createUser, createSubject, getAllUsers, getAllSubjects, deleteUser } from "@/app/actions/admin";
 import Link from "next/link";

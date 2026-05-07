@@ -2,18 +2,21 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { 
-  BookOpen, 
-  Trophy, 
-  LayoutDashboard, 
-  MessageSquare, 
-  GraduationCap, 
-  Users, 
-  Settings, 
-  PlusCircle, 
+import {
+  BookOpen,
+  Trophy,
+  LayoutDashboard,
+  MessageSquare,
+  GraduationCap,
+  Users,
+  Settings,
+  PlusCircle,
   LogOut,
-  User 
+  User,
+  Sun,
+  Moon
 } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -23,6 +26,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [progress, setProgress] = React.useState(0);
 
   React.useEffect(() => {
@@ -44,13 +48,13 @@ export function Sidebar() {
           { name: "Control Admin", href: "/admin", icon: LayoutDashboard },
           { name: "Materias", href: "/admin/subjects", icon: BookOpen },
           { name: "Docentes", href: "/admin/teachers", icon: Users },
-          { name: "Configuración", href: "/admin/settings", icon: Settings },
+          { name: "Usuarios", href: "/admin", icon: GraduationCap },
         ];
       case "teacher":
         return [
           { name: "Mis Clases", href: "/docente", icon: LayoutDashboard },
           { name: "Alumnos", href: "/docente/students", icon: Users },
-          { name: "Crear Desafío", href: "/docente/new-challenge", icon: PlusCircle },
+          { name: "Crear Encuentro", href: "/docente/new-challenge", icon: PlusCircle },
           { name: "Correcciones", href: "/docente/reviews", icon: Trophy },
         ];
       default:
@@ -132,14 +136,21 @@ export function Sidebar() {
             <p className="text-xs font-bold truncate leading-none mb-1">{user.name}</p>
             <p className="text-[10px] text-muted-foreground truncate uppercase">{user.role}</p>
           </div>
-          <Link 
+          <button
+            onClick={toggleTheme}
+            className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
+            title={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+          >
+            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+          <Link
             href="/perfil"
             className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
             title="Mi Perfil"
           >
             <User size={16} />
           </Link>
-          <button 
+          <button
             onClick={handleLogout}
             className="p-1.5 text-muted-foreground hover:text-red-500 transition-colors"
             title="Cerrar Sesión"

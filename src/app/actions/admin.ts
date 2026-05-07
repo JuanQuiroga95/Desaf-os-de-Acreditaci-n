@@ -102,10 +102,11 @@ export async function getAllUsers() {
 
 export async function getAllSubjects() {
   return await db.subject.findMany({
-    include: { 
-      teacher: true, 
+    include: {
+      teacher: true,
       challenges: true,
-      _count: { select: { challenges: true } } 
+      enrollments: true,
+      _count: { select: { challenges: true } }
     }
   });
 }

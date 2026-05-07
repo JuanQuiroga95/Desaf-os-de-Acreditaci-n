@@ -4,7 +4,7 @@
 import React, { useEffect, useState, use } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { BookOpen, CheckCircle2, Play, Lock, ArrowLeft, Award, HelpCircle, Send, FileText, Target } from "lucide-react";
+import { BookOpen, CheckCircle2, Play, ArrowLeft, Award, HelpCircle, Send, FileText, Target, Video, Dumbbell, MessageSquare, ClipboardList, BookMarked, Link2, Copy, X as XIcon } from "lucide-react";
 import { getSubjectChallenges, submitChallengeResponse } from "@/app/actions/student";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/context/ToastContext";
@@ -20,6 +20,8 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
   const [selectedChallenge, setSelectedChallenge] = useState<any>(null);
   const [answers, setAnswers] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
+  const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -182,20 +184,35 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-6 flex items-center gap-3">
               <FileText size={16} /> Guía Digital del Módulo
             </h3>
-            <div className="space-y-3">
-              <div className="p-4 bg-card rounded-2xl border border-border flex items-center justify-between group hover:border-primary/50 transition-all cursor-pointer">
-                <span className="text-[10px] font-black uppercase tracking-widest">Teoría Resumida</span>
-                <Play size={12} className="text-primary group-hover:translate-x-1 transition-transform" />
+            {(!subject?.materials || subject.materials.length === 0) ? (
+              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">El docente aún no cargó materiales.</p>
+            ) : (
+              <div className="space-y-2">
+                {[
+                  { type: "THEORY", label: "Teoría", icon: FileText, color: "text-blue-400" },
+                  { type: "VIDEO", label: "Videos", icon: Video, color: "text-red-400" },
+                  { type: "EXERCISE", label: "Ejercicios", icon: Dumbbell, color: "text-green-400" },
+                  { type: "PROMPT", label: "Prompts IA", icon: MessageSquare, color: "text-purple-400" },
+                  { type: "TP_TEMPLATE", label: "Plantilla TP", icon: ClipboardList, color: "text-orange-400" },
+                  { type: "RUBRIC", label: "Rúbrica", icon: BookMarked, color: "text-yellow-400" },
+                ].map(({ type, label, icon: Icon, color }) => {
+                  const items = subject.materials.filter((m: any) => m.type === type);
+                  if (items.length === 0) return null;
+                  return (
+                    <div key={type}>
+                      <p className={`text-[9px] font-black uppercase tracking-widest mb-1 ${color}`}>{label} ({items.length})</p>
+                      {items.map((mat: any) => (
+                        <button key={mat.id} onClick={() => setSelectedMaterial(mat)}
+                          className="w-full p-3 mb-1 bg-card rounded-xl border border-border flex items-center justify-between group hover:border-primary/50 transition-all text-left">
+                          <span className="text-[10px] font-bold truncate pr-2">{mat.title}</span>
+                          <Play size={10} className="text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })}
               </div>
-              <div className="p-4 bg-card rounded-2xl border border-border flex items-center justify-between group hover:border-primary/50 transition-all cursor-pointer">
-                <span className="text-[10px] font-black uppercase tracking-widest">Banco de Ejercicios</span>
-                <Play size={12} className="text-primary group-hover:translate-x-1 transition-transform" />
-              </div>
-              <div className="p-4 bg-card rounded-2xl border border-border flex items-center justify-between group hover:border-primary/50 transition-all cursor-pointer">
-                <span className="text-[10px] font-black uppercase tracking-widest">Videos Recomendados</span>
-                <Play size={12} className="text-primary group-hover:translate-x-1 transition-transform" />
-              </div>
-            </div>
+            )}
           </div>
 
           <div className="bg-primary/10 border border-primary/20 rounded-[2.5rem] p-8 shadow-sm">
@@ -315,6 +332,63 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                     </div>
                   </div>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Material Viewer Modal */}
+      <AnimatePresence>
+        {selectedMaterial && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md">
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-card border border-border w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+              <div className="p-6 border-b border-border flex justify-between items-center bg-secondary/30 shrink-0">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-primary mb-1">
+                    {selectedMaterial.type === "THEORY" ? "Teoría" : selectedMaterial.type === "VIDEO" ? "Video" :
+                     selectedMaterial.type === "EXERCISE" ? `Ejercicio · ${selectedMaterial.level || ""}` :
+                     selectedMaterial.type === "PROMPT" ? "Prompt IA" : selectedMaterial.type === "TP_TEMPLATE" ? "Plantilla TP" : "Rúbrica"}
+                  </p>
+                  <h3 className="font-black uppercase italic text-lg leading-tight">{selectedMaterial.title}</h3>
+                </div>
+                <button onClick={() => setSelectedMaterial(null)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shrink-0">
+                  <XIcon size={16} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-8">
+                {selectedMaterial.type === "VIDEO" ? (
+                  selectedMaterial.fileUrl ? (
+                    <video src={selectedMaterial.fileUrl} controls className="w-full rounded-2xl border border-border" />
+                  ) : (
+                    <a href={selectedMaterial.content} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-6 bg-secondary/20 rounded-2xl border border-border hover:border-primary/50 transition-all group">
+                      <Link2 size={20} className="text-primary shrink-0" />
+                      <div>
+                        <p className="font-black text-sm group-hover:text-primary transition-colors">Abrir video externo</p>
+                        <p className="text-xs text-muted-foreground truncate max-w-xs">{selectedMaterial.content}</p>
+                      </div>
+                    </a>
+                  )
+                ) : selectedMaterial.type === "PROMPT" ? (
+                  <div className="space-y-4">
+                    <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl font-mono text-sm leading-relaxed whitespace-pre-wrap">
+                      {selectedMaterial.content}
+                    </div>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(selectedMaterial.content); setCopiedPrompt(selectedMaterial.id); setTimeout(() => setCopiedPrompt(null), 2000); }}
+                      className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 transition-all ${copiedPrompt === selectedMaterial.id ? "bg-green-500 text-white" : "bg-secondary border border-border hover:bg-border"}`}
+                    >
+                      <Copy size={14} />
+                      {copiedPrompt === selectedMaterial.id ? "¡Copiado!" : "Copiar para usar con IA"}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="prose prose-sm max-w-none text-foreground">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{selectedMaterial.content}</p>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>

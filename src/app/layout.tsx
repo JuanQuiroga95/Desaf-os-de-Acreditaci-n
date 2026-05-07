@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ToastProvider } from "@/context/ToastContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import { LayoutWrapper } from "@/components/LayoutWrapper";
 import { cn } from "@/lib/utils";
 
@@ -21,11 +22,13 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={cn(inter.className, "bg-background text-foreground antialiased")}>
-        <AuthProvider>
-          <ToastProvider>
-            <LayoutWrapper>{children}</LayoutWrapper>
-          </ToastProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <LayoutWrapper>{children}</LayoutWrapper>
+            </ToastProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -68,13 +68,30 @@ export async function updateUserAction(id: string, data: { name?: string, email?
       where: { id },
       data
     });
-    return { 
-      success: true, 
-      user: { id: user.id, name: user.name, role: user.role.toLowerCase(), email: user.email } 
+    return {
+      success: true,
+      user: { id: user.id, name: user.name, role: user.role.toLowerCase(), email: user.email }
     };
   } catch (error) {
     console.error("Error updating user:", error);
     return { success: false, message: "Error al actualizar perfil" };
+  }
+}
+
+export async function updatePasswordAction(id: string, currentPassword: string, newPassword: string) {
+  try {
+    const user = await db.user.findUnique({ where: { id } });
+    if (!user) return { success: false, message: "Usuario no encontrado" };
+
+    const isMatch = user.password === currentPassword || await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return { success: false, message: "La contraseña actual es incorrecta" };
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.user.update({ where: { id }, data: { password: hashed } });
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating password:", error);
+    return { success: false, message: "Error al actualizar contraseña" };
   }
 }
 

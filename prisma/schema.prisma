@@ -15,61 +15,99 @@ enum Role {
   STUDENT
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      Role     @default(STUDENT)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum MaterialType {
+  THEORY
+  VIDEO
+  EXERCISE
+  PROMPT
+  RUBRIC
+  TP_TEMPLATE
+}
 
-  // Relationships
-  subjects  Subject[]  @relation("TeacherSubjects")
-  progress  Progress[]
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  password    String
+  name        String
+  role        Role         @default(STUDENT)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  subjects    Subject[]    @relation("TeacherSubjects")
+  progress    Progress[]
+  enrollments Enrollment[]
 }
 
 model Subject {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   name        String
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
-  // Relationships
   teacherId   String
-  teacher     User      @relation("TeacherSubjects", fields: [teacherId], references: [id])
+  teacher     User         @relation("TeacherSubjects", fields: [teacherId], references: [id])
   challenges  Challenge[]
+  materials   Material[]
+  enrollments Enrollment[]
 }
 
 model Challenge {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   title       String
   objective   String?
-  content     Json?    // For storing step-by-step logic
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  content     Json?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
-  // Relationships
   subjectId   String
-  subject     Subject   @relation(fields: [subjectId], references: [id])
+  subject     Subject    @relation(fields: [subjectId], references: [id])
   progress    Progress[]
+  materials   Material[]
 }
 
 model Progress {
-  id          String   @id @default(cuid())
-  status      String   @default("PENDING") // PENDING, COMPLETED
+  id          String    @id @default(cuid())
+  status      String    @default("PENDING")
   score       Float?
   feedback    String?
   answers     Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  // Relationships
   userId      String
   user        User      @relation(fields: [userId], references: [id])
   challengeId String
   challenge   Challenge @relation(fields: [challengeId], references: [id])
 
   @@unique([userId, challengeId])
+}
+
+model Material {
+  id          String       @id @default(cuid())
+  type        MaterialType
+  title       String
+  content     String
+  level       String?      // BASICO | INTERMEDIO | AVANZADO (para EXERCISE)
+  fileUrl     String?      // URL de Vercel Blob para archivos subidos
+  order       Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  subjectId   String
+  subject     Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  challengeId String?
+  challenge   Challenge?   @relation(fields: [challengeId], references: [id])
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  studentId String
+  student   User    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, subjectId])
 }

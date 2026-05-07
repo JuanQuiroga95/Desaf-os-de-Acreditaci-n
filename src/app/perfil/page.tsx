@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { User, Lock, Save, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
+import { updatePasswordAction } from "@/app/actions/auth";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -18,13 +19,19 @@ export default function ProfilePage() {
       showToast("Las contraseñas no coinciden", "error");
       return;
     }
-    
+    if (passwords.new.length < 6) {
+      showToast("La nueva contraseña debe tener al menos 6 caracteres", "error");
+      return;
+    }
     setIsUpdating(true);
-    // Simulation of password update action
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const res = await updatePasswordAction(user!.id, passwords.current, passwords.new);
     setIsUpdating(false);
-    showToast("Contraseña actualizada con éxito", "success");
-    setPasswords({ current: "", new: "", confirm: "" });
+    if (res.success) {
+      showToast("Contraseña actualizada con éxito", "success");
+      setPasswords({ current: "", new: "", confirm: "" });
+    } else {
+      showToast(res.message || "Error al actualizar contraseña", "error");
+    }
   };
 
   return (

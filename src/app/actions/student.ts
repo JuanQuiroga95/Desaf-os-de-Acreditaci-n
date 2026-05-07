@@ -5,7 +5,14 @@ import { db } from "@/lib/db";
 
 export async function getStudentDashboard(userId: string) {
   try {
+    // Si el alumno tiene inscripciones, mostrar solo esas materias
+    const enrollments = await db.enrollment.findMany({ where: { studentId: userId } });
+    const subjectFilter = enrollments.length > 0
+      ? { id: { in: enrollments.map((e: { subjectId: string }) => e.subjectId) } }
+      : {};
+
     const subjects = await db.subject.findMany({
+      where: subjectFilter,
       include: {
         challenges: {
           include: {
@@ -53,11 +60,11 @@ export async function getSubjectChallenges(subjectId: string, userId: string) {
       where: { id: subjectId },
       include: {
         teacher: true,
+        materials: { orderBy: [{ type: "asc" }, { order: "asc" }, { createdAt: "asc" }] },
         challenges: {
           include: {
-            progress: {
-              where: { userId }
-            }
+            progress: { where: { userId } },
+            materials: { orderBy: [{ order: "asc" }, { createdAt: "asc" }] },
           }
         }
       }

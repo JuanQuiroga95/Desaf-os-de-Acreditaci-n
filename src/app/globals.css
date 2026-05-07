@@ -16,7 +16,8 @@
   --color-border: var(--border);
 }
 
-:root {
+:root,
+[data-theme="dark"] {
   --background: #09090b;
   --foreground: #fafafa;
   --card: #18181b;
@@ -32,6 +33,22 @@
   --border: #27272a;
 }
 
+[data-theme="light"] {
+  --background: #f8f9fa;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f3f5;
+  --secondary-foreground: #18181b;
+  --muted: #f1f3f5;
+  --muted-foreground: #71717a;
+  --accent: #3b82f6;
+  --accent-foreground: #ffffff;
+  --border: #e4e4e7;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
@@ -39,10 +56,10 @@ body {
 }
 
 .glass {
-  background: rgba(24, 24, 27, 0.98);
+  background: var(--card);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border);
 }
 
 .progress-glow {

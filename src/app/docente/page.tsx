@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { PlusCircle, BookOpen, Clock, CheckCircle2, TrendingUp, HelpCircle } from "lucide-react";
+import { PlusCircle, BookOpen, Clock, CheckCircle2, TrendingUp, HelpCircle, FolderOpen, ArrowRight } from "lucide-react";
 import { getTeacherDashboard } from "@/app/actions/teacher";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -68,19 +68,27 @@ export default function TeacherPage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {data?.subjects.map((sub, i) => (
-                <div key={i} className="p-10 rounded-[2.5rem] bg-secondary/10 border border-border hover:border-primary/50 transition-all group shadow-sm relative overflow-hidden">
-                  <h3 className="font-black text-2xl mb-8 group-hover:text-primary transition-colors pr-8 leading-tight">{sub.name}</h3>
-                  <div className="flex gap-10">
+                <Link key={i} href={`/docente/materiales/${sub.id}`} className="p-10 rounded-[2.5rem] bg-secondary/10 border border-border hover:border-primary/50 transition-all group shadow-sm relative overflow-hidden flex flex-col">
+                  <div className="flex justify-between items-start mb-6">
+                    <h3 className="font-black text-2xl group-hover:text-primary transition-colors pr-8 leading-tight">{sub.name}</h3>
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shrink-0">
+                      <ArrowRight size={14} />
+                    </div>
+                  </div>
+                  <div className="flex gap-10 mb-6">
                     <div className="flex flex-col">
                       <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Alumnos</span>
                       <span className="text-4xl font-black tracking-tighter">{sub.studentsCount}</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Desafíos</span>
+                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Encuentros</span>
                       <span className="text-4xl font-black tracking-tighter">{sub.challengesCount}</span>
                     </div>
                   </div>
-                </div>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-primary flex items-center gap-1 mt-auto">
+                    <FolderOpen size={12} /> Gestionar materiales
+                  </span>
+                </Link>
               ))}
               {data?.subjects.length === 0 && (
                 <div className="col-span-2 p-16 text-center border-2 border-dashed border-border rounded-[2.5rem] bg-secondary/5">
