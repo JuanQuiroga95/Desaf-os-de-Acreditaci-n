@@ -65,7 +65,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
     setIsSubmitting(true);
     try {
       // Logic: compare answers with expected ones if desired, or just submit
-      const res = await submitChallengeResponse(selectedChallenge.id, user!.id);
+      const res = await submitChallengeResponse(selectedChallenge.id, user!.id, answers);
       if (res.success) {
         showToast("¡Desafío enviado! Pendiente de corrección.", "success");
         setSelectedChallenge(null);
@@ -247,6 +247,18 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                         />
                       </div>
                     ))}
+
+                    <div className="pt-6 border-t border-border/50 space-y-4">
+                      <label className="text-[10px] font-black uppercase text-primary block tracking-widest flex items-center gap-2">
+                        <FileText size={14} /> Desarrollo, Cálculos y Observaciones
+                      </label>
+                      <textarea 
+                        value={answers["notes"] || ""}
+                        onChange={(e) => setAnswers({...answers, notes: e.target.value})}
+                        className="w-full h-32 bg-secondary/10 border border-dashed border-border rounded-2xl p-6 outline-none focus:ring-2 focus:ring-primary/50 font-medium resize-none text-sm italic"
+                        placeholder="Escribí acá tu razonamiento, cuentas auxiliares o aclaraciones para el docente..."
+                      />
+                    </div>
 
                     {(!selectedChallenge.content?.questions || selectedChallenge.content.questions.length === 0) && (
                       <div className="space-y-3">
