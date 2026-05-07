@@ -73,11 +73,11 @@ export function Sidebar() {
   return (
     <aside className="w-64 h-screen border-r border-border bg-card flex flex-col fixed left-0 top-0 z-50">
       <div className="p-6 flex items-center gap-3">
-        <div className="w-12 h-12 relative overflow-hidden rounded-full border border-border shadow-sm bg-white flex items-center justify-center p-1">
+        <div className="w-12 h-12 relative overflow-hidden rounded-full border border-border shadow-sm bg-white flex items-center justify-center p-0.5">
           <img 
             src="/logo.png" 
             alt="Escuela Ricardo Videla" 
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain scale-110"
           />
         </div>
         <div className="flex flex-col">
