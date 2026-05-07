@@ -68,10 +68,10 @@ export function AITutor() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="mb-4 w-96 h-[500px] glass rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-primary/20"
+            className="mb-4 w-96 h-[500px] bg-card rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-primary/20"
           >
             {/* Header */}
-            <div className="p-4 bg-primary/10 border-b border-primary/20 flex justify-between items-center">
+            <div className="p-4 bg-primary/25 border-b border-primary/30 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground">
                   <Bot size={18} />
@@ -103,7 +103,7 @@ export function AITutor() {
                     "max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed",
                     msg.role === "user" 
                       ? "bg-primary text-primary-foreground rounded-tr-none" 
-                      : "bg-secondary/80 text-foreground border border-border rounded-tl-none"
+                      : "bg-secondary text-foreground border border-border rounded-tl-none"
                   )}>
                     {msg.content}
                   </div>
@@ -111,7 +111,7 @@ export function AITutor() {
               ))}
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-secondary/80 p-3 rounded-2xl rounded-tl-none border border-border flex gap-1">
+                  <div className="bg-secondary p-3 rounded-2xl rounded-tl-none border border-border flex gap-1">
                     <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" />
                     <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce [animation-delay:0.2s]" />
                     <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce [animation-delay:0.4s]" />
