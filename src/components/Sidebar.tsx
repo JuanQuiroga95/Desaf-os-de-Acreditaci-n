@@ -82,7 +82,7 @@ export function Sidebar() {
         </div>
         <div className="flex flex-col">
           <span className="font-black text-sm tracking-tighter leading-none mb-1 uppercase italic">Videla-Acredita</span>
-          <span className="text-[9px] text-muted-foreground uppercase tracking-[0.3em] font-black">Esc. N° 4-012</span>
+          <span className="text-[9px] text-muted-foreground uppercase tracking-[0.2em] font-black">Mejor en tu Escuela 2026</span>
         </div>
       </div>
 

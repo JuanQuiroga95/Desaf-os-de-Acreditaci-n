@@ -16,11 +16,18 @@ export function AITutor() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "¡Hola, cadete! Soy el Tutor Técnico de la Escuela Videla. ¿En qué parte del taller te has trabado? Recuerda: no te daré el esquema terminado, pero sí el plano para que lo pienses.",
+      content: "¡Hola! Soy tu Tutor de Recuperación Activa. Mi objetivo es que aprendas haciendo en cada encuentro. ¿En qué ejercicio o texto te gustaría trabajar hoy? Recordá que puedo explicarte conceptos, corregir tus pasos o crear ejercicios de práctica.",
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const suggestedPrompts = [
+    { label: "Corregir ejercicio", prompt: "Corregime este ejercicio paso a paso y explicame en qué me equivoqué y por qué: " },
+    { label: "Explicar concepto", prompt: "Explicame qué es un número racional como si tuviera 14 años." },
+    { label: "Crear práctica", prompt: "Creame 3 ejercicios similares a este con sus soluciones completas: " },
+    { label: "Idea Principal", prompt: "Leé este texto y explicame cuál es la idea principal y las secundarias: " },
+  ];
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -28,13 +35,14 @@ export function AITutor() {
     }
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+  const handleSend = async (customPrompt?: string) => {
+    const textToSend = customPrompt || input;
+    if (!textToSend.trim() || isLoading) return;
 
-    const userMsg: Message = { role: "user", content: input };
+    const userMsg: Message = { role: "user", content: textToSend };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
-    setInput("");
+    if (!customPrompt) setInput("");
     setIsLoading(true);
 
     try {
@@ -53,7 +61,7 @@ export function AITutor() {
       console.error(error);
       setMessages((prev) => [...prev, { 
         role: "assistant", 
-        content: "Se cortó la luz en el taller (Error de conexión). Por favor, intenta de nuevo." 
+        content: "Se cortó la conexión con el aula (Error de API). Por favor, intenta de nuevo." 
       }]);
     } finally {
       setIsLoading(false);
@@ -68,7 +76,7 @@ export function AITutor() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="mb-4 w-96 h-[500px] bg-card rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-primary/20"
+            className="mb-4 w-96 h-[600px] bg-card rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-primary/20"
           >
             {/* Header */}
             <div className="p-4 bg-primary/25 border-b border-primary/30 flex justify-between items-center">
@@ -77,10 +85,10 @@ export function AITutor() {
                   <Bot size={18} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm">Tutor Técnico Videla</h3>
+                  <h3 className="font-bold text-sm">Tutor de Recuperación</h3>
                   <div className="flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">En Línea - Taller Central</span>
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">En Línea - Escuela Videla</span>
                   </div>
                 </div>
               </div>
@@ -120,6 +128,22 @@ export function AITutor() {
               )}
             </div>
 
+            {/* Suggested Prompts Area */}
+            <div className="px-4 py-2 flex flex-wrap gap-2 border-t border-border bg-secondary/5">
+              {suggestedPrompts.map((item, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setInput(item.prompt);
+                    // scroll to input
+                  }}
+                  className="text-[9px] font-black uppercase tracking-wider bg-card border border-border px-3 py-1.5 rounded-full hover:border-primary/50 hover:text-primary transition-all"
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
             {/* Input Area */}
             <div className="p-4 border-t border-border bg-card">
               <div className="relative">
@@ -128,11 +152,11 @@ export function AITutor() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                  placeholder="Haz una pregunta técnica..."
+                  placeholder="Pegá tu ejercicio o consultá..."
                   className="w-full bg-secondary border border-border rounded-xl py-3 px-4 pr-12 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-sm"
                 />
                 <button 
-                  onClick={handleSend}
+                  onClick={() => handleSend()}
                   className="absolute right-2 top-1.5 p-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all"
                 >
                   <Send size={16} />

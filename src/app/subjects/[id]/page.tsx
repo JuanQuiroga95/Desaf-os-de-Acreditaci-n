@@ -102,7 +102,9 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
         <div className="flex justify-between items-end">
           <div>
             <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">{subject?.name || "Materia no encontrada"}</h1>
-            <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-[0.4em] mt-2">Docente: {subject?.teacher?.name || "Desconocido"}</p>
+            <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-[0.4em] mt-2">
+              Docente: {subject?.teacher?.name || "Desconocido"} • Modelo: Recuperación Activa Asistida
+            </p>
           </div>
           <div className="text-right">
             <span className="text-[10px] font-black text-primary uppercase tracking-widest">Estado Académico</span>
@@ -114,9 +116,12 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-6">
           <section className="bg-card border border-border rounded-[2.5rem] p-8 shadow-sm">
-            <h2 className="text-xl font-black mb-8 flex items-center gap-3 italic uppercase text-[10px] tracking-[0.2em] text-primary">
-              <BookOpen size={18} />
-              Hoja de Ruta del Ciclo
+            <h2 className="text-xl font-black mb-8 flex items-center justify-between italic uppercase text-[10px] tracking-[0.2em] text-primary">
+              <span className="flex items-center gap-3">
+                <BookOpen size={18} />
+                Hoja de Ruta: 4 Encuentros Obligatorios
+              </span>
+              <span className="bg-primary/10 px-3 py-1 rounded-full text-[8px] font-black border border-primary/20">80% Asistencia Requerida</span>
             </h2>
             
             <div className="space-y-4">
@@ -138,9 +143,9 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                         {isCompleted ? <CheckCircle2 size={24} /> : i + 1}
                       </div>
                       <div>
-                        <h3 className="font-bold text-lg">{challenge.title}</h3>
+                        <h3 className="font-bold text-lg">Encuentro {i + 1}: {challenge.title}</h3>
                         <p className="text-xs text-muted-foreground uppercase font-black tracking-widest">
-                          {isGraded ? `Calificación: ${challenge.progress[0]?.score}/10` : isCompleted ? "Pendiente de Calificación" : "Sin Iniciar"}
+                          {isGraded ? `Calificación: ${challenge.progress[0]?.score}/10` : isCompleted ? "Pendiente de Calificación" : "Pendiente de Acreditación"}
                         </p>
                       </div>
                     </div>
@@ -175,26 +180,36 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
         <aside className="lg:col-span-4 space-y-6">
           <div className="bg-secondary/20 border border-border rounded-[2.5rem] p-8 shadow-sm">
             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-6 flex items-center gap-3">
-              <Award size={16} /> Logros en esta Materia
+              <FileText size={16} /> Guía Digital del Módulo
+            </h3>
+            <div className="space-y-3">
+              <div className="p-4 bg-card rounded-2xl border border-border flex items-center justify-between group hover:border-primary/50 transition-all cursor-pointer">
+                <span className="text-[10px] font-black uppercase tracking-widest">Teoría Resumida</span>
+                <Play size={12} className="text-primary group-hover:translate-x-1 transition-transform" />
+              </div>
+              <div className="p-4 bg-card rounded-2xl border border-border flex items-center justify-between group hover:border-primary/50 transition-all cursor-pointer">
+                <span className="text-[10px] font-black uppercase tracking-widest">Banco de Ejercicios</span>
+                <Play size={12} className="text-primary group-hover:translate-x-1 transition-transform" />
+              </div>
+              <div className="p-4 bg-card rounded-2xl border border-border flex items-center justify-between group hover:border-primary/50 transition-all cursor-pointer">
+                <span className="text-[10px] font-black uppercase tracking-widest">Videos Recomendados</span>
+                <Play size={12} className="text-primary group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-primary/10 border border-primary/20 rounded-[2.5rem] p-8 shadow-sm">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-6 flex items-center gap-3">
+              <Award size={16} /> Sistema de Bonus
             </h3>
             <div className="space-y-4">
-              <div className="p-5 bg-card rounded-2xl border border-border flex items-center gap-4 opacity-40">
-                <div className="w-10 h-10 rounded-lg bg-yellow-500/20 text-yellow-600 flex items-center justify-center">
-                  <Award size={20} />
-                </div>
-                <div>
-                  <p className="text-xs font-black uppercase tracking-widest">Primer Paso</p>
-                  <p className="text-[9px] text-muted-foreground uppercase font-bold">Completa 1 desafío</p>
-                </div>
+              <div className="flex items-center gap-4">
+                <div className="w-8 h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center font-black text-xs">+10%</div>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">TP Final Prolijo</p>
               </div>
-              <div className="p-5 bg-card rounded-2xl border border-border flex items-center gap-4 opacity-40">
-                <div className="w-10 h-10 rounded-lg bg-blue-500/20 text-blue-600 flex items-center justify-center">
-                  <Award size={20} />
-                </div>
-                <div>
-                  <p className="text-xs font-black uppercase tracking-widest">Maestría Técnica</p>
-                  <p className="text-[9px] text-muted-foreground uppercase font-bold">Obtén un 10 en 3 desafíos</p>
-                </div>
+              <div className="flex items-center gap-4">
+                <div className="w-8 h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center font-black text-xs">+10%</div>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Asistencia Perfecta</p>
               </div>
             </div>
           </div>
