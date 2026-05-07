@@ -199,7 +199,8 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
               animate={{ opacity: 1, scale: 1, y: 0 }}
               className="bg-card border border-border w-full max-w-5xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
-              <div className="p-8 border-b border-border flex justify-between items-center bg-secondary/30 shrink-0">
+              {/* V2 - 2 Column Layout */}
+              <div className="p-8 border-b border-border flex justify-between items-center bg-primary/20 shrink-0">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-primary/20 text-primary flex items-center justify-center font-black">
                     <HelpCircle size={24} />
