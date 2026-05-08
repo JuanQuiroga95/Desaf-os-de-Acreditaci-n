@@ -12,6 +12,7 @@ import { getAllSubjects } from "@/app/actions/admin";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
+import { upload } from "@vercel/blob/client";
 
 type Tab = "THEORY" | "VIDEO" | "EXERCISE" | "PROMPT" | "RUBRIC" | "TP_TEMPLATE";
 
@@ -82,17 +83,11 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
       let fileUrl: string | undefined;
 
       if (activeTab === "VIDEO" && form.videoMode === "file" && form.file) {
-        const res = await fetch(`/api/upload?filename=${encodeURIComponent(form.file.name)}`, {
-          method: "POST",
-          body: form.file,
+        const blob = await upload(form.file.name, form.file, {
+          access: "public",
+          handleUploadUrl: "/api/upload",
         });
-        const data = await res.json();
-        if (!res.ok) {
-          showToast(data.error || "Error al subir video", "error");
-          setIsSaving(false);
-          return;
-        }
-        fileUrl = data.url;
+        fileUrl = blob.url;
       }
 
       const content = activeTab === "VIDEO" && form.videoMode === "url" ? form.content : form.content;

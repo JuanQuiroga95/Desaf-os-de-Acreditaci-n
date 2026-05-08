@@ -1,25 +1,36 @@
-import { put } from "@vercel/blob";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const { searchParams } = new URL(request.url);
-  const filename = searchParams.get("filename");
-
-  if (!filename) {
-    return NextResponse.json({ error: "Nombre de archivo requerido" }, { status: 400 });
-  }
-
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return NextResponse.json(
-      { error: "Vercel Blob no configurado. Agregá BLOB_READ_WRITE_TOKEN en las variables de entorno de Vercel." },
-      { status: 503 }
-    );
-  }
+  const body = (await request.json()) as HandleUploadBody;
 
   try {
-    const blob = await put(filename, request.body!, { access: "public" });
-    return NextResponse.json(blob);
-  } catch {
-    return NextResponse.json({ error: "Error al subir archivo" }, { status: 500 });
+    const jsonResponse = await handleUpload({
+      body,
+      request,
+      onBeforeGenerateToken: async (
+        pathname,
+        /* clientPayload */
+      ) => {
+        // Autenticación opcional aquí (puedes verificar cookies/sesión)
+        return {
+          allowedContentTypes: ["video/mp4", "video/webm", "video/quicktime", "application/pdf"],
+          tokenPayload: JSON.stringify({
+            // Datos opcionales para onUploadCompleted
+          }),
+        };
+      },
+      onUploadCompleted: async ({ blob, tokenPayload }) => {
+        // Se ejecuta cuando el archivo ya está en Vercel Blob
+        console.log("Upload completed", blob, tokenPayload);
+      },
+    });
+
+    return NextResponse.json(jsonResponse);
+  } catch (error) {
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 400 }
+    );
   }
 }
