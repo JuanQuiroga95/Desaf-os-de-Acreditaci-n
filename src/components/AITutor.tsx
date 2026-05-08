@@ -81,7 +81,7 @@ export function AITutor() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="mb-4 w-96 h-[600px] bg-card rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-primary/20"
+            className="mb-2 w-96 max-h-[calc(100vh-120px)] bg-card rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-primary/20"
           >
             {/* Header */}
             <div className="p-4 bg-primary/25 border-b border-primary/30 flex justify-between items-center">

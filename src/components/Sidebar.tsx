@@ -128,35 +128,39 @@ export function Sidebar() {
           </div>
         )}
 
-        <div className="flex items-center gap-3 p-2 px-4 rounded-2xl bg-secondary/30 border border-border/50">
-          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs uppercase">
-            {user.name.charAt(0)}
+        <div className="flex flex-col gap-2 p-4 rounded-2xl bg-secondary/30 border border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-black text-sm uppercase shrink-0 border border-primary/10">
+              {user.name.charAt(0)}
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <p className="text-xs font-black truncate leading-none mb-1 uppercase tracking-tight">{user.name}</p>
+              <p className="text-[10px] text-muted-foreground truncate uppercase font-bold tracking-widest">{user.role}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 text-muted-foreground hover:text-red-500 transition-colors hover:bg-red-500/10 rounded-lg"
+              title="Cerrar Sesión"
+            >
+              <LogOut size={16} />
+            </button>
           </div>
-          <div className="flex-1 overflow-hidden">
-            <p className="text-xs font-bold truncate leading-none mb-1">{user.name}</p>
-            <p className="text-[10px] text-muted-foreground truncate uppercase">{user.role}</p>
+          <div className="flex items-center justify-between pt-2 border-t border-border/30 px-1">
+            <button
+              onClick={toggleTheme}
+              className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-all"
+            >
+              {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
+              {theme === "dark" ? "Modo Claro" : "Modo Oscuro"}
+            </button>
+            <Link
+              href="/perfil"
+              className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-all"
+            >
+              <User size={14} />
+              Mi Perfil
+            </Link>
           </div>
-          <button
-            onClick={toggleTheme}
-            className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
-            title={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-          >
-            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
-          <Link
-            href="/perfil"
-            className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
-            title="Mi Perfil"
-          >
-            <User size={16} />
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="p-1.5 text-muted-foreground hover:text-red-500 transition-colors"
-            title="Cerrar Sesión"
-          >
-            <LogOut size={16} />
-          </button>
         </div>
       </div>
     </aside>
