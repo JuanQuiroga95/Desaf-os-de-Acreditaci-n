@@ -83,11 +83,18 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
       let fileUrl: string | undefined;
 
       if (activeTab === "VIDEO" && form.videoMode === "file" && form.file) {
-        const blob = await upload(form.file.name, form.file, {
-          access: "public",
-          handleUploadUrl: "/api/upload",
-        });
-        fileUrl = blob.url;
+        try {
+          const blob = await upload(form.file.name, form.file, {
+            access: "public",
+            handleUploadUrl: "/api/upload",
+          });
+          fileUrl = blob.url;
+        } catch (error: any) {
+          console.error("Error detallado de subida:", error);
+          showToast(error.message || "Error al subir video a Vercel Blob", "error");
+          setIsSaving(false);
+          return;
+        }
       }
 
       const content = activeTab === "VIDEO" && form.videoMode === "url" ? form.content : form.content;
