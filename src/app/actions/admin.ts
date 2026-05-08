@@ -79,10 +79,10 @@ export async function deleteSubject(id: string) {
   }
 }
 
-export async function createChallenge(subjectId: string, title: string, objective: string, content: any) {
+export async function createChallenge(subjectId: string, title: string, objective: string, content: any, type: "REGULAR" | "DIAGNOSTICO" | "FINAL" = "REGULAR") {
   try {
     const challenge = await db.challenge.create({
-      data: { subjectId, title, objective, content }
+      data: { subjectId, title, objective, content, type }
     });
     revalidatePath("/docente");
     revalidatePath(`/subjects/${subjectId}`);

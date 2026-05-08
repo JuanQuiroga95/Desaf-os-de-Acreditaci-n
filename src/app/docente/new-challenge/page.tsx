@@ -21,6 +21,7 @@ export default function TeacherNewChallengePage() {
     title: "",
     objective: "",
     subjectId: "",
+    type: "REGULAR" as "REGULAR" | "DIAGNOSTICO" | "FINAL",
     content: {
       theory: "",
       questions: [
@@ -90,7 +91,7 @@ export default function TeacherNewChallengePage() {
       return;
     }
     
-    const res = await createChallenge(form.subjectId, form.title, form.objective, form.content);
+    const res = await createChallenge(form.subjectId, form.title, form.objective, form.content, form.type);
     if (res.success) {
       showToast("¡Desafío publicado con éxito!", "success");
       router.push("/docente");
@@ -144,6 +145,21 @@ export default function TeacherNewChallengePage() {
                 className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="Ej: Análisis de Balance Patrimonial"
               />
+            </div>
+
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Tipo de Instancia</label>
+              <select 
+                required 
+                value={form.type} 
+                onChange={e => setForm({...form, type: e.target.value as any})}
+                className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 text-foreground appearance-none cursor-pointer"
+                style={{ colorScheme: 'dark' }}
+              >
+                <option value="REGULAR">Módulo de Aprendizaje (Con IA)</option>
+                <option value="DIAGNOSTICO">Diagnóstico Inicial (Sin IA)</option>
+                <option value="FINAL">Examen Final de Acreditación (Sin IA)</option>
+              </select>
             </div>
           </section>
 

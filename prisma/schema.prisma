@@ -52,16 +52,23 @@ model Subject {
   enrollments Enrollment[]
 }
 
+enum ChallengeType {
+  REGULAR
+  DIAGNOSTICO
+  FINAL
+}
+
 model Challenge {
-  id          String     @id @default(cuid())
+  id          String        @id @default(cuid())
   title       String
   objective   String?
   content     Json?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  type        ChallengeType @default(REGULAR)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   subjectId   String
-  subject     Subject    @relation(fields: [subjectId], references: [id])
+  subject     Subject       @relation(fields: [subjectId], references: [id])
   progress    Progress[]
   materials   Material[]
 }

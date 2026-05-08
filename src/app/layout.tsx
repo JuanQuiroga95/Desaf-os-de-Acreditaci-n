@@ -14,6 +14,8 @@ export const metadata: Metadata = {
   description: "Plataforma de acreditación técnica para alumnos de la Escuela N° 4-012 Ing. Ricardo Videla",
 };
 
+import { UIProvider } from "@/context/UIContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -23,11 +25,13 @@ export default function RootLayout({
     <html lang="es">
       <body className={cn(inter.className, "bg-background text-foreground antialiased")}>
         <ThemeProvider>
-          <AuthProvider>
-            <ToastProvider>
-              <LayoutWrapper>{children}</LayoutWrapper>
-            </ToastProvider>
-          </AuthProvider>
+          <UIProvider>
+            <AuthProvider>
+              <ToastProvider>
+                <LayoutWrapper>{children}</LayoutWrapper>
+              </ToastProvider>
+            </AuthProvider>
+          </UIProvider>
         </ThemeProvider>
       </body>
     </html>

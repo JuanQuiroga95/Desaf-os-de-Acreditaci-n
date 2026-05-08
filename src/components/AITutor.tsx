@@ -10,7 +10,10 @@ interface Message {
   content: string;
 }
 
+import { useUI } from "@/context/UIContext";
+
 export function AITutor() {
+  const { isAIBlocked } = useUI();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
@@ -67,6 +70,8 @@ export function AITutor() {
       setIsLoading(false);
     }
   };
+
+  if (isAIBlocked) return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-[100]">

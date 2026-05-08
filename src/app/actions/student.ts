@@ -62,6 +62,10 @@ export async function getSubjectChallenges(subjectId: string, userId: string) {
         teacher: true,
         materials: { orderBy: [{ type: "asc" }, { order: "asc" }, { createdAt: "asc" }] },
         challenges: {
+          orderBy: [
+            { type: "asc" }, // This might not work as intended for custom enums in order by
+            { createdAt: "asc" }
+          ],
           include: {
             progress: { where: { userId } },
             materials: { orderBy: [{ order: "asc" }, { createdAt: "asc" }] },
@@ -71,6 +75,15 @@ export async function getSubjectChallenges(subjectId: string, userId: string) {
     });
 
     if (!subject) return { success: false, message: "Materia no encontrada" };
+
+    // Sort challenges: DIAGNOSTICO -> REGULAR -> FINAL
+    const typeOrder = { DIAGNOSTICO: 0, REGULAR: 1, FINAL: 2 };
+    subject.challenges.sort((a: any, b: any) => {
+      const orderA = typeOrder[a.type as keyof typeof typeOrder] ?? 99;
+      const orderB = typeOrder[b.type as keyof typeof typeOrder] ?? 99;
+      if (orderA !== orderB) return orderA - orderB;
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    });
 
     return { success: true, subject };
   } catch (error) {

@@ -8,16 +8,30 @@ import { BookOpen, CheckCircle2, Play, ArrowLeft, Award, HelpCircle, Send, FileT
 import { getSubjectChallenges, submitChallengeResponse } from "@/app/actions/student";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/context/ToastContext";
+import { useUI } from "@/context/UIContext";
 import Link from "next/link";
 
 export default function SubjectPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const { user, isLoading: authLoading } = useAuth();
   const { showToast } = useToast();
+  const { setAIBlocked } = useUI();
   const router = useRouter();
   const [subject, setSubject] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedChallenge, setSelectedChallenge] = useState<any>(null);
+
+  useEffect(() => {
+    if (selectedChallenge) {
+      if (selectedChallenge.type === "DIAGNOSTICO" || selectedChallenge.type === "FINAL") {
+        setAIBlocked(true);
+      } else {
+        setAIBlocked(false);
+      }
+    } else {
+      setAIBlocked(false);
+    }
+  }, [selectedChallenge, setAIBlocked]);
   const [answers, setAnswers] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
@@ -127,32 +141,68 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
             </h2>
             
             <div className="space-y-4">
-              {subject?.challenges?.map((challenge: { id: string; title: string; progress: any[] }, i: number) => {
+              {subject?.challenges?.map((challenge: { id: string; title: string; type: string; progress: any[] }, i: number) => {
                 const isCompleted = (challenge.progress?.length || 0) > 0 && challenge.progress[0].status === "COMPLETED";
                 const isGraded = isCompleted && (challenge.progress[0]?.score !== null && challenge.progress[0]?.score !== undefined);
                 
+                let label = `Encuentro ${i + 1}`;
+                let colorClass = "bg-secondary text-muted-foreground";
+                let icon = <span className="font-black">{i + 1}</span>;
+
+                if (challenge.type === "DIAGNOSTICO") {
+                  label = "Diagnóstico Inicial";
+                  colorClass = "bg-orange-500/20 text-orange-500 border-orange-500/30";
+                  icon = <Sparkles size={20} />;
+                } else if (challenge.type === "FINAL") {
+                  label = "Examen Final de Acreditación";
+                  colorClass = "bg-red-500/20 text-red-500 border-red-500/30";
+                  icon = <Award size={20} />;
+                }
+
+                if (isGraded) {
+                  colorClass = "bg-green-500 text-white";
+                  icon = <CheckCircle2 size={24} />;
+                } else if (isCompleted) {
+                  colorClass = "bg-primary text-white";
+                  icon = <CheckCircle2 size={24} />;
+                }
+
+                const isPreviousCompleted = i === 0 || (subject.challenges[i-1].progress?.length > 0 && subject.challenges[i-1].progress[0].status === "COMPLETED");
+                const isLocked = !isCompleted && !isPreviousCompleted;
+                
+                // Final exam special locking: require all regular challenges to be done
+                const regularChallenges = subject.challenges.filter((c: any) => c.type === "REGULAR");
+                const allRegularCompleted = regularChallenges.every((c: any) => c.progress?.length > 0 && c.progress[0].status === "COMPLETED");
+                const isFinalLocked = challenge.type === "FINAL" && !allRegularCompleted;
+
                 return (
                   <div 
                     key={challenge.id} 
                     className={`p-6 rounded-[2rem] border transition-all flex items-center justify-between ${
                       isCompleted ? "bg-secondary/10 border-border" : "bg-card border-border hover:border-primary/50"
-                    }`}
+                    } ${(isLocked || isFinalLocked) ? "opacity-50 grayscale" : ""}`}
                   >
                     <div className="flex items-center gap-6">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black ${
-                        isGraded ? "bg-green-500 text-white" : isCompleted ? "bg-primary text-white" : "bg-secondary text-muted-foreground"
-                      }`}>
-                        {isCompleted ? <CheckCircle2 size={24} /> : i + 1}
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${colorClass}`}>
+                        {icon}
                       </div>
                       <div>
-                        <h3 className="font-bold text-lg">Encuentro {i + 1}: {challenge.title}</h3>
+                        <h3 className="font-bold text-lg">{label}: {challenge.title}</h3>
                         <p className="text-xs text-muted-foreground uppercase font-black tracking-widest">
-                          {isGraded ? `Calificación: ${challenge.progress[0]?.score}/10` : isCompleted ? "Pendiente de Calificación" : "Pendiente de Acreditación"}
+                          {challenge.type === "REGULAR" ? "Módulo de Aprendizaje" : "Examen Obligatorio (Sin IA)"} • {isGraded ? `Calificación: ${challenge.progress[0]?.score}/10` : isCompleted ? "Pendiente de Calificación" : "Pendiente de Acreditación"}
                         </p>
                       </div>
                     </div>
                     
-                    {!isCompleted ? (
+                    {isCompleted ? (
+                      <div className="bg-secondary/30 text-muted-foreground px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-border">
+                        Completado
+                      </div>
+                    ) : (isLocked || isFinalLocked) ? (
+                      <div className="bg-secondary/30 text-muted-foreground px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-border flex items-center gap-2">
+                        <Clock size={14} /> Bloqueado
+                      </div>
+                    ) : (
                       <button 
                         onClick={() => handleOpenChallenge(challenge)}
                         className="bg-primary text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
@@ -160,10 +210,6 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                         <Play size={14} fill="currentColor" />
                         Comenzar
                       </button>
-                    ) : (
-                      <div className="bg-secondary/30 text-muted-foreground px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-border">
-                        Completado
-                      </div>
                     )}
                   </div>
                 );
@@ -250,9 +296,17 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                   </div>
                   <div>
                     <h3 className="font-black uppercase italic text-xl">{selectedChallenge.title}</h3>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Resolución de Desafío</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase">
+                      {selectedChallenge.type === "REGULAR" ? "Resolución de Desafío" : "Examen de Acreditación"}
+                    </p>
                   </div>
                 </div>
+                {(selectedChallenge.type === "DIAGNOSTICO" || selectedChallenge.type === "FINAL") && (
+                  <div className="bg-red-500 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 animate-pulse">
+                    <Sparkles size={12} />
+                    Entorno Protegido (IA Desactivada)
+                  </div>
+                )}
                 <button onClick={() => setSelectedChallenge(null)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">✕</button>
               </div>
               

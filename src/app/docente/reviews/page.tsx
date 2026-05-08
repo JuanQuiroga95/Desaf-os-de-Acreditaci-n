@@ -113,6 +113,13 @@ export default function TeacherReviewsPage() {
                   <div className="flex gap-4">
                     <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{sub.subjectName}</span>
                     <span className="text-[10px] font-black uppercase tracking-widest text-primary">{sub.challengeTitle}</span>
+                    {sub.challengeType !== "REGULAR" && (
+                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                        sub.challengeType === "DIAGNOSTICO" ? "bg-orange-500/10 text-orange-500 border-orange-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"
+                      }`}>
+                        {sub.challengeType === "DIAGNOSTICO" ? "Diagnóstico" : "Examen Final"}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
