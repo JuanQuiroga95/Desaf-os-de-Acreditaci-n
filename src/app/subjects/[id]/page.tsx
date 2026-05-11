@@ -4,7 +4,7 @@
 import React, { useEffect, useState, use } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { BookOpen, CheckCircle2, Play, ArrowLeft, Award, HelpCircle, Send, FileText, Target, Video, Dumbbell, MessageSquare, ClipboardList, BookMarked, Link2, Copy, X as XIcon } from "lucide-react";
+import { BookOpen, CheckCircle2, Play, ArrowLeft, Award, HelpCircle, Send, FileText, Target, Video, Dumbbell, MessageSquare, ClipboardList, BookMarked, Link2, Copy, Download, X as XIcon } from "lucide-react";
 import { getSubjectChallenges, submitChallengeResponse } from "@/app/actions/student";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/context/ToastContext";
@@ -437,6 +437,31 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                       <Copy size={14} />
                       {copiedPrompt === selectedMaterial.id ? "¡Copiado!" : "Copiar para usar con IA"}
                     </button>
+                  </div>
+                ) : selectedMaterial.fileUrl ? (
+                  <div className="space-y-4">
+                    {/\.pdf(\?|$)/i.test(selectedMaterial.fileUrl) ? (
+                      <iframe
+                        src={selectedMaterial.fileUrl}
+                        className="w-full h-[70vh] rounded-2xl border border-border bg-white"
+                        title={selectedMaterial.title}
+                      />
+                    ) : (
+                      <div className="p-8 bg-secondary/20 rounded-2xl border border-border text-center">
+                        <FileText size={48} className="mx-auto mb-4 text-primary" />
+                        <p className="font-black uppercase tracking-widest text-sm mb-1">{selectedMaterial.title}</p>
+                        <p className="text-xs text-muted-foreground">Este formato no se puede previsualizar en el navegador. Descargalo para verlo.</p>
+                      </div>
+                    )}
+                    <a
+                      href={selectedMaterial.fileUrl}
+                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 bg-primary text-white hover:bg-primary/90 transition-all"
+                    >
+                      <Download size={14} /> Descargar archivo
+                    </a>
                   </div>
                 ) : (
                   <div className="prose prose-sm max-w-none text-foreground">

@@ -25,7 +25,9 @@
       "Bash(vercel projects *)",
       "Bash(vercel teams *)",
       "Bash(rm \"C:/Users/Docente/Desktop/Proyectos/previas/.vercel/project.json\")",
-      "Bash(vercel link *)"
+      "Bash(vercel link *)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)"
     ]
   }
 }

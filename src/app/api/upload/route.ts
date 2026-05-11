@@ -21,7 +21,14 @@ export async function POST(request: Request): Promise<NextResponse> {
         /* clientPayload */
       ) => {
         return {
-          allowedContentTypes: ["video/mp4", "video/webm", "video/quicktime", "application/pdf"],
+          allowedContentTypes: [
+            "video/mp4",
+            "video/webm",
+            "video/quicktime",
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          ],
           tokenPayload: JSON.stringify({
             // Datos opcionales
           }),

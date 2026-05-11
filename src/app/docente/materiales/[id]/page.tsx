@@ -46,6 +46,7 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
     content: "",
     level: "BASICO",
     videoMode: "url" as "url" | "file",
+    theoryMode: "text" as "text" | "file",
     file: null as File | null,
   });
 
@@ -69,7 +70,7 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
   };
 
   const resetForm = () => {
-    setForm({ title: "", content: "", level: "BASICO", videoMode: "url", file: null });
+    setForm({ title: "", content: "", level: "BASICO", videoMode: "url", theoryMode: "text", file: null });
     setShowForm(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -82,7 +83,11 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
     try {
       let fileUrl: string | undefined;
 
-      if (activeTab === "VIDEO" && form.videoMode === "file" && form.file) {
+      const needsFileUpload =
+        (activeTab === "VIDEO" && form.videoMode === "file" && form.file) ||
+        (activeTab === "THEORY" && form.theoryMode === "file" && form.file);
+
+      if (needsFileUpload && form.file) {
         try {
           const blob = await upload(form.file.name, form.file, {
             access: "public",
@@ -91,7 +96,7 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
           fileUrl = blob.url;
         } catch (error: any) {
           console.error("Error detallado de subida:", error);
-          showToast(error.message || "Error al subir video a Vercel Blob", "error");
+          showToast(error.message || "Error al subir archivo a Vercel Blob", "error");
           setIsSaving(false);
           return;
         }
@@ -244,6 +249,11 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
                           <Link2 size={14} /> {mat.content}
                         </a>
                       ) : null
+                    ) : mat.type === "THEORY" && mat.fileUrl ? (
+                      <a href={mat.fileUrl} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-primary text-sm font-bold hover:underline mt-2">
+                        <FileText size={14} /> Abrir / Descargar archivo
+                      </a>
                     ) : (
                       <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap mt-1 max-h-32 overflow-y-auto">
                         {mat.content}
@@ -363,11 +373,56 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
                         </div>
                       )}
                     </div>
+                  ) : activeTab === "THEORY" ? (
+                    <div className="space-y-4">
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, theoryMode: "text", file: null })}
+                          className={`flex items-center gap-2 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${form.theoryMode === "text" ? "bg-primary text-white border-primary" : "bg-secondary/30 border-border text-muted-foreground hover:bg-secondary"}`}
+                        >
+                          <FileText size={12} /> Escribir Texto
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, theoryMode: "file", content: "" })}
+                          className={`flex items-center gap-2 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${form.theoryMode === "file" ? "bg-primary text-white border-primary" : "bg-secondary/30 border-border text-muted-foreground hover:bg-secondary"}`}
+                        >
+                          <Upload size={12} /> Subir PDF / DOC
+                        </button>
+                      </div>
+
+                      {form.theoryMode === "text" ? (
+                        <textarea
+                          required
+                          value={form.content}
+                          onChange={(e) => setForm({ ...form, content: e.target.value })}
+                          className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none h-36 focus:ring-2 focus:ring-primary/50 resize-none leading-relaxed"
+                          placeholder="Escribí la teoría, conceptos clave y ejemplos resueltos..."
+                        />
+                      ) : (
+                        <div
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 transition-all"
+                        >
+                          <Upload className="mx-auto mb-3 text-muted-foreground" size={24} />
+                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                            {form.file ? form.file.name : "Hacé click para seleccionar PDF, DOC o DOCX"}
+                          </p>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                            className="hidden"
+                            onChange={(e) => setForm({ ...form, file: e.target.files?.[0] || null })}
+                          />
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <div>
                       <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">
-                        {activeTab === "THEORY" ? "Contenido teórico" :
-                         activeTab === "EXERCISE" ? "Enunciado del ejercicio" :
+                        {activeTab === "EXERCISE" ? "Enunciado del ejercicio" :
                          activeTab === "PROMPT" ? "Texto del prompt" :
                          activeTab === "TP_TEMPLATE" ? "Instrucciones del TP" :
                          "Criterios de evaluación"}
@@ -378,7 +433,6 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
                         onChange={(e) => setForm({ ...form, content: e.target.value })}
                         className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none h-36 focus:ring-2 focus:ring-primary/50 resize-none leading-relaxed"
                         placeholder={
-                          activeTab === "THEORY" ? "Escribí la teoría, conceptos clave y ejemplos resueltos..." :
                           activeTab === "EXERCISE" ? "Enunciado completo del ejercicio con datos..." :
                           activeTab === "PROMPT" ? "Ej: Explicame qué es un número racional como si tuviera 14 años." :
                           activeTab === "TP_TEMPLATE" ? "Instrucciones, criterios de presentación, estructura esperada..." :
