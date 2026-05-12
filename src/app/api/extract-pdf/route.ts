@@ -32,28 +32,29 @@ export async function POST(request: NextRequest) {
       buffer = Buffer.from(bytes);
     }
 
-    // HACK: pdf-parse v1.1.1 has a bug where it tries to open a test file at runtime.
-    // We create a dummy file to satisfy the requirement and avoid ENOENT.
-    try {
-      const fs = await import("fs");
-      const path = await import("path");
-      const testDir = path.join(process.cwd(), "test", "data");
-      if (!fs.existsSync(testDir)) {
-        fs.mkdirSync(testDir, { recursive: true });
-      }
-      const testFile = path.join(testDir, "05-versions-space.pdf");
-      if (!fs.existsSync(testFile)) {
-        fs.writeFileSync(testFile, "");
-      }
-    } catch (e) {
-      console.warn("PDF-Parse hack failed (ignoring):", e);
-    }
-
     let extractedText = "";
     try {
-      const pdf = (await import("pdf-parse")).default;
-      const data = await pdf(buffer);
-      extractedText = data.text;
+      // Usar require para cargar la versión legacy de pdfjs que funciona en Node
+      const pdfjs = require("pdfjs-dist/legacy/build/pdf.js");
+      
+      const data = new Uint8Array(buffer);
+      const loadingTask = pdfjs.getDocument({
+        data,
+        useSystemFonts: true,
+        disableFontFace: true,
+      });
+      
+      const pdfDoc = await loadingTask.promise;
+      let text = "";
+      
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+        const page = await pdfDoc.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map((item: any) => item.str).join(" ");
+        text += pageText + "\n";
+      }
+      
+      extractedText = text;
     } catch (parseErr: any) {
       console.error("PDF Parse specific error:", parseErr);
       throw new Error("Error interno al leer el PDF: " + parseErr.message);
