@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { Calculator, X, ChevronRight, Hash } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { evaluate } from 'mathjs';
+
 interface MathToolsProps {
   onInsertSymbol: (symbol: string) => void;
 }
@@ -22,32 +24,27 @@ export function MathTools({ onInsertSymbol }: MathToolsProps) {
     if (key === "C") {
       setCalcInput("");
       setCalcResult(null);
+    } else if (key === "⌫") {
+      setCalcInput(prev => prev.slice(0, -1));
     } else if (key === "=") {
       try {
-        // Safe evaluation replacing common symbols
         let expr = calcInput
           .replace(/×/g, "*")
           .replace(/÷/g, "/")
-          .replace(/π/g, "Math.PI")
-          .replace(/sin\(/g, "Math.sin(")
-          .replace(/cos\(/g, "Math.cos(")
-          .replace(/tan\(/g, "Math.tan(")
-          .replace(/log\(/g, "Math.log10(")
-          .replace(/ln\(/g, "Math.log(")
-          .replace(/√\(/g, "Math.sqrt(");
+          .replace(/π/g, "pi")
+          .replace(/√\(/g, "sqrt(");
         
-        // Handle power
-        expr = expr.replace(/\^/g, "**");
-
-        // Use Function instead of eval for slightly better safety, though still in browser client side it's okay
-        // eslint-disable-next-line no-new-func
-        const res = new Function(`return ${expr}`)();
+        const res = evaluate(expr);
         
-        if (Number.isFinite(res)) {
-          // Format to avoid long decimals like 0.30000000000000004
-          const formatted = Number.isInteger(res) ? res.toString() : parseFloat(res.toFixed(6)).toString();
-          setCalcResult(formatted);
-          setCalcInput(formatted);
+        if (typeof res === 'number' || typeof res === 'object') {
+          // mathjs might return objects for complex numbers or fractions
+          const formatted = Number.isInteger(Number(res)) ? Number(res).toString() : Number(res).toFixed(6).replace(/\.?0+$/, '');
+          if (formatted !== "NaN") {
+             setCalcResult(formatted);
+             setCalcInput(formatted);
+          } else {
+             setCalcResult("Error");
+          }
         } else {
           setCalcResult("Error");
         }
@@ -60,13 +57,13 @@ export function MathTools({ onInsertSymbol }: MathToolsProps) {
   };
 
   const calcButtons = [
-    "sin(", "cos(", "tan(", "C",
-    "log(", "ln(", "√(", "^",
-    "7", "8", "9", "÷",
-    "4", "5", "6", "×",
-    "1", "2", "3", "-",
-    "0", ".", "π", "+",
-    "(", ")", "C", "="
+    "sin(", "cos(", "tan(", "C", "⌫",
+    "asin(", "acos(", "atan(", "π", "e",
+    "log(", "ln(", "√(", "^", "!",
+    "7", "8", "9", "(", "÷",
+    "4", "5", "6", ")", "×",
+    "1", "2", "3", "abs(", "-",
+    "0", ".", ",", "=", "+"
   ];
 
   if (!isOpen) {
@@ -130,7 +127,7 @@ export function MathTools({ onInsertSymbol }: MathToolsProps) {
             )}
           </div>
 
-          <div className="grid grid-cols-4 gap-1">
+          <div className="grid grid-cols-5 gap-1">
             {calcButtons.map((btn, i) => (
               <button
                 key={i}
@@ -138,8 +135,8 @@ export function MathTools({ onInsertSymbol }: MathToolsProps) {
                 className={cn(
                   "p-2 rounded-lg text-xs font-bold transition-all",
                   btn === "=" ? "bg-primary text-white col-span-2 hover:bg-primary/90" : 
-                  btn === "C" ? "bg-red-500/20 text-red-500 hover:bg-red-500/30" :
-                  ["+", "-", "×", "÷", "^"].includes(btn) ? "bg-secondary text-primary hover:bg-secondary/80" :
+                  btn === "C" || btn === "⌫" ? "bg-red-500/20 text-red-500 hover:bg-red-500/30" :
+                  ["+", "-", "×", "÷", "^", "!"].includes(btn) ? "bg-secondary text-primary hover:bg-secondary/80" :
                   "bg-secondary/20 hover:bg-secondary border border-transparent hover:border-border"
                 )}
               >

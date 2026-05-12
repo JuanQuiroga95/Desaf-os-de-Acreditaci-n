@@ -25,7 +25,7 @@ export default function TeacherNewChallengePage() {
     content: {
       theory: "",
       questions: [
-        { id: Date.now(), question: "", answer: "" }
+        { id: Date.now(), question: "", answer: "", type: "TEXT" as "TEXT" | "TRUE_FALSE" | "MULTIPLE_CHOICE", options: [""] }
       ]
     }
   });
@@ -58,7 +58,7 @@ export default function TeacherNewChallengePage() {
       ...form,
       content: {
         ...form.content,
-        questions: [...form.content.questions, { id: Date.now(), question: "", answer: "" }]
+        questions: [...form.content.questions, { id: Date.now(), question: "", answer: "", type: "TEXT", options: [""] }]
       }
     });
   };
@@ -74,12 +74,73 @@ export default function TeacherNewChallengePage() {
     });
   };
 
-  const updateQuestion = (id: number, field: "question" | "answer", value: string) => {
+  const updateQuestion = (id: number, field: string, value: any) => {
     setForm({
       ...form,
       content: {
         ...form.content,
-        questions: form.content.questions.map(q => q.id === id ? { ...q, [field]: value } : q)
+        questions: form.content.questions.map(q => {
+          if (q.id === id) {
+            const updated = { ...q, [field]: value };
+            if (field === "type" && value === "TRUE_FALSE") {
+              updated.options = ["Verdadero", "Falso"];
+              updated.answer = "";
+            } else if (field === "type" && value === "MULTIPLE_CHOICE" && q.type !== "MULTIPLE_CHOICE") {
+              updated.options = ["Opción 1", "Opción 2"];
+              updated.answer = "";
+            }
+            return updated;
+          }
+          return q;
+        })
+      }
+    });
+  };
+
+  const updateOption = (qId: number, index: number, value: string) => {
+    setForm({
+      ...form,
+      content: {
+        ...form.content,
+        questions: form.content.questions.map(q => {
+          if (q.id === qId) {
+            const newOptions = [...q.options];
+            newOptions[index] = value;
+            return { ...q, options: newOptions };
+          }
+          return q;
+        })
+      }
+    });
+  };
+
+  const addOption = (qId: number) => {
+    setForm({
+      ...form,
+      content: {
+        ...form.content,
+        questions: form.content.questions.map(q => {
+          if (q.id === qId) {
+            return { ...q, options: [...q.options, `Opción ${q.options.length + 1}`] };
+          }
+          return q;
+        })
+      }
+    });
+  };
+
+  const removeOption = (qId: number, index: number) => {
+    setForm({
+      ...form,
+      content: {
+        ...form.content,
+        questions: form.content.questions.map(q => {
+          if (q.id === qId && q.options.length > 2) {
+            const newOptions = q.options.filter((_, i) => i !== index);
+            return { ...q, options: newOptions, answer: q.answer === q.options[index] ? "" : q.answer };
+          }
+          return q;
+        })
       }
     });
   };
@@ -225,26 +286,100 @@ export default function TeacherNewChallengePage() {
                       </button>
                     )}
                     <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Pregunta {index + 1}</label>
-                        <input 
-                          required
-                          value={q.question}
-                          onChange={e => updateQuestion(q.id, "question", e.target.value)}
-                          className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50"
-                          placeholder="Ej: ¿Cuál es el activo corriente total?"
-                        />
+                      <div className="flex gap-4">
+                        <div className="flex-[3]">
+                          <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Pregunta {index + 1}</label>
+                          <input 
+                            required
+                            value={q.question}
+                            onChange={e => updateQuestion(q.id, "question", e.target.value)}
+                            className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50"
+                            placeholder="Ej: ¿Cuál es el activo corriente total?"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Formato</label>
+                          <select
+                            value={q.type || "TEXT"}
+                            onChange={e => updateQuestion(q.id, "type", e.target.value)}
+                            className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 appearance-none"
+                            style={{ colorScheme: 'dark' }}
+                          >
+                            <option value="TEXT">Texto Libre</option>
+                            <option value="TRUE_FALSE">V/F</option>
+                            <option value="MULTIPLE_CHOICE">Opciones</option>
+                          </select>
+                        </div>
                       </div>
-                      <div>
-                        <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Respuesta Esperada</label>
-                        <input 
-                          required
-                          value={q.answer}
-                          onChange={e => updateQuestion(q.id, "answer", e.target.value)}
-                          className="w-full bg-background border border-border rounded-xl p-4 font-mono font-bold outline-none focus:ring-2 focus:ring-primary/50"
-                          placeholder="Valor o concepto clave..."
-                        />
-                      </div>
+
+                      {(!q.type || q.type === "TEXT") && (
+                        <div>
+                          <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Respuesta Esperada</label>
+                          <input 
+                            required
+                            value={q.answer}
+                            onChange={e => updateQuestion(q.id, "answer", e.target.value)}
+                            className="w-full bg-background border border-border rounded-xl p-4 font-mono font-bold outline-none focus:ring-2 focus:ring-primary/50"
+                            placeholder="Valor o concepto clave..."
+                          />
+                        </div>
+                      )}
+
+                      {q.type === "TRUE_FALSE" && (
+                        <div>
+                          <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Respuesta Correcta</label>
+                          <div className="flex gap-4">
+                            {q.options.map((opt: string) => (
+                              <button
+                                key={opt}
+                                type="button"
+                                onClick={() => updateQuestion(q.id, "answer", opt)}
+                                className={`flex-1 p-4 rounded-xl font-bold transition-all border ${q.answer === opt ? "bg-primary text-white border-primary" : "bg-background border-border hover:border-primary/50 text-foreground"}`}
+                              >
+                                {opt}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {q.type === "MULTIPLE_CHOICE" && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block">Opciones Múltiples</label>
+                            <button type="button" onClick={() => addOption(q.id)} className="text-[9px] font-black uppercase text-primary hover:underline flex items-center gap-1">
+                              <Plus size={12} /> Añadir
+                            </button>
+                          </div>
+                          {q.options.map((opt: string, optIndex: number) => (
+                            <div key={optIndex} className="flex gap-2 items-center">
+                              <button
+                                type="button"
+                                onClick={() => updateQuestion(q.id, "answer", opt)}
+                                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${q.answer === opt ? "border-primary bg-primary text-white" : "border-border hover:border-primary/50"}`}
+                              >
+                                {q.answer === opt && <CheckCircle2 size={16} />}
+                              </button>
+                              <input 
+                                required
+                                value={opt}
+                                onChange={e => {
+                                  updateOption(q.id, optIndex, e.target.value);
+                                  if (q.answer === opt) updateQuestion(q.id, "answer", e.target.value);
+                                }}
+                                className="flex-1 bg-background border border-border rounded-xl p-3 font-bold outline-none focus:ring-2 focus:ring-primary/50"
+                                placeholder={`Opción ${optIndex + 1}`}
+                              />
+                              {q.options.length > 2 && (
+                                <button type="button" onClick={() => removeOption(q.id, optIndex)} className="p-2 text-muted-foreground hover:text-red-500 shrink-0">
+                                  <X size={16} />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          <p className="text-[9px] text-muted-foreground uppercase mt-2">Marcá el círculo para indicar cuál es la opción correcta.</p>
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 ))}

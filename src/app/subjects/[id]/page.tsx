@@ -4,7 +4,7 @@
 import React, { useEffect, useState, use } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { BookOpen, CheckCircle2, Play, ArrowLeft, Award, HelpCircle, Send, FileText, Target, Video, Dumbbell, MessageSquare, ClipboardList, BookMarked, Link2, Copy, Download, X as XIcon } from "lucide-react";
+import { BookOpen, CheckCircle2, Play, ArrowLeft, Award, HelpCircle, Send, FileText, Target, Video, Dumbbell, MessageSquare, ClipboardList, BookMarked, Link2, Copy, Download, X as XIcon, Sparkles, Clock } from "lucide-react";
 import { getSubjectChallenges, submitChallengeResponse } from "@/app/actions/student";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/context/ToastContext";
@@ -338,17 +338,50 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                     <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Cuestionario de Validación</h4>
                     {selectedChallenge.content?.questions?.map((q: { id: string; question: string }, index: number) => (
                       <div key={q.id} className="space-y-3">
-                        <label className="text-[10px] font-black uppercase text-muted-foreground block tracking-widest">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground block tracking-widest mb-3">
                           {index + 1}. {q.question}
                         </label>
-                        <input 
-                          required
-                          value={answers[q.id] || ""}
-                          onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
-                          onFocus={() => setLastFocusedInput(q.id)}
-                          className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-inner"
-                          placeholder="Tu respuesta..."
-                        />
+                        {(!q.type || q.type === "TEXT") && (
+                          <input 
+                            required
+                            value={answers[q.id] || ""}
+                            onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
+                            onFocus={() => setLastFocusedInput(q.id)}
+                            className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-inner"
+                            placeholder="Tu respuesta..."
+                          />
+                        )}
+                        {(q.type === "TRUE_FALSE" || q.type === "MULTIPLE_CHOICE") && (
+                          <div className={`grid gap-3 ${q.type === "TRUE_FALSE" ? "grid-cols-2" : "grid-cols-1"}`}>
+                            {q.options?.map((opt: string, optIndex: number) => (
+                              <label
+                                key={optIndex}
+                                className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                  answers[q.id] === opt 
+                                    ? "border-primary bg-primary/10" 
+                                    : "border-border hover:border-primary/50 bg-background"
+                                }`}
+                              >
+                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                                  answers[q.id] === opt ? "border-primary" : "border-muted-foreground"
+                                }`}>
+                                  {answers[q.id] === opt && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
+                                </div>
+                                <input
+                                  type="radio"
+                                  name={`question_${q.id}`}
+                                  value={opt}
+                                  checked={answers[q.id] === opt}
+                                  onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
+                                  className="hidden"
+                                />
+                                <span className={`font-bold ${answers[q.id] === opt ? "text-foreground" : "text-muted-foreground"}`}>
+                                  {opt}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
