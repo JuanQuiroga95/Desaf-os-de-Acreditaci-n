@@ -32,11 +32,27 @@ export async function POST(request: NextRequest) {
       buffer = Buffer.from(bytes);
     }
 
+    // HACK: pdf-parse v1.1.1 has a bug where it tries to open a test file at runtime.
+    try {
+      const fs = require("fs");
+      const path = require("path");
+      const testDir = path.join(process.cwd(), "test", "data");
+      if (!fs.existsSync(testDir)) {
+        fs.mkdirSync(testDir, { recursive: true });
+      }
+      const testFile = path.join(testDir, "05-versions-space.pdf");
+      if (!fs.existsSync(testFile)) {
+        fs.writeFileSync(testFile, "");
+      }
+    } catch (e) {
+      console.warn("PDF-Parse hack failed (ignoring):", e);
+    }
+
     let extractedText = "";
     try {
-      const { extractText } = await import("unpdf");
-      const result = await extractText(buffer);
-      extractedText = result.text;
+      const pdf = require("pdf-parse");
+      const data = await pdf(buffer);
+      extractedText = data.text;
     } catch (parseErr: any) {
       console.error("PDF Parse specific error:", parseErr);
       throw new Error("Error interno al leer el PDF: " + parseErr.message);
