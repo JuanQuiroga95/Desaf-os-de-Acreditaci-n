@@ -34,32 +34,14 @@ export async function POST(request: NextRequest) {
 
     let extractedText = "";
     try {
-      // Usar require para cargar la versión legacy de pdfjs que funciona en Node
-      const pdfjs = require("pdfjs-dist/legacy/build/pdf.js");
-      
-      const data = new Uint8Array(buffer);
-      const loadingTask = pdfjs.getDocument({
-        data,
-        useSystemFonts: true,
-        disableFontFace: true,
-      });
-      
-      const pdfDoc = await loadingTask.promise;
-      let text = "";
-      
-      for (let i = 1; i <= pdfDoc.numPages; i++) {
-        const page = await pdfDoc.getPage(i);
-        const content = await page.getTextContent();
-        const pageText = content.items.map((item: any) => item.str).join(" ");
-        text += pageText + "\n";
-      }
-      
-      extractedText = text;
+      const { extractText } = await import("unpdf");
+      const result = await extractText(buffer);
+      extractedText = result.text;
     } catch (parseErr: any) {
       console.error("PDF Parse specific error:", parseErr);
       throw new Error("Error interno al leer el PDF: " + parseErr.message);
     }
-
+    
     if (!extractedText || extractedText.trim().length < 5) {
       return NextResponse.json({ error: "El PDF parece estar vacío o no se pudo leer el texto." }, { status: 400 });
     }
