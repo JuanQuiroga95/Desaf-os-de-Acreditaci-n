@@ -5,10 +5,12 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, Plus, Trash2, FileText, Video, Dumbbell,
-  MessageSquare, ClipboardList, BookMarked, Upload, Link2, Save, Loader2
+  MessageSquare, ClipboardList, BookMarked, Upload, Link2, Save, Loader2,
+  Pencil, Check, X as XIcon
 } from "lucide-react";
 import { getMaterialsBySubject, createMaterial, deleteMaterial } from "@/app/actions/material";
 import { getAllSubjects } from "@/app/actions/admin";
+import { updateSubjectName } from "@/app/actions/teacher";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
@@ -40,6 +42,9 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
   const [showForm, setShowForm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editingName, setEditingName] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
 
   const [form, setForm] = useState({
     title: "",
@@ -67,6 +72,20 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSaveName = async () => {
+    if (!newName.trim() || newName === subject?.name) { setEditingName(false); return; }
+    setIsSavingName(true);
+    const res = await updateSubjectName(subjectId, newName.trim());
+    if (res.success) {
+      setSubject((s: any) => ({ ...s, name: newName.trim() }));
+      showToast("Nombre actualizado", "success");
+    } else {
+      showToast("Error al guardar el nombre", "error");
+    }
+    setIsSavingName(false);
+    setEditingName(false);
   };
 
   const resetForm = () => {
@@ -147,9 +166,36 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
         </Link>
         <div className="flex justify-between items-end">
           <div>
-            <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">
-              Materiales: <span className="text-primary">{subject?.name || "..."}</span>
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">
+                Materiales:
+              </h1>
+              {editingName ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    autoFocus
+                    value={newName}
+                    onChange={e => setNewName(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") handleSaveName(); if (e.key === "Escape") setEditingName(false); }}
+                    className="text-3xl font-black tracking-tighter uppercase italic bg-secondary/30 border border-primary/50 rounded-xl px-3 py-1 outline-none focus:ring-2 focus:ring-primary/50 text-primary"
+                  />
+                  <button onClick={handleSaveName} disabled={isSavingName} className="p-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition-all">
+                    {isSavingName ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                  </button>
+                  <button onClick={() => setEditingName(false)} className="p-2 rounded-xl bg-secondary border border-border hover:bg-border transition-all">
+                    <XIcon size={14} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { setNewName(subject?.name || ""); setEditingName(true); }}
+                  className="flex items-center gap-2 group"
+                >
+                  <span className="text-5xl font-black tracking-tighter uppercase italic text-primary">{subject?.name || "..."}</span>
+                  <Pencil size={16} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-1" />
+                </button>
+              )}
+            </div>
             <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-[0.4em] mt-2">
               Guía digital del módulo · {materials.length} recursos cargados
             </p>

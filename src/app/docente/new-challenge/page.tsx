@@ -17,7 +17,11 @@ export default function TeacherNewChallengePage() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExtracting, setIsExtracting] = useState(false);
-  
+  const [pdfPreview, setPdfPreview] = useState<{
+    title: string; objective: string; theory: string;
+    questions: { id: string; question: string; answer: string; type: string; options: string[] }[];
+  } | null>(null);
+
   const [form, setForm] = useState({
     title: "",
     objective: "",
@@ -165,24 +169,21 @@ export default function TeacherNewChallengePage() {
       if (!response.ok) throw new Error("Error al procesar el PDF");
 
       const data = await response.json();
-      
-      setForm({
-        ...form,
-        title: data.title || form.title,
-        objective: data.objective || form.objective,
-        content: {
-          theory: data.theory || form.content.theory,
-          questions: data.questions?.map((q: any) => ({
-            id: Date.now() + Math.random(),
-            question: q.question || "",
-            answer: q.answer || "",
-            type: q.type || "TEXT",
-            options: q.options || ["Opción 1", "Opción 2"]
-          })) || form.content.questions
-        }
+
+      setPdfPreview({
+        title: data.title || "",
+        objective: data.objective || "",
+        theory: data.theory || "",
+        questions: (data.questions || []).map((q: any) => ({
+          id: q.id || String(Date.now() + Math.random()),
+          question: q.question || "",
+          answer: q.answer || "",
+          type: q.type || "TEXT",
+          options: q.options || [],
+        })),
       });
 
-      showToast("¡Contenido extraído con éxito! Podés revisarlo y editarlo ahora.", "success");
+      showToast("¡PDF analizado! Revisá el contenido antes de cargarlo.", "success");
     } catch (error) {
       console.error("Error importing PDF:", error);
       showToast("Hubo un error al extraer los datos del PDF.", "error");
@@ -464,6 +465,126 @@ export default function TeacherNewChallengePage() {
           Publicar Desafío en el Aula
         </button>
       </form>
+
+      {/* PDF Preview Modal */}
+      <AnimatePresence>
+        {pdfPreview && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-card border border-border w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            >
+              <div className="p-6 border-b border-border flex justify-between items-center bg-primary/10 shrink-0">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-primary mb-1">Demo de lo que captó la IA</p>
+                  <h3 className="font-black uppercase italic text-lg leading-tight">Revisá y corregí antes de cargar</h3>
+                </div>
+                <button onClick={() => setPdfPreview(null)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Título</label>
+                  <input
+                    value={pdfPreview.title}
+                    onChange={e => setPdfPreview(p => p && ({ ...p, title: e.target.value }))}
+                    className="w-full bg-secondary/30 border border-border rounded-xl p-3 font-bold outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Objetivo</label>
+                  <textarea
+                    value={pdfPreview.objective}
+                    onChange={e => setPdfPreview(p => p && ({ ...p, objective: e.target.value }))}
+                    className="w-full bg-secondary/30 border border-border rounded-xl p-3 font-bold outline-none focus:ring-2 focus:ring-primary/50 text-sm h-20 resize-none"
+                  />
+                </div>
+                {pdfPreview.theory && (
+                  <div>
+                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Contenido Teórico</label>
+                    <textarea
+                      value={pdfPreview.theory}
+                      onChange={e => setPdfPreview(p => p && ({ ...p, theory: e.target.value }))}
+                      className="w-full bg-secondary/30 border border-border rounded-xl p-3 font-bold outline-none focus:ring-2 focus:ring-primary/50 text-sm h-28 resize-none"
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">
+                    Preguntas detectadas ({pdfPreview.questions.length})
+                  </label>
+                  <div className="space-y-3">
+                    {pdfPreview.questions.map((q, i) => (
+                      <div key={q.id} className="p-4 bg-secondary/20 rounded-2xl border border-border space-y-2">
+                        <p className="text-[9px] font-black uppercase text-primary">Pregunta {i + 1}</p>
+                        <input
+                          value={q.question}
+                          onChange={e => setPdfPreview(p => p && ({
+                            ...p,
+                            questions: p.questions.map((qq, idx) => idx === i ? { ...qq, question: e.target.value } : qq)
+                          }))}
+                          className="w-full bg-background border border-border rounded-xl p-3 font-bold text-sm outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                        {q.answer && (
+                          <input
+                            value={q.answer}
+                            onChange={e => setPdfPreview(p => p && ({
+                              ...p,
+                              questions: p.questions.map((qq, idx) => idx === i ? { ...qq, answer: e.target.value } : qq)
+                            }))}
+                            className="w-full bg-background border border-border/50 rounded-xl p-2 text-xs font-medium text-muted-foreground outline-none focus:ring-1 focus:ring-primary/30"
+                            placeholder="Respuesta esperada..."
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-border flex gap-3 shrink-0">
+                <button
+                  onClick={() => setPdfPreview(null)}
+                  className="flex-1 py-4 bg-secondary border border-border rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-border transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    setForm(f => ({
+                      ...f,
+                      title: pdfPreview.title || f.title,
+                      objective: pdfPreview.objective || f.objective,
+                      content: {
+                        theory: pdfPreview.theory || f.content.theory,
+                        questions: pdfPreview.questions.length > 0
+                          ? pdfPreview.questions.map(q => ({
+                              id: Date.now() + Math.random(),
+                              question: q.question,
+                              answer: q.answer,
+                              type: (["TEXT","TRUE_FALSE","MULTIPLE_CHOICE"].includes(q.type) ? q.type : "TEXT") as "TEXT" | "TRUE_FALSE" | "MULTIPLE_CHOICE",
+                              options: q.options?.length ? q.options : ["Opción 1", "Opción 2"],
+                            }))
+                          : f.content.questions,
+                      },
+                    }));
+                    setPdfPreview(null);
+                    showToast("Contenido cargado. Revisalo y publicalo cuando estés listo.", "success");
+                  }}
+                  className="flex-[2] py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-xl hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 size={16} />
+                  Aceptar y usar este contenido
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

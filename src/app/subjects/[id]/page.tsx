@@ -4,7 +4,7 @@
 import React, { useEffect, useState, use } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { BookOpen, CheckCircle2, Play, ArrowLeft, Award, HelpCircle, Send, FileText, Target, Video, Dumbbell, MessageSquare, ClipboardList, BookMarked, Link2, Copy, Download, X as XIcon, Sparkles, Clock, Paperclip, FileUp } from "lucide-react";
+import { BookOpen, CheckCircle2, Play, ArrowLeft, Award, HelpCircle, Send, FileText, Target, Video, Dumbbell, MessageSquare, ClipboardList, BookMarked, Link2, Copy, Download, X as XIcon, Sparkles, Clock, Paperclip, FileUp, Loader2 } from "lucide-react";
 import { getSubjectChallenges, submitChallengeResponse } from "@/app/actions/student";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/context/ToastContext";
@@ -70,38 +70,6 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
       });
     }
     setAnswers(initialAnswers);
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setIsUploading(true);
-      showToast("Subiendo archivo...", "success");
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: JSON.stringify({
-          type: "blob.generate-client-token",
-          payload: { pathname: file.name, callbackUrl: window.location.href }
-        }),
-      });
-
-      // Actually, since I have /api/upload but it seems structured for handleUpload, 
-      // I'll try a simpler direct upload if possible or just use the handleUpload flow.
-      // But for now, let's assume I can use a simpler route if I create it, 
-      // or I'll just use the vercel blob 'put' if I have the token.
-      
-      // I'll update /api/upload to be more flexible or use a new route.
-    } catch (error) {
-      console.error("Upload error:", error);
-    } finally {
-      setIsUploading(false);
-    }
   };
 
   const handleSubmitChallenge = async (e?: React.FormEvent | React.MouseEvent) => {
