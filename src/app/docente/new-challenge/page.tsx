@@ -21,7 +21,7 @@ export default function TeacherNewChallengePage() {
     title: "",
     objective: "",
     subjectId: "",
-    type: "REGULAR" as "REGULAR" | "DIAGNOSTICO" | "FINAL",
+    type: "REGULAR" as "REGULAR" | "DIAGNOSTICO" | "AUTOEVALUACION",
     content: {
       theory: "",
       questions: [
@@ -158,7 +158,7 @@ export default function TeacherNewChallengePage() {
               >
                 <option value="REGULAR">Módulo de Aprendizaje (Con IA)</option>
                 <option value="DIAGNOSTICO">Diagnóstico Inicial (Sin IA)</option>
-                <option value="FINAL">Examen Final de Acreditación (Sin IA)</option>
+                <option value="AUTOEVALUACION">Autoevaluación (Sin IA)</option>
               </select>
             </div>
           </section>

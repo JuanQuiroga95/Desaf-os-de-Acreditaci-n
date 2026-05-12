@@ -94,23 +94,48 @@ export async function getSubjectChallenges(subjectId: string, userId: string) {
 
 export async function submitChallengeResponse(challengeId: string, userId: string, answers: Record<string, any> | null = null) {
   try {
+    const challenge = await db.challenge.findUnique({ where: { id: challengeId } });
+    
+    let score: number | null = null;
+    let feedback: string | null = null;
+
+    if (challenge && challenge.type === "AUTOEVALUACION" && challenge.content && (challenge.content as any).questions && answers) {
+      const questions = (challenge.content as any).questions;
+      let correctCount = 0;
+      
+      questions.forEach((q: any) => {
+        const studentAns = answers[q.id]?.toString().toLowerCase().trim() || "";
+        const expectedAns = q.answer?.toString().toLowerCase().trim() || "";
+        if (studentAns === expectedAns) {
+          correctCount++;
+        }
+      });
+      
+      score = parseFloat(((correctCount / questions.length) * 10).toFixed(1));
+      feedback = `Autocorrección completada: ${correctCount} correctas de ${questions.length}.`;
+    }
+
     const progress = await db.progress.upsert({
       where: {
         userId_challengeId: { userId, challengeId }
       },
       update: {
         status: "COMPLETED",
-        answers: answers
+        answers: answers,
+        ...(score !== null && { score }),
+        ...(feedback !== null && { feedback })
       },
       create: {
         userId,
         challengeId,
         status: "COMPLETED",
-        answers: answers
+        answers: answers,
+        score,
+        feedback
       }
     });
 
-    return { success: true, progress };
+    return { success: true, progress, score, feedback };
   } catch (error) {
     console.error("Error submitting challenge:", error);
     return { success: false, message: "Error al enviar respuesta" };

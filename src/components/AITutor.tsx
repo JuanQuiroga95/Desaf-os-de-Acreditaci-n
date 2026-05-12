@@ -4,6 +4,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { MessageSquare, X, Send, Bot, User, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 
 interface Message {
   role: "user" | "assistant";
@@ -113,12 +117,18 @@ export function AITutor() {
               {messages.map((msg, i) => (
                 <div key={i} className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
                   <div className={cn(
-                    "max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed",
+                    "max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed prose prose-sm dark:prose-invert prose-p:leading-snug prose-pre:bg-black/50",
                     msg.role === "user" 
                       ? "bg-primary text-primary-foreground rounded-tr-none" 
                       : "bg-secondary text-foreground border border-border rounded-tl-none"
                   )}>
-                    {msg.content}
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkMath]} 
+                      rehypePlugins={[rehypeKatex]}
+                      className="break-words"
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
                   </div>
                 </div>
               ))}

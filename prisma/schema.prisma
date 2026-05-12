@@ -55,7 +55,7 @@ model Subject {
 enum ChallengeType {
   REGULAR
   DIAGNOSTICO
-  FINAL
+  AUTOEVALUACION
 }
 
 model Challenge {

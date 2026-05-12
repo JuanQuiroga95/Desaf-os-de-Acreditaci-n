@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/context/ToastContext";
 import { useUI } from "@/context/UIContext";
 import Link from "next/link";
+import { MathTools } from "@/components/MathTools";
 
 export default function SubjectPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -23,7 +24,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
 
   useEffect(() => {
     if (selectedChallenge) {
-      if (selectedChallenge.type === "DIAGNOSTICO" || selectedChallenge.type === "FINAL") {
+      if (selectedChallenge.type === "DIAGNOSTICO" || selectedChallenge.type === "AUTOEVALUACION") {
         setAIBlocked(true);
       } else {
         setAIBlocked(false);
@@ -36,6 +37,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
   const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null);
+  const [lastFocusedInput, setLastFocusedInput] = useState<string>("notes");
 
   useEffect(() => {
     if (user?.id) {
@@ -85,10 +87,13 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
     
     setIsSubmitting(true);
     try {
-      // Logic: compare answers with expected ones if desired, or just submit
       const res = await submitChallengeResponse(selectedChallenge.id, user!.id, answers);
       if (res.success) {
-        showToast("¡Desafío enviado! Pendiente de corrección.", "success");
+        if (res.score !== undefined && res.score !== null) {
+          showToast(`¡Desafío enviado! ${res.feedback} Calificación: ${res.score}/10`, "success");
+        } else {
+          showToast("¡Desafío enviado! Pendiente de corrección.", "success");
+        }
         setSelectedChallenge(null);
         setAnswers({});
         loadData();
@@ -153,9 +158,9 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                   label = "Diagnóstico Inicial";
                   colorClass = "bg-orange-500/20 text-orange-500 border-orange-500/30";
                   icon = <Sparkles size={20} />;
-                } else if (challenge.type === "FINAL") {
-                  label = "Examen Final de Acreditación";
-                  colorClass = "bg-red-500/20 text-red-500 border-red-500/30";
+                } else if (challenge.type === "AUTOEVALUACION") {
+                  label = "Autoevaluación (Sin IA)";
+                  colorClass = "bg-purple-500/20 text-purple-500 border-purple-500/30";
                   icon = <Award size={20} />;
                 }
 
@@ -170,10 +175,10 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                 const isPreviousCompleted = i === 0 || (subject.challenges[i-1].progress?.length > 0 && subject.challenges[i-1].progress[0].status === "COMPLETED");
                 const isLocked = !isCompleted && !isPreviousCompleted;
                 
-                // Final exam special locking: require all regular challenges to be done
+                // Autoevaluacion special locking: require all regular challenges to be done
                 const regularChallenges = subject.challenges.filter((c: any) => c.type === "REGULAR");
                 const allRegularCompleted = regularChallenges.every((c: any) => c.progress?.length > 0 && c.progress[0].status === "COMPLETED");
-                const isFinalLocked = challenge.type === "FINAL" && !allRegularCompleted;
+                const isFinalLocked = challenge.type === "AUTOEVALUACION" && !allRegularCompleted;
 
                 return (
                   <div 
@@ -189,7 +194,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                       <div>
                         <h3 className="font-bold text-lg">{label}: {challenge.title}</h3>
                         <p className="text-xs text-muted-foreground uppercase font-black tracking-widest">
-                          {challenge.type === "REGULAR" ? "Módulo de Aprendizaje" : "Examen Obligatorio (Sin IA)"} • {isGraded ? `Calificación: ${challenge.progress[0]?.score}/10` : isCompleted ? "Pendiente de Calificación" : "Pendiente de Acreditación"}
+                          {challenge.type === "REGULAR" ? "Módulo de Aprendizaje" : challenge.type === "AUTOEVALUACION" ? "Autoevaluación Automática" : "Examen Obligatorio (Sin IA)"} • {isGraded ? `Calificación: ${challenge.progress[0]?.score}/10` : isCompleted ? "Pendiente de Calificación" : "Pendiente"}
                         </p>
                       </div>
                     </div>
@@ -297,11 +302,11 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                   <div>
                     <h3 className="font-black uppercase italic text-xl">{selectedChallenge.title}</h3>
                     <p className="text-[10px] font-bold text-muted-foreground uppercase">
-                      {selectedChallenge.type === "REGULAR" ? "Resolución de Desafío" : "Examen de Acreditación"}
+                      {selectedChallenge.type === "REGULAR" ? "Resolución de Desafío" : selectedChallenge.type === "AUTOEVALUACION" ? "Autoevaluación con Autocorrección" : "Diagnóstico Inicial"}
                     </p>
                   </div>
                 </div>
-                {(selectedChallenge.type === "DIAGNOSTICO" || selectedChallenge.type === "FINAL") && (
+                {(selectedChallenge.type === "DIAGNOSTICO" || selectedChallenge.type === "AUTOEVALUACION") && (
                   <div className="bg-red-500 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 animate-pulse">
                     <Sparkles size={12} />
                     Entorno Protegido (IA Desactivada)
@@ -340,6 +345,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                           required
                           value={answers[q.id] || ""}
                           onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
+                          onFocus={() => setLastFocusedInput(q.id)}
                           className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-inner"
                           placeholder="Tu respuesta..."
                         />
@@ -357,11 +363,13 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                   </div>
                   
                   <div className="flex-1 relative group">
+                    <MathTools onInsertSymbol={(sym) => setAnswers(prev => ({ ...prev, [lastFocusedInput]: (prev[lastFocusedInput] || "") + sym }))} />
                     <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:20px_20px] opacity-[0.03] pointer-events-none" />
                     <textarea 
                       value={answers["notes"] || ""}
                       onChange={(e) => setAnswers({...answers, notes: e.target.value})}
-                      className="w-full h-full min-h-[300px] bg-secondary/20 border border-dashed border-border rounded-2xl p-8 outline-none focus:ring-2 focus:ring-primary/50 font-mono text-sm leading-relaxed resize-none shadow-xl"
+                      onFocus={() => setLastFocusedInput("notes")}
+                      className="w-full h-full min-h-[300px] bg-secondary/20 border border-dashed border-border rounded-2xl p-8 pt-16 outline-none focus:ring-2 focus:ring-primary/50 font-mono text-sm leading-relaxed resize-none shadow-xl"
                       placeholder="Escribí acá tu razonamiento, cálculos auxiliares o justificaciones..."
                     />
                   </div>
