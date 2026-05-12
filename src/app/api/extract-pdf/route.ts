@@ -8,8 +8,6 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   console.log("PDF Extraction request received");
   try {
-    // Dynamic import to avoid ENOENT errors during build
-    const pdf = (await import("pdf-parse-fork")).default;
     if (!process.env.GROQ_API_KEY) {
       return NextResponse.json({ error: "Falta GROQ_API_KEY en las variables de entorno" }, { status: 500 });
     }
@@ -37,9 +35,21 @@ export async function POST(request: NextRequest) {
     console.log("Parsing PDF buffer, length:", buffer.length);
     let extractedText = "";
     try {
-      // Usar la versión clásica de pdf-parse
-      const data = await pdf(buffer);
-      extractedText = data.text;
+      const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+      const data = new Uint8Array(buffer);
+      const loadingTask = pdfjs.getDocument({
+        data,
+        useSystemFonts: true,
+        disableFontFace: true,
+      });
+      const pdfDoc = await loadingTask.promise;
+      let text = "";
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+        const page = await pdfDoc.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map((item: any) => item.str).join(" ") + "\n";
+      }
+      extractedText = text;
     } catch (parseErr: any) {
       console.error("PDF Parse specific error:", parseErr);
       throw new Error("Error interno al leer el PDF: " + parseErr.message);
