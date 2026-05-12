@@ -117,7 +117,6 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
           const blob = await upload(form.file.name, form.file, {
             access: "public",
             handleUploadUrl: "/api/upload",
-            addRandomSuffix: true,
           });
           fileUrl = blob.url;
         } catch (error: any) {

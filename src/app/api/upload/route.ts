@@ -39,6 +39,7 @@ export async function POST(request: Request): Promise<NextResponse> {
             "application/msword",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
           ],
+          addRandomSuffix: true,
           tokenPayload: JSON.stringify({
             // Datos opcionales
           }),
