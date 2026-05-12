@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import pdf from "pdf-parse";
 import Groq from "groq-sdk";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   console.log("PDF Extraction request received");
   try {
+    // Dynamic import to avoid ENOENT errors during build
+    const pdf = (await import("pdf-parse")).default;
     if (!process.env.GROQ_API_KEY) {
       return NextResponse.json({ error: "Falta GROQ_API_KEY en las variables de entorno" }, { status: 500 });
     }
