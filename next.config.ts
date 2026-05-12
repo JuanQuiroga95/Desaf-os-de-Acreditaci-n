@@ -13,6 +13,13 @@ const nextConfig: NextConfig = {
     config.resolve.alias.canvas = false;
     return config;
   },
+  experimental: {
+    turbo: {
+      resolveAlias: {
+        canvas: './src/lib/mock-canvas.js',
+      },
+    },
+  },
 };
 
 export default nextConfig;
