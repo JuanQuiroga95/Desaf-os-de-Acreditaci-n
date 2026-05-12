@@ -134,7 +134,7 @@ export async function updateSubjectName(subjectId: string, newName: string) {
 }
 export async function resetChallengeSubmissions(challengeId: string) {
   try {
-    await db.submission.deleteMany({
+    await db.progress.deleteMany({
       where: { challengeId }
     });
     return { success: true };

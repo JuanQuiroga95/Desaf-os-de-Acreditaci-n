@@ -8,7 +8,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   if (filename) {
     // Direct server-side upload for student files
-    const blob = await put(filename, request.body!, { access: "public" });
+    const blob = await put(filename, request.body!, { access: "public", addRandomSuffix: true });
     return NextResponse.json(blob);
   }
 
