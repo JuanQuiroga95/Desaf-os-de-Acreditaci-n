@@ -5,34 +5,49 @@ import Groq from "groq-sdk";
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function POST(request: NextRequest) {
+  console.log("PDF Extraction request received");
   try {
+    if (!process.env.GROQ_API_KEY) {
+      return NextResponse.json({ error: "Falta GROQ_API_KEY en las variables de entorno" }, { status: 500 });
+    }
+
     let buffer: Buffer;
     const contentType = request.headers.get("content-type") || "";
 
     if (contentType.includes("application/json")) {
       const { url } = await request.json();
       if (!url) return NextResponse.json({ error: "No se proporcionó URL" }, { status: 400 });
+      console.log("Fetching PDF from URL:", url);
       const res = await fetch(url);
-      if (!res.ok) throw new Error("No se pudo descargar el archivo de la URL");
+      if (!res.ok) throw new Error("No se pudo descargar el archivo de la URL. Status: " + res.status);
       const arrayBuffer = await res.arrayBuffer();
       buffer = Buffer.from(arrayBuffer);
     } else {
       const formData = await request.formData();
       const file = formData.get("file") as File;
       if (!file) return NextResponse.json({ error: "No se subió ningún archivo" }, { status: 400 });
+      console.log("Processing uploaded file:", file.name);
       const bytes = await file.arrayBuffer();
       buffer = Buffer.from(bytes);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const parser = new PDFParse({ data: buffer } as any);
-    const result = await parser.getText();
-    const extractedText = result.text;
-
-    if (!extractedText || extractedText.trim().length < 5) {
-      return NextResponse.json({ error: "No se pudo extraer texto del PDF" }, { status: 400 });
+    console.log("Parsing PDF buffer, length:", buffer.length);
+    let extractedText = "";
+    try {
+      // Intentar usar PDFParse con los parámetros correctos
+      const parser = new PDFParse({ data: new Uint8Array(buffer) } as any);
+      const result = await parser.getText();
+      extractedText = result.text;
+    } catch (parseErr: any) {
+      console.error("PDF Parse specific error:", parseErr);
+      throw new Error("Error interno al leer el PDF: " + parseErr.message);
     }
 
+    if (!extractedText || extractedText.trim().length < 5) {
+      return NextResponse.json({ error: "El PDF parece estar vacío o no se pudo leer el texto." }, { status: 400 });
+    }
+
+    console.log("Sending text to Groq IA, length:", extractedText.length);
     const completion = await groq.chat.completions.create({
       messages: [
         {
@@ -75,10 +90,15 @@ export async function POST(request: NextRequest) {
     });
 
     const structuredData = JSON.parse(completion.choices[0].message.content || "{}");
+    console.log("Groq extraction successful");
 
     return NextResponse.json(structuredData);
   } catch (error: any) {
-    console.error("PDF Extraction Error:", error);
-    return NextResponse.json({ error: "Error al procesar el PDF: " + error.message }, { status: 500 });
+    console.error("PDF Extraction Global Error:", error);
+    // Asegurarnos de devolver JSON incluso en errores globales
+    return NextResponse.json({ 
+      error: error.message || "Error desconocido al procesar el PDF",
+      details: error.stack 
+    }, { status: 500 });
   }
 }

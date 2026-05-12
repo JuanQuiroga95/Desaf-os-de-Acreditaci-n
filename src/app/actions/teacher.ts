@@ -91,7 +91,50 @@ export async function getTeacherStudents(teacherId: string) {
     });
 
     const studentsMap = new Map();
-    subjects.forEach(subject => {
+
+    // 1. Get students from enrollments (enrolled but maybe haven't started challenges)
+    const subjectEnrollments = await db.subject.findMany({
+      where: { teacherId },
+      include: {
+        enrollments: {
+          include: { student: true }
+        }
+      }
+    });
+
+    subjectEnrollments.forEach(subject => {
+      subject.enrollments.forEach(enrollment => {
+        const student = enrollment.student;
+        if (!studentsMap.has(student.id)) {
+          studentsMap.set(student.id, {
+            id: student.id,
+            name: student.name,
+            email: student.email,
+            subjects: new Set([subject.name])
+          });
+        } else {
+          studentsMap.get(student.id).subjects.add(subject.name);
+        }
+      });
+    });
+
+    // 2. Get students from progress (in case there are progress records without explicit enrollment, though rare)
+    const subjectsWithProgress = await db.subject.findMany({
+      where: { teacherId },
+      include: {
+        challenges: {
+          include: {
+            progress: {
+              include: {
+                user: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    subjectsWithProgress.forEach(subject => {
       subject.challenges.forEach(challenge => {
         challenge.progress.forEach(p => {
           if (!studentsMap.has(p.user.id)) {

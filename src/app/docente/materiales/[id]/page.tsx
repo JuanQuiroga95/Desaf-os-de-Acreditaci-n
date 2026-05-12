@@ -185,9 +185,21 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
       });
 
       if (!aiRes.ok) {
-        const errorData = await aiRes.json();
-        throw new Error(errorData.error || "Error en la IA");
+        let errorMsg = "Error en el servidor (" + aiRes.status + ")";
+        try {
+          const contentType = aiRes.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const errorData = await aiRes.json();
+            errorMsg = errorData.error || errorMsg;
+          } else {
+            errorMsg = "El servidor devolvió un error (HTML). Verifica la configuración de Vercel.";
+          }
+        } catch (e) {
+          console.error("Failed to parse error response", e);
+        }
+        throw new Error(errorMsg);
       }
+
       const data = await aiRes.json();
 
       // 3. Create Challenge
