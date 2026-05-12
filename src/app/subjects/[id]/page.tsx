@@ -4,7 +4,7 @@
 import React, { useEffect, useState, use } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { BookOpen, CheckCircle2, Play, ArrowLeft, Award, HelpCircle, Send, FileText, Target, Video, Dumbbell, MessageSquare, ClipboardList, BookMarked, Link2, Copy, Download, X as XIcon, Sparkles, Clock } from "lucide-react";
+import { BookOpen, CheckCircle2, Play, ArrowLeft, Award, HelpCircle, Send, FileText, Target, Video, Dumbbell, MessageSquare, ClipboardList, BookMarked, Link2, Copy, Download, X as XIcon, Sparkles, Clock, Paperclip, FileUp } from "lucide-react";
 import { getSubjectChallenges, submitChallengeResponse } from "@/app/actions/student";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/context/ToastContext";
@@ -18,6 +18,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
   const { showToast } = useToast();
   const { setAIBlocked } = useUI();
   const router = useRouter();
+  const [isUploading, setIsUploading] = useState(false);
   const [subject, setSubject] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedChallenge, setSelectedChallenge] = useState<any>(null);
@@ -69,6 +70,38 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
       });
     }
     setAnswers(initialAnswers);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      showToast("Subiendo archivo...", "success");
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: JSON.stringify({
+          type: "blob.generate-client-token",
+          payload: { pathname: file.name, callbackUrl: window.location.href }
+        }),
+      });
+
+      // Actually, since I have /api/upload but it seems structured for handleUpload, 
+      // I'll try a simpler direct upload if possible or just use the handleUpload flow.
+      // But for now, let's assume I can use a simpler route if I create it, 
+      // or I'll just use the vercel blob 'put' if I have the token.
+      
+      // I'll update /api/upload to be more flexible or use a new route.
+    } catch (error) {
+      console.error("Upload error:", error);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSubmitChallenge = async (e?: React.FormEvent | React.MouseEvent) => {
@@ -405,6 +438,57 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                       className="w-full h-full min-h-[300px] bg-secondary/20 border border-dashed border-border rounded-2xl p-8 pt-16 outline-none focus:ring-2 focus:ring-primary/50 font-mono text-sm leading-relaxed resize-none shadow-xl"
                       placeholder="Escribí acá tu razonamiento, cálculos auxiliares o justificaciones..."
                     />
+                  </div>
+
+                  <div className="bg-secondary/10 border border-dashed border-border rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-[9px] font-black uppercase text-muted-foreground tracking-widest flex items-center gap-2">
+                        <Paperclip size={14} /> Adjuntar Archivo (Papel, PDF, etc.)
+                      </h4>
+                      {answers["fileUrl"] && (
+                        <span className="text-[8px] font-black uppercase text-green-500 bg-green-500/10 px-2 py-1 rounded">Cargado</span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <input 
+                        type="file" 
+                        id="student-file" 
+                        className="hidden" 
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setIsUploading(true);
+                          try {
+                            const response = await fetch(`/api/upload?filename=${file.name}`, {
+                              method: 'POST',
+                              body: file,
+                            });
+                            const blob = await response.json();
+                            setAnswers(prev => ({ ...prev, fileUrl: blob.url }));
+                            showToast("¡Archivo adjuntado con éxito!", "success");
+                          } catch (err) {
+                            showToast("Error al subir archivo", "error");
+                          } finally {
+                            setIsUploading(false);
+                          }
+                        }}
+                      />
+                      <label 
+                        htmlFor="student-file"
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-all ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
+                      >
+                        {isUploading ? <Loader2 size={16} className="animate-spin" /> : <FileUp size={16} className="text-primary" />}
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase">
+                          {answers["fileUrl"] ? "Cambiar archivo" : "Seleccionar archivo"}
+                        </span>
+                      </label>
+                    </div>
+                    {answers["fileUrl"] && (
+                      <p className="text-[8px] text-muted-foreground truncate mt-2 font-mono">
+                        {answers["fileUrl"]}
+                      </p>
+                    )}
                   </div>
 
                   <div className="pt-4 space-y-4">

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { Trophy, ArrowLeft, CheckCircle2, Award, Clock, Search, MessageSquare, HelpCircle, FileText } from "lucide-react";
+import { Trophy, ArrowLeft, CheckCircle2, Award, Clock, Search, MessageSquare, HelpCircle, FileText, Paperclip, ExternalLink } from "lucide-react";
 import { getTeacherDashboard, gradeSubmission } from "@/app/actions/teacher";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -192,6 +192,29 @@ export default function TeacherReviewsPage() {
                       {(!selectedSubmission.challengeContent?.questions || selectedSubmission.challengeContent.questions.length === 0) && (
                         <div className="p-4 bg-background border border-border rounded-xl italic text-sm text-muted-foreground">
                           {selectedSubmission.answers?.default || "Sin respuesta detallada"}
+                        </div>
+                      )}
+
+                      {selectedSubmission.answers?.fileUrl && (
+                        <div className="mt-8 pt-6 border-t border-border">
+                          <h4 className="text-[10px] font-black uppercase text-primary mb-4 flex items-center gap-2">
+                            <Paperclip size={14} /> Archivo Adjunto (TP en Papel)
+                          </h4>
+                          <a 
+                            href={selectedSubmission.answers.fileUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-4 p-4 bg-primary/10 border border-primary/20 rounded-xl hover:bg-primary/20 transition-all group"
+                          >
+                            <div className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center shrink-0">
+                              <FileText size={20} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-black uppercase truncate tracking-widest text-primary">Ver Archivo Adjunto</p>
+                              <p className="text-[10px] text-muted-foreground truncate">{selectedSubmission.answers.fileUrl}</p>
+                            </div>
+                            <ExternalLink size={16} className="text-primary group-hover:scale-125 transition-transform" />
+                          </a>
                         </div>
                       )}
                     </div>

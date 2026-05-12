@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { PlusCircle, ArrowLeft, BookOpen, Target, Settings, HelpCircle, Save, Trash2, Plus } from "lucide-react";
+import { PlusCircle, Save, ArrowLeft, Trash2, Plus, X, CheckCircle2, FileUp, Loader2, Settings, Target, HelpCircle } from "lucide-react";
 import { getTeacherDashboard } from "@/app/actions/teacher";
 import { createChallenge } from "@/app/actions/admin";
 import Link from "next/link";
@@ -16,6 +16,7 @@ export default function TeacherNewChallengePage() {
   const router = useRouter();
   const [subjects, setSubjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isExtracting, setIsExtracting] = useState(false);
   
   const [form, setForm] = useState({
     title: "",
@@ -145,6 +146,52 @@ export default function TeacherNewChallengePage() {
     });
   };
 
+  const handlePdfImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsExtracting(true);
+      showToast("Analizando PDF con IA... esto puede tardar un momento.", "success");
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/extract-pdf", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Error al procesar el PDF");
+
+      const data = await response.json();
+      
+      setForm({
+        ...form,
+        title: data.title || form.title,
+        objective: data.objective || form.objective,
+        content: {
+          theory: data.theory || form.content.theory,
+          questions: data.questions?.map((q: any) => ({
+            id: Date.now() + Math.random(),
+            question: q.question || "",
+            answer: q.answer || "",
+            type: q.type || "TEXT",
+            options: q.options || ["Opción 1", "Opción 2"]
+          })) || form.content.questions
+        }
+      });
+
+      showToast("¡Contenido extraído con éxito! Podés revisarlo y editarlo ahora.", "success");
+    } catch (error) {
+      console.error("Error importing PDF:", error);
+      showToast("Hubo un error al extraer los datos del PDF.", "error");
+    } finally {
+      setIsExtracting(false);
+      e.target.value = ""; // Clear input
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.subjectId) {
@@ -238,10 +285,31 @@ export default function TeacherNewChallengePage() {
           </section>
         </div>
 
-        <section className="bg-card border border-border rounded-[2.5rem] p-8 shadow-sm space-y-8">
-          <h2 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-            <HelpCircle size={16} /> Lógica del Desafío
-          </h2>
+        <section className="bg-card border border-border rounded-[2.5rem] p-8 shadow-sm">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary flex items-center gap-3 italic">
+                <PlusCircle size={16} />
+                Información del Desafío
+              </h2>
+              
+              <div className="relative">
+                <input 
+                  type="file" 
+                  id="pdf-upload" 
+                  className="hidden" 
+                  accept="application/pdf"
+                  onChange={handlePdfImport}
+                  disabled={isExtracting}
+                />
+                <label 
+                  htmlFor="pdf-upload"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border border-primary/30 text-primary hover:bg-primary hover:text-white transition-all cursor-pointer ${isExtracting ? 'opacity-50 pointer-events-none' : ''}`}
+                >
+                  {isExtracting ? <Loader2 size={14} className="animate-spin" /> : <FileUp size={14} />}
+                  {isExtracting ? "Procesando..." : "Importar desde PDF (IA)"}
+                </label>
+              </div>
+            </div>
           
           <div className="space-y-6">
             <div className="p-6 bg-secondary/10 border border-border rounded-2xl">

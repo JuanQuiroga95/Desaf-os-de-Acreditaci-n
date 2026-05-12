@@ -120,3 +120,15 @@ export async function getTeacherStudents(teacherId: string) {
     return { success: false, message: "Error al cargar alumnos" };
   }
 }
+export async function updateSubjectName(subjectId: string, newName: string) {
+  try {
+    await db.subject.update({
+      where: { id: subjectId },
+      data: { name: newName }
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Error renaming subject:", error);
+    return { success: false };
+  }
+}

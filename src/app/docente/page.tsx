@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { PlusCircle, BookOpen, Clock, CheckCircle2, TrendingUp, HelpCircle, FolderOpen, ArrowRight } from "lucide-react";
-import { getTeacherDashboard } from "@/app/actions/teacher";
+import { PlusCircle, BookOpen, Clock, CheckCircle2, TrendingUp, HelpCircle, FolderOpen, ArrowRight, Edit2, Check } from "lucide-react";
+import { getTeacherDashboard, updateSubjectName } from "@/app/actions/teacher";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
@@ -13,6 +13,8 @@ export default function TeacherPage() {
   const router = useRouter();
   const [data, setData] = useState<{ subjects: any[], pendingSubmissions: any[] } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingSubjectId, setEditingSubjectId] = useState<string | null>(null);
+  const [newSubjectName, setNewSubjectName] = useState("");
   
   useEffect(() => {
     if (user?.id) {
@@ -31,6 +33,19 @@ export default function TeacherPage() {
       console.error("Error al cargar datos del docente:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRename = async (subjectId: string) => {
+    if (!newSubjectName.trim()) return;
+    try {
+      const res = await updateSubjectName(subjectId, newSubjectName);
+      if (res.success) {
+        setEditingSubjectId(null);
+        loadData();
+      }
+    } catch (error) {
+      console.error("Error al renombrar:", error);
     }
   };
 
@@ -70,7 +85,38 @@ export default function TeacherPage() {
               {data?.subjects.map((sub, i) => (
                 <Link key={i} href={`/docente/materiales/${sub.id}`} className="p-10 rounded-[2.5rem] bg-secondary/10 border border-border hover:border-primary/50 transition-all group shadow-sm relative overflow-hidden flex flex-col">
                   <div className="flex justify-between items-start mb-6">
-                    <h3 className="font-black text-2xl group-hover:text-primary transition-colors pr-8 leading-tight">{sub.name}</h3>
+                    {editingSubjectId === sub.id ? (
+                      <div className="flex items-center gap-2 w-full pr-8" onClick={(e) => e.preventDefault()}>
+                        <input 
+                          autoFocus
+                          value={newSubjectName}
+                          onChange={(e) => setNewSubjectName(e.target.value)}
+                          className="bg-background border border-primary rounded-lg px-3 py-2 text-xl font-black w-full"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleRename(sub.id); }}
+                          className="p-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+                        >
+                          <Check size={18} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 pr-8 w-full group/title">
+                        <h3 className="font-black text-2xl group-hover:text-primary transition-colors leading-tight">{sub.name}</h3>
+                        <button 
+                          onClick={(e) => { 
+                            e.preventDefault(); 
+                            e.stopPropagation(); 
+                            setEditingSubjectId(sub.id); 
+                            setNewSubjectName(sub.name); 
+                          }}
+                          className="p-1.5 text-muted-foreground hover:text-primary opacity-0 group-hover/title:opacity-100 transition-all"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                      </div>
+                    )}
                     <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shrink-0">
                       <ArrowRight size={14} />
                     </div>
