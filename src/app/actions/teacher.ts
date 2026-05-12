@@ -39,19 +39,25 @@ export async function getTeacherDashboard(teacherId: string) {
 
     return { 
       success: true, 
-      subjects: subjects.map(s => {
+      subjects: await Promise.all(subjects.map(async (s) => {
+        // Count from progress
         const uniqueStudents = new Set();
         s.challenges.forEach(c => {
           c.progress.forEach(p => uniqueStudents.add(p.userId));
         });
         
+        // Count from enrollments (this is the most accurate for assigned students)
+        const enrollments = await db.enrollment.count({
+          where: { subjectId: s.id }
+        });
+        
         return {
           id: s.id,
           name: s.name,
-          studentsCount: uniqueStudents.size || 0,
+          studentsCount: Math.max(uniqueStudents.size, enrollments),
           challengesCount: s._count.challenges
         };
-      }),
+      })),
       pendingSubmissions
     };
   } catch (error) {

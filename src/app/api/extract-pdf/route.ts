@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PDFParse } from "pdf-parse";
+import pdf from "pdf-parse";
 import Groq from "groq-sdk";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -34,10 +34,9 @@ export async function POST(request: NextRequest) {
     console.log("Parsing PDF buffer, length:", buffer.length);
     let extractedText = "";
     try {
-      // Intentar usar PDFParse con los parámetros correctos
-      const parser = new PDFParse({ data: new Uint8Array(buffer) } as any);
-      const result = await parser.getText();
-      extractedText = result.text;
+      // Usar la versión clásica de pdf-parse
+      const data = await pdf(buffer);
+      extractedText = data.text;
     } catch (parseErr: any) {
       console.error("PDF Parse specific error:", parseErr);
       throw new Error("Error interno al leer el PDF: " + parseErr.message);
