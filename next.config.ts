@@ -9,6 +9,17 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   trailingSlash: false,
+  webpack: (config) => {
+    config.resolve.alias.canvas = false;
+    return config;
+  },
+  experimental: {
+    turbo: {
+      resolveAlias: {
+        canvas: false,
+      },
+    },
+  },
 };
 
 export default nextConfig;
