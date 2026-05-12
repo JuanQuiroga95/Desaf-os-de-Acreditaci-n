@@ -132,3 +132,14 @@ export async function updateSubjectName(subjectId: string, newName: string) {
     return { success: false };
   }
 }
+export async function resetChallengeSubmissions(challengeId: string) {
+  try {
+    await db.submission.deleteMany({
+      where: { challengeId }
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Error resetting challenge:", error);
+    return { success: false };
+  }
+}

@@ -92,6 +92,31 @@ export async function createChallenge(subjectId: string, title: string, objectiv
   }
 }
 
+export async function deleteChallenge(id: string, subjectId: string) {
+  try {
+    await db.challenge.delete({ where: { id } });
+    revalidatePath("/docente");
+    revalidatePath(`/subjects/${subjectId}`);
+    revalidatePath(`/docente/materiales/${subjectId}`);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: "Error al eliminar desafío" };
+  }
+}
+
+export async function getChallengesBySubject(subjectId: string) {
+  try {
+    const challenges = await db.challenge.findMany({
+      where: { subjectId },
+      orderBy: { createdAt: "asc" }
+    });
+    return { success: true, challenges };
+  } catch (error) {
+    return { success: false, error: "Error al cargar desafíos" };
+  }
+}
+
+
 // --- CONSULTAS GLOBALES ---
 
 export async function getAllUsers() {

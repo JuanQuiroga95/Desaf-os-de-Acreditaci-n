@@ -6,19 +6,21 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft, Plus, Trash2, FileText, Video, Dumbbell,
   MessageSquare, ClipboardList, BookMarked, Upload, Link2, Save, Loader2,
-  Pencil, Check, X as XIcon
+  Pencil, Check, X as XIcon, RotateCcw
 } from "lucide-react";
 import { getMaterialsBySubject, createMaterial, deleteMaterial } from "@/app/actions/material";
-import { getAllSubjects } from "@/app/actions/admin";
-import { updateSubjectName } from "@/app/actions/teacher";
+import { getAllSubjects, getChallengesBySubject, deleteChallenge, createChallenge } from "@/app/actions/admin";
+import { updateSubjectName, resetChallengeSubmissions } from "@/app/actions/teacher";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
 import { upload } from "@vercel/blob/client";
+import { Sparkles, Zap } from "lucide-react";
 
-type Tab = "THEORY" | "VIDEO" | "EXERCISE" | "PROMPT" | "RUBRIC" | "TP_TEMPLATE";
+type Tab = "THEORY" | "VIDEO" | "EXERCISE" | "PROMPT" | "RUBRIC" | "TP_TEMPLATE" | "CHALLENGES";
 
 const TABS: { key: Tab; label: string; icon: React.ElementType; color: string }[] = [
+  { key: "CHALLENGES", label: "Encuentros", icon: Zap, color: "text-amber-400" },
   { key: "THEORY", label: "Teoría", icon: FileText, color: "text-blue-400" },
   { key: "VIDEO", label: "Videos", icon: Video, color: "text-red-400" },
   { key: "EXERCISE", label: "Ejercicios", icon: Dumbbell, color: "text-green-400" },
@@ -45,6 +47,8 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
+  const [challenges, setChallenges] = useState<any[]>([]);
+  const [isConverting, setIsConverting] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -62,11 +66,13 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [mats, subs] = await Promise.all([
+      const [mats, subs, challs] = await Promise.all([
         getMaterialsBySubject(subjectId),
         getAllSubjects(),
+        getChallengesBySubject(subjectId),
       ]);
       if (mats.success) setMaterials(mats.materials || []);
+      if (challs.success) setChallenges(challs.challenges || []);
       const found = (subs as any[]).find((s: any) => s.id === subjectId);
       setSubject(found || null);
     } finally {
@@ -149,6 +155,70 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
     const res = await deleteMaterial(id, subjectId);
     if (res.success) { showToast("Eliminado", "success"); loadData(); }
     else showToast("Error al eliminar", "error");
+  };
+
+  const handleDeleteChallenge = async (id: string) => {
+    if (!confirm("¿Eliminar este encuentro? Se perderán las respuestas de los alumnos.")) return;
+    const res = await deleteChallenge(id, subjectId);
+    if (res.success) { showToast("Encuentro eliminado", "success"); loadData(); }
+    else showToast("Error al eliminar", "error");
+  };
+
+  const handleResetChallenge = async (id: string) => {
+    if (!confirm("¿Reiniciar este encuentro? Se borrarán todas las respuestas y notas de los alumnos para este desafío específico.")) return;
+    const res = await resetChallengeSubmissions(id);
+    if (res.success) { showToast("Encuentro reiniciado", "success"); }
+    else showToast("Error al reiniciar", "error");
+  };
+
+  const handleConvertToChallenge = async (material: any) => {
+    if (!material.fileUrl) return;
+    setIsConverting(material.id);
+    showToast("Extrayendo contenido con IA...", "success");
+
+    try {
+      // 1. Get Blob
+      const fileRes = await fetch(material.fileUrl);
+      const blob = await fileRes.blob();
+      const file = new File([blob], material.title + ".pdf", { type: "application/pdf" });
+
+      // 2. Extract with IA
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const aiRes = await fetch("/api/extract-pdf", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!aiRes.ok) throw new Error("Error en la IA");
+      const data = await aiRes.json();
+
+      // 3. Create Challenge
+      const challRes = await createChallenge(
+        subjectId,
+        data.title || material.title,
+        data.objective || "Sin objetivo",
+        {
+          theory: data.theory || "",
+          questions: data.questions || []
+        },
+        "REGULAR"
+      );
+
+      if (challRes.success) {
+        showToast("¡Encuentro generado con éxito!", "success");
+        setActiveTab("CHALLENGES");
+        loadData();
+      } else {
+        showToast("Error al crear encuentro", "error");
+      }
+    } catch (error) {
+      console.error(error);
+      showToast("No se pudo generar el encuentro", "error");
+    } finally {
+      setIsConverting(null);
+    }
   };
 
   const tabMaterials = materials.filter((m) => m.type === activeTab);
@@ -263,59 +333,108 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
           )}
 
           <AnimatePresence>
-            {tabMaterials.map((mat) => (
-              <motion.div
-                key={mat.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-card border border-border rounded-[2rem] p-6 hover:border-primary/30 transition-all shadow-sm"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      {mat.level && (
-                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border ${
-                          mat.level === "BASICO" ? "bg-green-500/10 text-green-400 border-green-500/20" :
-                          mat.level === "INTERMEDIO" ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" :
-                          "bg-red-500/10 text-red-400 border-red-500/20"
-                        }`}>
-                          {mat.level}
+            {activeTab === "CHALLENGES" ? (
+              challenges.map((chall) => (
+                <motion.div
+                  key={chall.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-card border border-border rounded-[2rem] p-6 hover:border-primary/30 transition-all shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border bg-amber-500/10 text-amber-400 border-amber-500/20`}>
+                          {chall.type}
                         </span>
+                        <h4 className="font-black text-base">{chall.title}</h4>
+                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-2">{chall.objective}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleResetChallenge(chall.id)}
+                        className="p-2 rounded-xl text-amber-500 hover:bg-amber-500 hover:text-white transition-all border border-amber-500/20 shrink-0 group"
+                        title="Reiniciar respuestas de alumnos"
+                      >
+                        <RotateCcw size={14} className="group-hover:rotate-180 transition-transform" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteChallenge(chall.id)}
+                        className="p-2 rounded-xl text-muted-foreground hover:bg-red-500 hover:text-white transition-all border border-border shrink-0"
+                        title="Eliminar encuentro"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              tabMaterials.map((mat) => (
+                <motion.div
+                  key={mat.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="bg-card border border-border rounded-[2rem] p-6 hover:border-primary/30 transition-all shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        {mat.level && (
+                          <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border ${
+                            mat.level === "BASICO" ? "bg-green-500/10 text-green-400 border-green-500/20" :
+                            mat.level === "INTERMEDIO" ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" :
+                            "bg-red-500/10 text-red-400 border-red-500/20"
+                          }`}>
+                            {mat.level}
+                          </span>
+                        )}
+                        <h4 className="font-black text-base">{mat.title}</h4>
+                      </div>
+
+                      {mat.type === "VIDEO" ? (
+                        mat.fileUrl ? (
+                          <video src={mat.fileUrl} controls className="w-full max-w-lg rounded-xl mt-2 border border-border" />
+                        ) : mat.content ? (
+                          <a href={mat.content} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-primary text-sm font-bold hover:underline mt-2">
+                            <Link2 size={14} /> {mat.content}
+                          </a>
+                        ) : null
+                      ) : mat.type === "THEORY" && mat.fileUrl ? (
+                        <div className="flex items-center gap-4 mt-2">
+                          <a href={mat.fileUrl} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-primary text-sm font-bold hover:underline">
+                            <FileText size={14} /> Abrir / Descargar archivo
+                          </a>
+                          <button
+                            onClick={() => handleConvertToChallenge(mat)}
+                            disabled={isConverting === mat.id}
+                            className="flex items-center gap-2 bg-amber-500/10 text-amber-500 border border-amber-500/20 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all disabled:opacity-50"
+                          >
+                            {isConverting === mat.id ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                            {isConverting === mat.id ? "Generando..." : "Convertir en Encuentro"}
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap mt-1 max-h-32 overflow-y-auto">
+                          {mat.content}
+                        </p>
                       )}
-                      <h4 className="font-black text-base">{mat.title}</h4>
                     </div>
 
-                    {mat.type === "VIDEO" ? (
-                      mat.fileUrl ? (
-                        <video src={mat.fileUrl} controls className="w-full max-w-lg rounded-xl mt-2 border border-border" />
-                      ) : mat.content ? (
-                        <a href={mat.content} target="_blank" rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-primary text-sm font-bold hover:underline mt-2">
-                          <Link2 size={14} /> {mat.content}
-                        </a>
-                      ) : null
-                    ) : mat.type === "THEORY" && mat.fileUrl ? (
-                      <a href={mat.fileUrl} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-primary text-sm font-bold hover:underline mt-2">
-                        <FileText size={14} /> Abrir / Descargar archivo
-                      </a>
-                    ) : (
-                      <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap mt-1 max-h-32 overflow-y-auto">
-                        {mat.content}
-                      </p>
-                    )}
+                    <button
+                      onClick={() => handleDelete(mat.id)}
+                      className="p-2 rounded-xl text-muted-foreground hover:bg-red-500 hover:text-white transition-all border border-border shrink-0"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
-
-                  <button
-                    onClick={() => handleDelete(mat.id)}
-                    className="p-2 rounded-xl text-muted-foreground hover:bg-red-500 hover:text-white transition-all border border-border shrink-0"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))
+            )}
           </AnimatePresence>
 
           {/* Form */}

@@ -27,7 +27,12 @@
       "Bash(rm \"C:/Users/Docente/Desktop/Proyectos/previas/.vercel/project.json\")",
       "Bash(vercel link *)",
       "Bash(npx tsc *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(smart_outline *)",
+      "mcp__plugin_claude-mem_mcp-search__smart_search",
+      "mcp__plugin_claude-mem_mcp-search__search",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Get-ChildItem -LiteralPath \"C:\\\\Users\\\\Docente\\\\Desktop\\\\Proyectos\\\\previas\" -Filter \".env.local\" -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })"
     ]
   }
 }
