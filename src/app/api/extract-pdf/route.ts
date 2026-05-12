@@ -6,23 +6,30 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const file = formData.get("file") as File;
+    let buffer: Buffer;
+    const contentType = request.headers.get("content-type") || "";
 
-    if (!file) {
-      return NextResponse.json({ error: "No se subió ningún archivo" }, { status: 400 });
+    if (contentType.includes("application/json")) {
+      const { url } = await request.json();
+      if (!url) return NextResponse.json({ error: "No se proporcionó URL" }, { status: 400 });
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("No se pudo descargar el archivo de la URL");
+      const arrayBuffer = await res.arrayBuffer();
+      buffer = Buffer.from(arrayBuffer);
+    } else {
+      const formData = await request.formData();
+      const file = formData.get("file") as File;
+      if (!file) return NextResponse.json({ error: "No se subió ningún archivo" }, { status: 400 });
+      const bytes = await file.arrayBuffer();
+      buffer = Buffer.from(bytes);
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const instance = new (PDFParse as any)(buffer);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const parsed: any = typeof instance.then === "function" ? await instance : await instance.getText?.() ?? instance;
-    const extractedText: string = parsed?.text ?? "";
+    const parser = new PDFParse({ data: buffer } as any);
+    const result = await parser.getText();
+    const extractedText = result.text;
 
-    if (!extractedText || extractedText.trim().length < 10) {
+    if (!extractedText || extractedText.trim().length < 5) {
       return NextResponse.json({ error: "No se pudo extraer texto del PDF" }, { status: 400 });
     }
 
@@ -60,7 +67,7 @@ export async function POST(request: NextRequest) {
         },
         {
           role: "user",
-          content: `Texto extraído del PDF:\n\n${extractedText.slice(0, 10000)}`
+          content: `Texto extraído del PDF:\n\n${extractedText.slice(0, 12000)}`
         }
       ],
       model: "llama-3.3-70b-versatile",

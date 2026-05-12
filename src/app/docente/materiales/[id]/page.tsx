@@ -177,21 +177,17 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
     showToast("Extrayendo contenido con IA...", "success");
 
     try {
-      // 1. Get Blob
-      const fileRes = await fetch(material.fileUrl);
-      const blob = await fileRes.blob();
-      const file = new File([blob], material.title + ".pdf", { type: "application/pdf" });
-
-      // 2. Extract with IA
-      const formData = new FormData();
-      formData.append("file", file);
-
+      // 1. Extract with IA using URL directly
       const aiRes = await fetch("/api/extract-pdf", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: material.fileUrl }),
       });
 
-      if (!aiRes.ok) throw new Error("Error en la IA");
+      if (!aiRes.ok) {
+        const errorData = await aiRes.json();
+        throw new Error(errorData.error || "Error en la IA");
+      }
       const data = await aiRes.json();
 
       // 3. Create Challenge
@@ -213,9 +209,9 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
       } else {
         showToast("Error al crear encuentro", "error");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      showToast("No se pudo generar el encuentro", "error");
+      showToast(error.message || "No se pudo generar el encuentro", "error");
     } finally {
       setIsConverting(null);
     }
