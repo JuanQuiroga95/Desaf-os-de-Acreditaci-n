@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 
+// Trigger deploy
 const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
