@@ -9,13 +9,13 @@ import {
   Pencil, Check, X as XIcon, RotateCcw
 } from "lucide-react";
 import { getMaterialsBySubject, createMaterial, deleteMaterial } from "@/app/actions/material";
-import { getAllSubjects, getChallengesBySubject, deleteChallenge, createChallenge } from "@/app/actions/admin";
+import { getAllSubjects, getChallengesBySubject, deleteChallenge, createChallenge, updateChallenge } from "@/app/actions/admin";
 import { updateSubjectName, resetChallengeSubmissions } from "@/app/actions/teacher";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
 import { upload } from "@vercel/blob/client";
-import { Sparkles, Zap } from "lucide-react";
+import { Sparkles, Zap, Eye } from "lucide-react";
 
 type Tab = "THEORY" | "VIDEO" | "EXERCISE" | "PROMPT" | "RUBRIC" | "TP_TEMPLATE" | "CHALLENGES";
 
@@ -49,6 +49,8 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
   const [isSavingName, setIsSavingName] = useState(false);
   const [challenges, setChallenges] = useState<any[]>([]);
   const [isConverting, setIsConverting] = useState<string | null>(null);
+  const [editingChallenge, setEditingChallenge] = useState<any>(null);
+  const [isSavingChallenge, setIsSavingChallenge] = useState(false);
 
   const [form, setForm] = useState({
     title: "",
@@ -169,6 +171,39 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
     const res = await resetChallengeSubmissions(id);
     if (res.success) { showToast("Encuentro reiniciado", "success"); }
     else showToast("Error al reiniciar", "error");
+  };
+
+  const handleSaveChallenge = async () => {
+    if (!editingChallenge) return;
+    setIsSavingChallenge(true);
+    try {
+      const res = await updateChallenge(editingChallenge.id, subjectId, {
+        title: editingChallenge.title,
+        objective: editingChallenge.objective,
+        content: editingChallenge.content,
+      });
+      if (res.success) {
+        showToast("Encuentro actualizado", "success");
+        setEditingChallenge(null);
+        loadData();
+      } else {
+        showToast("Error al actualizar", "error");
+      }
+    } finally {
+      setIsSavingChallenge(false);
+    }
+  };
+
+  const handleUpdateQuestion = (qId: string, field: string, value: string) => {
+    setEditingChallenge((prev: any) => ({
+      ...prev,
+      content: {
+        ...prev.content,
+        questions: prev.content.questions.map((q: any) => 
+          q.id === qId ? { ...q, [field]: value } : q
+        )
+      }
+    }));
   };
 
   const handleConvertToChallenge = async (material: any) => {
@@ -360,6 +395,13 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
                       <p className="text-sm text-muted-foreground line-clamp-2">{chall.objective}</p>
                     </div>
                     <div className="flex gap-2">
+                      <button
+                        onClick={() => setEditingChallenge(chall)}
+                        className="p-2 rounded-xl text-primary hover:bg-primary hover:text-white transition-all border border-primary/20 shrink-0 group"
+                        title="Ver / Editar encuentro"
+                      >
+                        <Eye size={14} />
+                      </button>
                       <button
                         onClick={() => handleResetChallenge(chall.id)}
                         className="p-2 rounded-xl text-amber-500 hover:bg-amber-500 hover:text-white transition-all border border-amber-500/20 shrink-0 group"
@@ -682,6 +724,110 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
           </div>
         </aside>
       </div>
+      </div>
+
+      {/* Edit Challenge Modal */}
+      <AnimatePresence>
+        {editingChallenge && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              className="bg-card border border-border w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              <div className="p-8 border-b border-border flex justify-between items-center bg-amber-500/10 shrink-0">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-black">
+                    <Zap size={24} />
+                  </div>
+                  <div>
+                    <h3 className="font-black uppercase italic text-xl">Editar Encuentro</h3>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Ajustar contenido generado o manual</p>
+                  </div>
+                </div>
+                <button onClick={() => setEditingChallenge(null)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">✕</button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-8 space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Título del Encuentro</label>
+                    <input 
+                      value={editingChallenge.title}
+                      onChange={(e) => setEditingChallenge({...editingChallenge, title: e.target.value})}
+                      className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Objetivo Pedagógico</label>
+                    <input 
+                      value={editingChallenge.objective}
+                      onChange={(e) => setEditingChallenge({...editingChallenge, objective: e.target.value})}
+                      className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Contenido Teórico de Apoyo</label>
+                  <textarea 
+                    value={editingChallenge.content?.theory || ""}
+                    onChange={(e) => setEditingChallenge({
+                      ...editingChallenge, 
+                      content: { ...editingChallenge.content, theory: e.target.value }
+                    })}
+                    className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none h-32 resize-none"
+                  />
+                </div>
+
+                <div className="space-y-6">
+                  <h4 className="text-[10px] font-black uppercase text-primary tracking-[0.2em] border-b border-border pb-2">Cuestionario</h4>
+                  {editingChallenge.content?.questions?.map((q: any, index: number) => (
+                    <div key={q.id} className="p-6 bg-secondary/20 rounded-2xl border border-border space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black text-primary uppercase">Pregunta {index + 1}</span>
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-black uppercase text-muted-foreground mb-1 block">Enunciado</label>
+                        <textarea 
+                          value={q.question}
+                          onChange={(e) => handleUpdateQuestion(q.id, "question", e.target.value)}
+                          className="w-full bg-background border border-border rounded-xl p-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/50 h-20 resize-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-black uppercase text-muted-foreground mb-1 block">Respuesta / Resolución Esperada</label>
+                        <textarea 
+                          value={q.answer}
+                          onChange={(e) => handleUpdateQuestion(q.id, "answer", e.target.value)}
+                          className="w-full bg-background border border-border rounded-xl p-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/50 h-20 resize-none"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-8 border-t border-border bg-secondary/10 flex gap-4">
+                <button 
+                  onClick={() => setEditingChallenge(null)}
+                  className="flex-1 py-4 bg-secondary border border-border rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-border transition-all"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleSaveChallenge}
+                  disabled={isSavingChallenge}
+                  className="flex-[2] py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-xl flex items-center justify-center gap-3 disabled:opacity-60"
+                >
+                  {isSavingChallenge ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  {isSavingChallenge ? "Guardando..." : "Guardar Cambios"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -92,6 +92,21 @@ export async function createChallenge(subjectId: string, title: string, objectiv
   }
 }
 
+export async function updateChallenge(id: string, subjectId: string, data: { title?: string, objective?: string, content?: any, type?: any }) {
+  try {
+    const challenge = await db.challenge.update({
+      where: { id },
+      data
+    });
+    revalidatePath("/docente");
+    revalidatePath(`/subjects/${subjectId}`);
+    revalidatePath(`/docente/materiales/${subjectId}`);
+    return { success: true, challenge };
+  } catch (error) {
+    return { success: false, error: "Error al actualizar desafío" };
+  }
+}
+
 export async function deleteChallenge(id: string, subjectId: string) {
   try {
     await db.challenge.delete({ where: { id } });
