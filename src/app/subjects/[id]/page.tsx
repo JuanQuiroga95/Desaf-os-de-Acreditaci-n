@@ -292,7 +292,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="bg-card border border-border w-full max-w-5xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className={`bg-card border border-border w-full rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] ${selectedChallenge.fileUrl ? 'max-w-[95vw]' : 'max-w-5xl'}`}
             >
               {/* V2 - 2 Column Layout */}
               <div className="p-8 border-b border-border flex justify-between items-center bg-primary/20 shrink-0">
@@ -316,9 +316,20 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                 <button onClick={() => setSelectedChallenge(null)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">✕</button>
               </div>
               
-              <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
-                {/* Left Side: Questions */}
-                <div className="flex-1 p-8 space-y-8 overflow-y-auto border-r border-border/50 bg-secondary/10">
+              <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
+                {/* Left Side: PDF Viewer (Optional) */}
+                {selectedChallenge.fileUrl && (
+                  <div className="w-full lg:w-1/2 border-r border-border bg-secondary/5 h-full">
+                    <iframe 
+                      src={selectedChallenge.fileUrl} 
+                      className="w-full h-full border-none bg-white"
+                      title="PDF Original"
+                    />
+                  </div>
+                )}
+
+                {/* Middle/Left: Questions */}
+                <div className={`flex-1 p-8 space-y-8 overflow-y-auto border-r border-border/50 bg-secondary/10 ${selectedChallenge.fileUrl ? 'lg:w-1/4' : ''}`}>
                   <div className="p-6 bg-secondary/20 rounded-2xl border border-border">
                     <h4 className="text-[10px] font-black uppercase text-primary mb-3 flex items-center gap-2">
                       <Target size={14} /> Objetivo a Acreditar
@@ -389,7 +400,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                 </div>
 
                 {/* Right Side: Notepad / Desarrollo */}
-                <div className="w-full md:w-[40%] p-8 bg-card flex flex-col space-y-4 overflow-y-auto">
+                <div className={`w-full p-8 bg-card flex flex-col space-y-4 overflow-y-auto ${selectedChallenge.fileUrl ? 'lg:w-1/4' : 'md:w-[40%]'}`}>
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-[10px] font-black uppercase text-primary tracking-[0.2em] flex items-center gap-2">
                       <FileText size={16} /> Block de Notas y Cálculos

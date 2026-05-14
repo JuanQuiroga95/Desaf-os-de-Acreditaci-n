@@ -269,7 +269,8 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
           theory: data.theory || "",
           questions: data.questions || []
         },
-        "REGULAR"
+        "REGULAR",
+        material.fileUrl // Pass the original file URL
       );
 
       if (challRes.success) {

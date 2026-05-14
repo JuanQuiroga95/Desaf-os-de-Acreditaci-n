@@ -192,3 +192,45 @@ export async function resetChallengeSubmissions(challengeId: string) {
     return { success: false };
   }
 }
+
+export async function getStudentLegajo(studentId: string) {
+  try {
+    const student = await db.user.findUnique({
+      where: { id: studentId },
+      include: {
+        enrollments: {
+          include: {
+            subject: {
+              include: {
+                challenges: {
+                  include: {
+                    progress: {
+                      where: { userId: studentId }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        progress: {
+          include: {
+            challenge: {
+              include: {
+                subject: true
+              }
+            }
+          },
+          orderBy: { createdAt: "desc" }
+        }
+      }
+    });
+
+    if (!student) return { success: false, message: "Alumno no encontrado" };
+
+    return { success: true, student };
+  } catch (error) {
+    console.error("Error getting student legajo:", error);
+    return { success: false, message: "Error al cargar legajo" };
+  }
+}

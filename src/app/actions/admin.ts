@@ -79,10 +79,10 @@ export async function deleteSubject(id: string) {
   }
 }
 
-export async function createChallenge(subjectId: string, title: string, objective: string, content: any, type: "REGULAR" | "DIAGNOSTICO" | "FINAL" = "REGULAR") {
+export async function createChallenge(subjectId: string, title: string, objective: string, content: any, type: "REGULAR" | "DIAGNOSTICO" | "FINAL" = "REGULAR", fileUrl?: string) {
   try {
     const challenge = await db.challenge.create({
-      data: { subjectId, title, objective, content, type }
+      data: { subjectId, title, objective, content, type, fileUrl }
     });
     revalidatePath("/docente");
     revalidatePath(`/subjects/${subjectId}`);
@@ -92,7 +92,7 @@ export async function createChallenge(subjectId: string, title: string, objectiv
   }
 }
 
-export async function updateChallenge(id: string, subjectId: string, data: { title?: string, objective?: string, content?: any, type?: any }) {
+export async function updateChallenge(id: string, subjectId: string, data: { title?: string, objective?: string, content?: any, type?: any, fileUrl?: string }) {
   try {
     const challenge = await db.challenge.update({
       where: { id },

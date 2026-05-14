@@ -64,6 +64,7 @@ model Challenge {
   objective   String?
   content     Json?
   type        ChallengeType @default(REGULAR)
+  fileUrl     String?       // URL del PDF original si fue convertido
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
