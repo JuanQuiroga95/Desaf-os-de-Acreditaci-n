@@ -389,7 +389,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                 </div>
 
                 {/* Right Side: Notepad / Desarrollo */}
-                <div className="w-full md:w-[40%] p-8 bg-card flex flex-col space-y-4">
+                <div className="w-full md:w-[40%] p-8 bg-card flex flex-col space-y-4 overflow-y-auto">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-[10px] font-black uppercase text-primary tracking-[0.2em] flex items-center gap-2">
                       <FileText size={16} /> Block de Notas y Cálculos
