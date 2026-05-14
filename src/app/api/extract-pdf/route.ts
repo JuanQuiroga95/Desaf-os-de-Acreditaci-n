@@ -33,26 +33,24 @@ export async function POST(request: NextRequest) {
     }
 
     // HACK: pdf-parse v1.1.1 has a bug where it tries to open a test file at runtime.
-    // It specifically looks for './test/data/05-versions-space.pdf' or similar.
-    // On Linux/Vercel this is case-sensitive. The error shows it wants uppercase.
+    // It specifically looks for './test/data/05-versions-space.pdf'.
     try {
       const fs = require("fs");
       const path = require("path");
       
-      const testDir = path.join(process.cwd(), "TEST", "DATA");
-      const testFile = path.join(testDir, "05-VERSIONS-SPACE.PDF");
+      const baseDir = process.cwd();
+      const testDir = path.join(baseDir, "test", "data");
+      const testFile = path.join(testDir, "05-versions-space.pdf");
 
       if (!fs.existsSync(testFile)) {
-        console.log("Hack: Creating dummy PDF file to satisfy pdf-parse bug");
+        console.log("Hack: Creating dummy PDF file to satisfy pdf-parse bug (lowercase)");
         if (!fs.existsSync(testDir)) {
           fs.mkdirSync(testDir, { recursive: true });
         }
         fs.writeFileSync(testFile, "");
       }
     } catch (e) {
-      // On Vercel this will fail due to read-only FS, 
-      // so the file MUST be included in the repository.
-      console.warn("PDF-Parse hack failed (expected on Vercel if file not in repo):", e);
+      console.warn("PDF-Parse hack failed (ignoring):", e);
     }
 
     let extractedText = "";
@@ -65,8 +63,8 @@ export async function POST(request: NextRequest) {
       console.error("PDF Parse specific error:", parseErr);
       
       // If it's the specific ENOENT error, give a clearer message
-      if (parseErr.message && (parseErr.message.includes("ENOENT") || parseErr.message.includes("05-versions-space"))) {
-        throw new Error(`Error de librería (pdf-parse): No se encontró el archivo de prueba requerido. Asegúrate de que 'TEST/DATA/05-VERSIONS-SPACE.PDF' existe en la raíz del proyecto. Detalle: ${parseErr.message}`);
+      if (parseErr.message && (parseErr.message.includes("ENOENT") || parseErr.message.toLowerCase().includes("05-versions-space"))) {
+        throw new Error(`Error de librería (pdf-parse): No se encontró el archivo de prueba requerido. Asegúrate de que 'test/data/05-versions-space.pdf' existe en la raíz del proyecto. Detalle: ${parseErr.message}`);
       }
       
       throw new Error("Error interno al leer el PDF: " + parseErr.message);
