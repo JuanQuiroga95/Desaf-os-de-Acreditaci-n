@@ -8,7 +8,7 @@ import {
   MessageSquare, ClipboardList, BookMarked, Upload, Link2, Save, Loader2,
   Pencil, Check, X as XIcon, RotateCcw
 } from "lucide-react";
-import { getMaterialsBySubject, createMaterial, deleteMaterial } from "@/app/actions/material";
+import { getMaterialsBySubject, createMaterial, deleteMaterial, updateMaterial } from "@/app/actions/material";
 import { getAllSubjects, getChallengesBySubject, deleteChallenge, createChallenge, updateChallenge } from "@/app/actions/admin";
 import { updateSubjectName, resetChallengeSubmissions } from "@/app/actions/teacher";
 import { motion, AnimatePresence } from "framer-motion";
@@ -50,7 +50,9 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
   const [challenges, setChallenges] = useState<any[]>([]);
   const [isConverting, setIsConverting] = useState<string | null>(null);
   const [editingChallenge, setEditingChallenge] = useState<any>(null);
+  const [editingMaterial, setEditingMaterial] = useState<any>(null);
   const [isSavingChallenge, setIsSavingChallenge] = useState(false);
+  const [isSavingMaterial, setIsSavingMaterial] = useState(false);
 
   const [form, setForm] = useState({
     title: "",
@@ -204,6 +206,27 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
         )
       }
     }));
+  };
+
+  const handleSaveMaterial = async () => {
+    if (!editingMaterial) return;
+    setIsSavingMaterial(true);
+    try {
+      const res = await updateMaterial(editingMaterial.id, subjectId, {
+        title: editingMaterial.title,
+        content: editingMaterial.content,
+        level: editingMaterial.level,
+      });
+      if (res.success) {
+        showToast("Material actualizado", "success");
+        setEditingMaterial(null);
+        loadData();
+      } else {
+        showToast("Error al actualizar", "error");
+      }
+    } finally {
+      setIsSavingMaterial(false);
+    }
   };
 
   const handleConvertToChallenge = async (material: any) => {
@@ -475,12 +498,21 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
                       )}
                     </div>
 
-                    <button
-                      onClick={() => handleDelete(mat.id)}
-                      className="p-2 rounded-xl text-muted-foreground hover:bg-red-500 hover:text-white transition-all border border-border shrink-0"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setEditingMaterial(mat)}
+                        className="p-2 rounded-xl text-primary hover:bg-primary hover:text-white transition-all border border-primary/20 shrink-0 group"
+                        title="Editar material"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(mat.id)}
+                        className="p-2 rounded-xl text-muted-foreground hover:bg-red-500 hover:text-white transition-all border border-border shrink-0"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               ))
@@ -822,6 +854,96 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
                 >
                   {isSavingChallenge ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                   {isSavingChallenge ? "Guardando..." : "Guardar Cambios"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Material Modal */}
+      <AnimatePresence>
+        {editingMaterial && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              className="bg-card border border-border w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col"
+            >
+              <div className="p-8 border-b border-border flex justify-between items-center bg-secondary/30 shrink-0">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-primary/20 text-primary flex items-center justify-center font-black">
+                    <Pencil size={24} />
+                  </div>
+                  <div>
+                    <h3 className="font-black uppercase italic text-xl">Editar {editingMaterial.type}</h3>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Modificar contenido del recurso</p>
+                  </div>
+                </div>
+                <button onClick={() => setEditingMaterial(null)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">✕</button>
+              </div>
+
+              <div className="p-8 space-y-6">
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Título</label>
+                  <input 
+                    value={editingMaterial.title}
+                    onChange={(e) => setEditingMaterial({...editingMaterial, title: e.target.value})}
+                    className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+
+                {editingMaterial.type === "EXERCISE" && (
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Nivel</label>
+                    <div className="flex gap-3">
+                      {LEVELS.map((lvl) => (
+                        <button
+                          key={lvl}
+                          type="button"
+                          onClick={() => setEditingMaterial({ ...editingMaterial, level: lvl })}
+                          className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all flex-1 ${
+                            editingMaterial.level === lvl
+                              ? lvl === "BASICO" ? "bg-green-500 text-white border-green-500" :
+                                lvl === "INTERMEDIO" ? "bg-yellow-500 text-black border-yellow-500" :
+                                "bg-red-500 text-white border-red-500"
+                              : "bg-secondary/30 border-border text-muted-foreground hover:bg-secondary"
+                          }`}
+                        >
+                          {lvl}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Only show content textarea if it's not a file-only material or it's theory/exercise */}
+                {(!editingMaterial.fileUrl || editingMaterial.type === "THEORY" || editingMaterial.type === "EXERCISE" || editingMaterial.type === "PROMPT") && (
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Contenido / Descripción</label>
+                    <textarea 
+                      value={editingMaterial.content || ""}
+                      onChange={(e) => setEditingMaterial({...editingMaterial, content: e.target.value})}
+                      className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none h-48 resize-none leading-relaxed"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="p-8 border-t border-border bg-secondary/10 flex gap-4">
+                <button 
+                  onClick={() => setEditingMaterial(null)}
+                  className="flex-1 py-4 bg-secondary border border-border rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-border transition-all"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleSaveMaterial}
+                  disabled={isSavingMaterial}
+                  className="flex-[2] py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-xl flex items-center justify-center gap-3 disabled:opacity-60"
+                >
+                  {isSavingMaterial ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  {isSavingMaterial ? "Guardando..." : "Guardar Cambios"}
                 </button>
               </div>
             </motion.div>
