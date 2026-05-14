@@ -756,7 +756,6 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
           </div>
         </aside>
       </div>
-      </div>
 
       {/* Edit Challenge Modal */}
       <AnimatePresence>
