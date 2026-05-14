@@ -6,8 +6,8 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  console.log("PDF Extraction request received");
-  try {
+    console.log("PDF Extraction request received. CWD:", process.cwd());
+    try {
     if (!process.env.GROQ_API_KEY) {
       return NextResponse.json({ error: "Falta GROQ_API_KEY en las variables de entorno" }, { status: 500 });
     }
@@ -33,28 +33,42 @@ export async function POST(request: NextRequest) {
     }
 
     // HACK: pdf-parse v1.1.1 has a bug where it tries to open a test file at runtime.
+    // It specifically looks for './test/data/05-versions-space.pdf' or similar.
+    // On Linux/Vercel this is case-sensitive. The error shows it wants uppercase.
     try {
       const fs = require("fs");
       const path = require("path");
-      const testDir = path.join(process.cwd(), "test", "data");
-      if (!fs.existsSync(testDir)) {
-        fs.mkdirSync(testDir, { recursive: true });
-      }
-      const testFile = path.join(testDir, "05-versions-space.pdf");
+      
+      const testDir = path.join(process.cwd(), "TEST", "DATA");
+      const testFile = path.join(testDir, "05-VERSIONS-SPACE.PDF");
+
       if (!fs.existsSync(testFile)) {
+        console.log("Hack: Creating dummy PDF file to satisfy pdf-parse bug");
+        if (!fs.existsSync(testDir)) {
+          fs.mkdirSync(testDir, { recursive: true });
+        }
         fs.writeFileSync(testFile, "");
       }
     } catch (e) {
-      console.warn("PDF-Parse hack failed (ignoring):", e);
+      // On Vercel this will fail due to read-only FS, 
+      // so the file MUST be included in the repository.
+      console.warn("PDF-Parse hack failed (expected on Vercel if file not in repo):", e);
     }
 
     let extractedText = "";
     try {
+      // Use dynamic require to avoid issues with some bundlers
       const pdf = require("pdf-parse");
       const data = await pdf(buffer);
       extractedText = data.text;
     } catch (parseErr: any) {
       console.error("PDF Parse specific error:", parseErr);
+      
+      // If it's the specific ENOENT error, give a clearer message
+      if (parseErr.message && (parseErr.message.includes("ENOENT") || parseErr.message.includes("05-versions-space"))) {
+        throw new Error(`Error de librería (pdf-parse): No se encontró el archivo de prueba requerido. Asegúrate de que 'TEST/DATA/05-VERSIONS-SPACE.PDF' existe en la raíz del proyecto. Detalle: ${parseErr.message}`);
+      }
+      
       throw new Error("Error interno al leer el PDF: " + parseErr.message);
     }
     
