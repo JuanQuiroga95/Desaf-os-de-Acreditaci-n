@@ -79,17 +79,25 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: "system",
-          content: `Eres un asistente pedagógico experto. Tu tarea es extraer y estructurar el contenido de un examen o práctico en formato JSON.
+          content: `Eres un asistente pedagógico experto en educación secundaria. Tu tarea es convertir un texto extraído de un PDF (examen, práctico o guía de estudio) en un formato estructurado JSON.
+          
+          OBJETIVO: Fidelidad absoluta al contenido original. No resumas excesivamente, no simplifiques los ejercicios y mantén todos los valores numéricos y datos exactos.
 
-          Reglas:
-          1. Identifica el TÍTULO del práctico.
-          2. Identifica el OBJETIVO pedagógico.
-          3. Extrae la TEORÍA si existe (podés resumirla).
-          4. Extrae las PREGUNTAS de validación.
-          5. Si la pregunta tiene opciones (múltiple choice), listalas.
-          6. Genera una "respuesta esperada" coherente si no está explícita.
+          REGLAS DE EXTRACCIÓN:
+          1. TÍTULO: Extrae el título principal del documento.
+          2. OBJETIVO: Identifica o deduce el objetivo pedagógico (ej: "Evaluación de capacidades en álgebra y estadística").
+          3. TEORÍA: Extrae el marco teórico si existe. Si el PDF solo tiene ejercicios, genera un breve resumen conceptual (4-5 líneas) que sirva de apoyo para resolver esos ejercicios específicos.
+          4. PREGUNTAS:
+             - Crea una entrada en "questions" por cada ejercicio principal del PDF.
+             - Si un ejercicio tiene varios incisos (a, b, c...), inclúyelos todos en la misma descripción de la pregunta para mantener el contexto, o sepáralos si son muy extensos.
+             - MATEMÁTICAS: Mantén las expresiones matemáticas tal cual. Usa ^ para potencias, / para fracciones y descripciones claras para raíces.
+             - TABLAS Y DATOS: Si el texto contiene datos tabulares o listas de valores (ej: una tabla de frecuencias o una lista de edades), represéntalos fielmente en formato Markdown dentro del campo "question".
+          5. FORMATO DE RESPUESTA:
+             - "TEXT": Para la mayoría de los ejercicios de desarrollo.
+             - "MULTIPLE_CHOICE": Solo si el PDF ofrece opciones explícitas.
+          6. RESOLUCIÓN: En el campo "answer", proporciona la respuesta correcta o el procedimiento esperado.
 
-          IMPORTANTE: Responde ÚNICAMENTE con el objeto JSON puro, sin markdown ni explicaciones adicionales.
+          IMPORTANTE: Responde ÚNICAMENTE con el objeto JSON puro.
 
           Formato JSON requerido:
           {
@@ -99,8 +107,8 @@ export async function POST(request: NextRequest) {
             "questions": [
               {
                 "id": "q1",
-                "question": "...",
-                "answer": "...",
+                "question": "Enunciado completo del ejercicio...",
+                "answer": "Resolución o respuesta correcta...",
                 "type": "TEXT",
                 "options": []
               }
@@ -109,7 +117,7 @@ export async function POST(request: NextRequest) {
         },
         {
           role: "user",
-          content: `Texto extraído del PDF:\n\n${extractedText.slice(0, 12000)}`
+          content: `Texto extraído del PDF:\n\n${extractedText.slice(0, 15000)}`
         }
       ],
       model: "llama-3.3-70b-versatile",
