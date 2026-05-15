@@ -382,50 +382,47 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                                   {q.question}
                                 </label>
                               </div>
-                        {(!q.type || q.type === "TEXT") && (
-                          <input 
-                            required
-                            value={answers[q.id] || ""}
-                            onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
-                            onFocus={() => setLastFocusedInput(q.id)}
-                            className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-inner"
-                            placeholder="Tu respuesta..."
-                          />
-                        )}
-                        {(q.type === "TRUE_FALSE" || q.type === "MULTIPLE_CHOICE") && (
-                          <div className={`grid gap-3 ${q.type === "TRUE_FALSE" ? "grid-cols-2" : "grid-cols-1"}`}>
-                            {q.options?.map((opt: string, optIndex: number) => (
-                              <label
-                                key={optIndex}
-                                className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                                  answers[q.id] === opt 
-                                    ? "border-primary bg-primary/10" 
-                                    : "border-border hover:border-primary/50 bg-background"
-                                }`}
-                              >
-                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                                  answers[q.id] === opt ? "border-primary" : "border-muted-foreground"
-                                }`}>
-                                  {answers[q.id] === opt && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
-                                </div>
-                                <input
-                                  type="radio"
-                                  name={`question_${q.id}`}
-                                  value={opt}
-                                  checked={answers[q.id] === opt}
+                              {(!q.type || q.type === "TEXT") && (
+                                <input 
+                                  required
+                                  value={answers[q.id] || ""}
                                   onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
-                                  className="hidden"
+                                  onFocus={() => setLastFocusedInput(q.id)}
+                                  className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-inner"
+                                  placeholder="Tu respuesta..."
                                 />
-                                <span className={`font-bold ${answers[q.id] === opt ? "text-foreground" : "text-muted-foreground"}`}>
-                                  {opt}
-                                </span>
-                              </label>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                              )}
+                              {(q.type === "TRUE_FALSE" || q.type === "MULTIPLE_CHOICE") && (
+                                <div className={`grid gap-3 ${q.type === "TRUE_FALSE" ? "grid-cols-2" : "grid-cols-1"}`}>
+                                  {q.options?.map((opt: string, optIndex: number) => (
+                                    <label
+                                      key={optIndex}
+                                      className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                        answers[q.id] === opt 
+                                          ? "border-primary bg-primary/10" 
+                                          : "border-border hover:border-primary/50 bg-background"
+                                      }`}
+                                    >
+                                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                                        answers[q.id] === opt ? "border-primary" : "border-muted-foreground"
+                                      }`}>
+                                        {answers[q.id] === opt && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
+                                      </div>
+                                      <input
+                                        type="radio"
+                                        name={`question_${q.id}`}
+                                        value={opt}
+                                        checked={answers[q.id] === opt}
+                                        onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
+                                        className="hidden"
+                                      />
+                                      <span className={`font-bold ${answers[q.id] === opt ? "text-foreground" : "text-muted-foreground"}`}>
+                                        {opt}
+                                      </span>
+                                    </label>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
