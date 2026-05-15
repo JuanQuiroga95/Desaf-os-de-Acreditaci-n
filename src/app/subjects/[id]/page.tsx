@@ -21,6 +21,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
   const [isUploading, setIsUploading] = useState(false);
   const [subject, setSubject] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedChallenge, setSelectedChallenge] = useState<any>(null);
 
   useEffect(() => {
