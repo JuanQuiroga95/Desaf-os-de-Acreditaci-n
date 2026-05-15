@@ -291,9 +291,9 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
         {selectedChallenge && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md">
             <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 30 }}
+              initial={{ opacity: 0, scale: 0.98, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              className={`bg-card border border-border w-full rounded-[2.5rem] shadow-[0_0_100px_-20px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col max-h-[96vh] ${selectedChallenge.fileUrl ? 'max-w-[98vw]' : 'max-w-5xl'}`}
+              className={`bg-card border border-border w-full rounded-[1.5rem] shadow-[0_0_100px_-20px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col max-h-[98vh] ${selectedChallenge.fileUrl ? 'max-w-[99vw]' : 'max-w-4xl'}`}
             >
               {/* V2 - 2 Column Layout */}
               <div className="p-8 border-b border-border flex justify-between items-center bg-primary/20 shrink-0">
@@ -306,24 +306,17 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                     <p className="text-[10px] font-bold text-muted-foreground uppercase">
                       {selectedChallenge.type === "REGULAR" ? "Resolución de Desafío" : selectedChallenge.type === "AUTOEVALUACION" ? "Autoevaluación con Autocorrección" : "Diagnóstico Inicial"}
                     </p>
+                    <h2 className="text-sm font-black tracking-widest uppercase italic leading-none">{subject?.name}</h2>
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em] mt-1">{selectedChallenge.title}</p>
                   </div>
                 </div>
-                {(selectedChallenge.type === "DIAGNOSTICO" || selectedChallenge.type === "AUTOEVALUACION") && (
-                  <div className="bg-red-500 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 animate-pulse">
-                    <Sparkles size={12} />
-                    Entorno Protegido (IA Desactivada)
-                  </div>
-                )}
-                <button onClick={() => setSelectedChallenge(null)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">✕</button>
+                <button onClick={() => setSelectedChallenge(null)} className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">✕</button>
               </div>
               
-              <div className="flex-1 overflow-hidden flex flex-col lg:flex-row bg-background/50">
+              <div className="flex-1 overflow-hidden flex flex-col lg:flex-row bg-background">
                 {/* Left Side: PDF Viewer (Optional) */}
                 {selectedChallenge.fileUrl && (
-                  <div className="w-full lg:w-[55%] border-r border-border bg-black/10 h-full relative group">
-                    <div className="absolute top-4 left-4 z-10 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-black text-white uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
-                      <FileText size={12} /> Documento de Referencia
-                    </div>
+                  <div className="w-full lg:w-[60%] border-r border-border bg-black h-full relative group">
                     <iframe 
                       src={selectedChallenge.fileUrl} 
                       className="w-full h-full border-none bg-white"
@@ -333,53 +326,50 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                 )}
 
                 {/* Right Side: Resolution Studio */}
-                <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 flex flex-col overflow-hidden bg-secondary/5">
                   {/* Internal Tabs */}
-                  <div className="flex border-b border-border bg-secondary/20 p-2 gap-2 shrink-0">
+                  <div className="flex border-b border-border bg-secondary/20 p-1.5 gap-1.5 shrink-0">
                     <button 
                       onClick={() => setInternalTab("QUESTIONS")}
-                      className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${internalTab === "QUESTIONS" ? "bg-primary text-white shadow-lg shadow-primary/20" : "hover:bg-secondary text-muted-foreground"}`}
+                      className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${internalTab === "QUESTIONS" ? "bg-primary text-white shadow-md shadow-primary/20" : "hover:bg-secondary text-muted-foreground"}`}
                     >
-                      <Target size={14} /> Resolver
+                      <Target size={12} /> Resolver
                     </button>
                     {selectedChallenge.content?.theory && (
                       <button 
                         onClick={() => setInternalTab("THEORY")}
-                        className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${internalTab === "THEORY" ? "bg-primary text-white shadow-lg shadow-primary/20" : "hover:bg-secondary text-muted-foreground"}`}
+                        className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${internalTab === "THEORY" ? "bg-primary text-white shadow-md shadow-primary/20" : "hover:bg-secondary text-muted-foreground"}`}
                       >
-                        <FileText size={14} /> Teoría
+                        <FileText size={12} /> Teoría
                       </button>
                     )}
                     <button 
                       onClick={() => setInternalTab("NOTES")}
-                      className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${internalTab === "NOTES" ? "bg-primary text-white shadow-lg shadow-primary/20" : "hover:bg-secondary text-muted-foreground"}`}
+                      className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${internalTab === "NOTES" ? "bg-primary text-white shadow-md shadow-primary/20" : "hover:bg-secondary text-muted-foreground"}`}
                     >
-                      <Calculator size={14} /> Cálculos
+                      <Calculator size={12} /> Cálculos
                     </button>
                   </div>
 
                   <div className="flex-1 overflow-y-auto custom-scrollbar">
                     {internalTab === "QUESTIONS" ? (
-                      <div className="p-10 space-y-10">
+                      <div className="p-6 space-y-6">
                         {/* Objective */}
-                        <div className="p-8 bg-primary/5 border border-primary/20 rounded-3xl relative overflow-hidden group">
-                          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Target size={60} />
-                          </div>
-                          <h4 className="text-[10px] font-black uppercase text-primary mb-4 flex items-center gap-2 tracking-[0.2em]">
-                            <Target size={14} /> Objetivo a Acreditar
+                        <div className="p-5 bg-primary/5 border border-primary/20 rounded-2xl relative overflow-hidden group">
+                          <h4 className="text-[8px] font-black uppercase text-primary mb-2 flex items-center gap-2 tracking-[0.2em]">
+                            <Target size={10} /> Objetivo a Acreditar
                           </h4>
-                          <p className="text-base text-foreground font-bold italic leading-relaxed relative z-10">"{selectedChallenge.objective}"</p>
+                          <p className="text-xs text-foreground font-bold italic leading-relaxed relative z-10">"{selectedChallenge.objective}"</p>
                         </div>
 
-                        <div className="space-y-10">
+                        <div className="space-y-6">
                           {selectedChallenge.content?.questions?.map((q: any, index: number) => (
-                            <div key={q.id} className="p-10 bg-card border border-border rounded-[2.5rem] shadow-sm hover:shadow-xl hover:border-primary/20 transition-all group">
-                              <div className="flex items-start gap-4 mb-8">
-                                <span className="w-10 h-10 rounded-2xl bg-secondary flex items-center justify-center text-xs font-black text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-inner">
+                            <div key={q.id} className="p-6 bg-card border border-border rounded-2xl shadow-sm hover:border-primary/20 transition-all group">
+                              <div className="flex items-start gap-3 mb-4">
+                                <span className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-[10px] font-black text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-inner shrink-0">
                                   {index + 1}
                                 </span>
-                                <label className="flex-1 text-sm font-black uppercase text-foreground leading-relaxed tracking-widest pt-2">
+                                <label className="flex-1 text-[11px] font-black uppercase text-foreground leading-relaxed tracking-widest pt-1.5">
                                   {q.question}
                                 </label>
                               </div>
@@ -389,25 +379,25 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                                   value={answers[q.id] || ""}
                                   onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
                                   onFocus={() => setLastFocusedInput(q.id)}
-                                  className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-inner"
+                                  className="w-full bg-background border border-border rounded-xl p-3 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-inner"
                                   placeholder="Tu respuesta..."
                                 />
                               )}
                               {(q.type === "TRUE_FALSE" || q.type === "MULTIPLE_CHOICE") && (
-                                <div className={`grid gap-3 ${q.type === "TRUE_FALSE" ? "grid-cols-2" : "grid-cols-1"}`}>
+                                <div className={`grid gap-2 ${q.type === "TRUE_FALSE" ? "grid-cols-2" : "grid-cols-1"}`}>
                                   {q.options?.map((opt: string, optIndex: number) => (
                                     <label
                                       key={optIndex}
-                                      className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                      className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
                                         answers[q.id] === opt 
                                           ? "border-primary bg-primary/10" 
                                           : "border-border hover:border-primary/50 bg-background"
                                       }`}
                                     >
-                                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
                                         answers[q.id] === opt ? "border-primary" : "border-muted-foreground"
                                       }`}>
-                                        {answers[q.id] === opt && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
+                                        {answers[q.id] === opt && <div className="w-2 h-2 bg-primary rounded-full" />}
                                       </div>
                                       <input
                                         type="radio"
@@ -417,7 +407,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                                         onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
                                         className="hidden"
                                       />
-                                      <span className={`font-bold ${answers[q.id] === opt ? "text-foreground" : "text-muted-foreground"}`}>
+                                      <span className={`text-[11px] font-bold ${answers[q.id] === opt ? "text-foreground" : "text-muted-foreground"}`}>
                                         {opt}
                                       </span>
                                     </label>
@@ -429,45 +419,41 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                         </div>
                       </div>
                     ) : internalTab === "THEORY" ? (
-                      <div className="p-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                      <div className="p-8 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="max-w-none prose prose-invert">
-                          <h3 className="text-2xl font-black uppercase italic tracking-tighter mb-8 border-b-4 border-primary inline-block">Material de Apoyo</h3>
-                          <div className="text-base text-muted-foreground leading-[1.8] whitespace-pre-wrap bg-secondary/10 p-10 rounded-[2.5rem] border border-border shadow-inner">
+                          <h3 className="text-base font-black uppercase italic tracking-tighter mb-4 border-b-2 border-primary inline-block">Apunte Teórico</h3>
+                          <div className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap bg-secondary/10 p-6 rounded-2xl border border-border shadow-inner">
                             {selectedChallenge.content?.theory}
                           </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="p-10 h-full flex flex-col space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                      <div className="p-6 h-full flex flex-col space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="flex-1 relative">
                           <MathTools onInsertSymbol={(sym) => setAnswers(prev => ({ ...prev, [lastFocusedInput]: (prev[lastFocusedInput] || "") + sym }))} />
-                          <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.05] pointer-events-none rounded-[2.5rem]" />
+                          <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.05] pointer-events-none rounded-2xl" />
                           <textarea 
                             value={answers["notes"] || ""}
                             onChange={(e) => setAnswers({...answers, notes: e.target.value})}
                             onFocus={() => setLastFocusedInput("notes")}
-                            className="w-full h-full min-h-[450px] bg-card border-2 border-border rounded-[2.5rem] p-12 pt-20 outline-none focus:ring-8 focus:ring-primary/5 font-mono text-base leading-relaxed resize-none shadow-2xl transition-all"
-                            placeholder="Escribí acá tu razonamiento, cálculos auxiliares o justificaciones para el docente..."
+                            className="w-full h-full min-h-[300px] bg-card border-2 border-border rounded-2xl p-6 pt-16 outline-none focus:ring-4 focus:ring-primary/5 font-mono text-sm leading-relaxed resize-none shadow-xl transition-all"
+                            placeholder="Escribí acá tu razonamiento o cálculos..."
                           />
                         </div>
 
-                        <div className="bg-primary/5 border-2 border-dashed border-primary/20 rounded-[2.5rem] p-10 group hover:border-primary/40 transition-all">
-                          <div className="flex items-center justify-between mb-6">
-                            <div className="space-y-1">
-                              <h4 className="text-[11px] font-black uppercase text-primary tracking-[0.3em] flex items-center gap-2">
-                                <Paperclip size={18} /> Evidencia Complementaria
-                              </h4>
-                              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Formatos permitidos: PDF, JPG, PNG</p>
-                            </div>
+                        <div className="bg-primary/5 border border-dashed border-primary/20 rounded-2xl p-6 group hover:border-primary/40 transition-all">
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-[9px] font-black uppercase text-primary tracking-[0.2em] flex items-center gap-2">
+                              <Paperclip size={14} /> Adjuntar Evidencia
+                            </h4>
                             {answers["fileUrl"] && (
-                              <div className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-full shadow-lg shadow-green-500/20">
-                                <Sparkles size={14} className="animate-pulse" />
-                                <span className="text-[9px] font-black uppercase tracking-widest">Vinculado</span>
+                              <div className="flex items-center gap-2 bg-green-500 text-white px-3 py-1 rounded-full shadow-lg">
+                                <span className="text-[8px] font-black uppercase">Vinculado</span>
                               </div>
                             )}
                           </div>
                           
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-3">
                             <input type="file" id="student-file" className="hidden" 
                               onChange={async (e) => {
                                 const file = e.target.files?.[0]; if (!file) return;
@@ -476,16 +462,16 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                                   const response = await fetch(`/api/upload?filename=${file.name}`, { method: 'POST', body: file });
                                   const blob = await response.json();
                                   setAnswers(prev => ({ ...prev, fileUrl: blob.url }));
-                                  showToast("¡Archivo adjuntado correctamente!", "success");
+                                  showToast("¡Archivo adjuntado!", "success");
                                 } catch (err) { showToast("Error al subir", "error"); } finally { setIsUploading(false); }
                               }}
                             />
                             <label htmlFor="student-file"
-                              className={`flex-1 flex items-center justify-center gap-4 py-6 bg-background border-2 border-dashed border-border rounded-[2rem] cursor-pointer hover:border-primary hover:bg-primary/5 transition-all shadow-sm ${isUploading ? 'opacity-50' : ''}`}
+                              className={`flex-1 flex items-center justify-center gap-3 py-4 bg-background border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary hover:bg-primary/5 transition-all ${isUploading ? 'opacity-50' : ''}`}
                             >
-                              {isUploading ? <Loader2 size={24} className="animate-spin text-primary" /> : <FileUp size={24} className="text-primary" />}
-                              <span className="text-[12px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-                                {answers["fileUrl"] ? "Actualizar Documento" : "Subir Escaneos de Carpeta"}
+                              {isUploading ? <Loader2 size={16} className="animate-spin text-primary" /> : <FileUp size={16} className="text-primary" />}
+                              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                                {answers["fileUrl"] ? "Cambiar Archivo" : "Subir Escaneos"}
                               </span>
                             </label>
                           </div>
@@ -495,23 +481,22 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                   </div>
 
                   {/* Universal Resolution Footer */}
-                  <div className="p-10 border-t border-border bg-secondary/10 shrink-0">
-                    <div className="flex gap-6">
+                  <div className="p-6 border-t border-border bg-secondary/10 shrink-0">
+                    <div className="flex gap-4">
                       <button 
                         type="button"
                         onClick={() => setSelectedChallenge(null)}
-                        className="px-12 py-6 bg-secondary text-foreground rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] border border-border hover:bg-border transition-all shadow-sm"
+                        className="px-6 py-4 bg-secondary text-foreground rounded-xl font-black uppercase tracking-widest text-[9px] border border-border hover:bg-border transition-all"
                       >
                         Abandonar
                       </button>
                       <button 
                         onClick={handleSubmitChallenge}
                         disabled={isSubmitting}
-                        className="flex-1 py-6 bg-primary text-white rounded-[1.5rem] font-black uppercase tracking-[0.4em] text-[11px] shadow-[0_20px_50px_-15px_rgba(59,130,246,0.5)] flex items-center justify-center gap-4 disabled:opacity-50 hover:scale-[1.02] active:scale-95 transition-all relative overflow-hidden group"
+                        className="flex-1 py-4 bg-primary text-white rounded-xl font-black uppercase tracking-[0.3em] text-[10px] shadow-lg shadow-primary/30 flex items-center justify-center gap-3 disabled:opacity-50 hover:scale-[1.01] active:scale-95 transition-all relative overflow-hidden group"
                       >
-                        <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                        <Send size={20} />
-                        {isSubmitting ? "Sincronizando..." : "Enviar a Acreditación"}
+                        <Send size={16} />
+                        {isSubmitting ? "Enviando..." : "Enviar a Acreditación"}
                       </button>
                     </div>
                   </div>
