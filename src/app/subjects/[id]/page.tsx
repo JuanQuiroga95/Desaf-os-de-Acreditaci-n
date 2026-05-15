@@ -319,7 +319,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                   <div className="w-full lg:w-[60%] border-r border-border bg-black h-full relative group">
                     <iframe 
                       src={selectedChallenge.fileUrl} 
-                      className="w-full h-full border-none bg-white"
+                      className="absolute inset-0 w-full h-full border-none bg-white"
                       title="PDF Original"
                     />
                   </div>
