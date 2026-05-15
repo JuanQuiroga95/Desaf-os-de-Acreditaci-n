@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { Plus, Users, BookOpen, X, UserPlus, GraduationCap, Briefcase, TrendingUp, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { createUser, createSubject, getAllUsers, getAllSubjects, deleteUser } from "@/app/actions/admin";
+import { createUser, createSubject, getAllUsers, getAllSubjects, deleteUser, getDashboardStats } from "@/app/actions/admin";
 import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
 
@@ -16,6 +16,7 @@ export default function AdminPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState<{ subjectStats: any[], retentionIndex: number }>({ subjectStats: [], retentionIndex: 0 });
 
   // Modals
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -34,9 +35,10 @@ export default function AdminPage() {
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [u, s] = await Promise.all([getAllUsers(), getAllSubjects()]);
+      const [u, s, st] = await Promise.all([getAllUsers(), getAllSubjects(), getDashboardStats()]);
       setUsers(u);
       setSubjects(s);
+      if (st.success) setStats({ subjectStats: st.subjectStats, retentionIndex: st.retentionIndex });
       if (u.filter(usr => usr.role === "TEACHER").length > 0) {
         setNewSubject(prev => ({ ...prev, teacherId: u.find(usr => usr.role === "TEACHER")?.id || "" }));
       }
@@ -200,11 +202,9 @@ export default function AdminPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div className="space-y-6">
             <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Tasa de Acreditación por Materia</h3>
-            {[
-              { name: "Matemática Aplicada", val: 78 },
-              { name: "Lengua y Comunicación", val: 92 },
-              { name: "Biología", val: 65 },
-            ].map((m, i) => (
+            {stats.subjectStats.length === 0 ? (
+              <p className="text-[10px] text-muted-foreground uppercase font-black italic">Sin datos suficientes...</p>
+            ) : stats.subjectStats.map((m, i) => (
               <div key={i} className="space-y-2">
                 <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
                   <span>{m.name}</span>
@@ -223,10 +223,10 @@ export default function AdminPage() {
           </div>
           <div className="bg-secondary/20 rounded-[2.5rem] p-8 border border-border flex flex-col justify-center items-center text-center">
             <div className="w-32 h-32 rounded-full border-[12px] border-primary/20 border-t-primary flex items-center justify-center mb-6 shadow-2xl">
-              <span className="text-3xl font-black italic">82%</span>
+              <span className="text-3xl font-black italic">{stats.retentionIndex}%</span>
             </div>
             <h4 className="text-sm font-black uppercase tracking-widest mb-2">Índice de Retención</h4>
-            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-[0.2em]">Promedio trimestral • Ciclo 2026</p>
+            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-[0.2em]">Basado en desafíos completados</p>
           </div>
         </div>
       </section>

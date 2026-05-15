@@ -42,6 +42,57 @@ export async function deleteUser(id: string) {
   }
 }
 
+export async function getDashboardStats() {
+  try {
+    const subjects = await db.subject.findMany({
+      include: {
+        challenges: {
+          include: {
+            progress: true
+          }
+        },
+        enrollments: true
+      }
+    });
+
+    const subjectStats = subjects.map(s => {
+      const totalEnrolled = s.enrollments.length;
+      const totalChallenges = s.challenges.length;
+      const possibleSubmissions = totalEnrolled * totalChallenges;
+      
+      const completedSubmissions = s.challenges.reduce((acc, chall) => {
+        return acc + chall.progress.filter(p => p.status === "COMPLETED").length;
+      }, 0);
+
+      const rate = possibleSubmissions > 0 
+        ? Math.round((completedSubmissions / possibleSubmissions) * 100) 
+        : 0;
+
+      return {
+        name: s.name,
+        val: rate
+      };
+    });
+
+    // Overall retention index (average of all subjects for now, or total completed vs total possible)
+    const totalPossible = subjects.reduce((acc, s) => acc + (s.enrollments.length * s.challenges.length), 0);
+    const totalCompleted = subjects.reduce((acc, s) => {
+      return acc + s.challenges.reduce((sum, c) => sum + c.progress.filter(p => p.status === "COMPLETED").length, 0);
+    }, 0);
+
+    const retentionIndex = totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
+
+    return {
+      success: true,
+      subjectStats: subjectStats.slice(0, 5), // Top 5 subjects
+      retentionIndex
+    };
+  } catch (error) {
+    console.error("Dashboard stats error:", error);
+    return { success: false, subjectStats: [], retentionIndex: 0 };
+  }
+}
+
 // --- GESTIÓN DE MATERIAS & DESAFÍOS ---
 
 export async function createSubject(name: string, description: string, teacherId: string) {

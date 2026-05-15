@@ -69,7 +69,7 @@ model Challenge {
   updatedAt   DateTime      @updatedAt
 
   subjectId   String
-  subject     Subject       @relation(fields: [subjectId], references: [id])
+  subject     Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   progress    Progress[]
   materials   Material[]
 }
@@ -84,9 +84,9 @@ model Progress {
   updatedAt   DateTime  @updatedAt
 
   userId      String
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   challengeId String
-  challenge   Challenge @relation(fields: [challengeId], references: [id])
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
 
   @@unique([userId, challengeId])
 }
@@ -105,7 +105,7 @@ model Material {
   subjectId   String
   subject     Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   challengeId String?
-  challenge   Challenge?   @relation(fields: [challengeId], references: [id])
+  challenge   Challenge?   @relation(fields: [challengeId], references: [id], onDelete: Cascade)
 }
 
 model Enrollment {
