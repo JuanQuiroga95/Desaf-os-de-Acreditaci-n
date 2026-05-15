@@ -346,7 +346,7 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
               )}
             </div>
             <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-[0.4em] mt-2">
-              Guía digital del módulo · {materials.length} recursos cargados
+              Guía digital del módulo · {materials.length + challenges.length} recursos cargados
             </p>
           </div>
         </div>
@@ -355,7 +355,7 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
       {/* Tabs */}
       <div className="flex gap-2 mb-8 flex-wrap">
         {TABS.map((tab) => {
-          const count = materials.filter((m) => m.type === tab.key).length;
+          const count = tab.key === "CHALLENGES" ? challenges.length : materials.filter((m) => m.type === tab.key).length;
           const Icon = tab.icon;
           return (
             <button
@@ -396,7 +396,7 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
             </div>
           )}
 
-          {tabMaterials.length === 0 && !showForm && (
+          {(activeTab === "CHALLENGES" ? challenges.length === 0 : tabMaterials.length === 0) && !showForm && (
             <div className="p-16 text-center border-2 border-dashed border-border rounded-[2.5rem] bg-secondary/5">
               <activeTabDef.icon className={`mx-auto mb-4 opacity-20 ${activeTabDef.color}`} size={48} />
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-6">
@@ -757,7 +757,7 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
             <h3 className="text-[10px] font-black uppercase tracking-widest text-primary mb-6">Resumen de materiales</h3>
             <div className="space-y-3">
               {TABS.map((tab) => {
-                const count = materials.filter((m) => m.type === tab.key).length;
+                const count = tab.key === "CHALLENGES" ? challenges.length : materials.filter((m) => m.type === tab.key).length;
                 const Icon = tab.icon;
                 return (
                   <div key={tab.key} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
