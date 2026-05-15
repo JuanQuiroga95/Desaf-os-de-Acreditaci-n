@@ -313,13 +313,13 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                 <button onClick={() => setSelectedChallenge(null)} className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">✕</button>
               </div>
               
-              <div className="flex-1 overflow-hidden flex flex-col lg:flex-row bg-background">
+              <div className="flex-1 overflow-hidden flex flex-col lg:flex-row bg-background min-h-[500px]">
                 {/* Left Side: PDF Viewer (Optional) */}
                 {selectedChallenge.fileUrl && (
-                  <div className="w-full lg:w-[60%] border-r border-border bg-black h-full relative group">
+                  <div className="w-full lg:w-[60%] border-r border-border bg-white relative flex flex-col">
                     <iframe 
                       src={selectedChallenge.fileUrl} 
-                      className="absolute inset-0 w-full h-full border-none bg-white"
+                      className="flex-1 w-full border-none"
                       title="PDF Original"
                     />
                   </div>
@@ -370,7 +370,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                                   {index + 1}
                                 </span>
                                 <label className="flex-1 text-[11px] font-black uppercase text-foreground leading-relaxed tracking-widest pt-1.5">
-                                  {q.question}
+                                  Punto {index + 1}
                                 </label>
                               </div>
                               {(!q.type || q.type === "TEXT") && (
