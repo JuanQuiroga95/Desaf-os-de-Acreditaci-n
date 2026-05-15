@@ -99,6 +99,7 @@ model Material {
   level       String?      // BASICO | INTERMEDIO | AVANZADO (para EXERCISE)
   fileUrl     String?      // URL de Vercel Blob para archivos subidos
   order       Int          @default(0)
+  visible     Boolean      @default(true)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 

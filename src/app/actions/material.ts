@@ -37,7 +37,7 @@ export async function createMaterial(data: {
 export async function updateMaterial(
   id: string,
   subjectId: string,
-  data: { title?: string; content?: string; level?: string; fileUrl?: string }
+  data: { title?: string; content?: string; level?: string; fileUrl?: string; visible?: boolean }
 ) {
   try {
     const material = await db.material.update({ where: { id }, data });

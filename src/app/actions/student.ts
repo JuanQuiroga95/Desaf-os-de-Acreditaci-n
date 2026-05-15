@@ -60,7 +60,10 @@ export async function getSubjectChallenges(subjectId: string, userId: string) {
       where: { id: subjectId },
       include: {
         teacher: true,
-        materials: { orderBy: [{ type: "asc" }, { order: "asc" }, { createdAt: "asc" }] },
+        materials: { 
+          where: { visible: true },
+          orderBy: [{ type: "asc" }, { order: "asc" }, { createdAt: "asc" }] 
+        },
         challenges: {
           orderBy: [
             { type: "asc" }, // This might not work as intended for custom enums in order by

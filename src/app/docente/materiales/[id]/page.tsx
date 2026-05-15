@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
 import { upload } from "@vercel/blob/client";
-import { Sparkles, Zap, Eye } from "lucide-react";
+import { Sparkles, Zap, Eye, EyeOff } from "lucide-react";
 
 type Tab = "THEORY" | "VIDEO" | "EXERCISE" | "PROMPT" | "RUBRIC" | "TP_TEMPLATE" | "CHALLENGES";
 
@@ -226,6 +226,18 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
       }
     } finally {
       setIsSavingMaterial(false);
+    }
+  };
+
+  const handleToggleVisibility = async (material: any) => {
+    const res = await updateMaterial(material.id, subjectId, {
+      visible: !material.visible,
+    });
+    if (res.success) {
+      showToast(material.visible ? "Material oculto para alumnos" : "Material visible para alumnos", "success");
+      loadData();
+    } else {
+      showToast("Error al cambiar visibilidad", "error");
     }
   };
 
@@ -451,11 +463,16 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-card border border-border rounded-[2rem] p-6 hover:border-primary/30 transition-all shadow-sm"
+                  className={`bg-card border border-border rounded-[2rem] p-6 hover:border-primary/30 transition-all shadow-sm ${mat.visible === false ? "opacity-60 grayscale-[0.5]" : ""}`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
+                        {mat.visible === false && (
+                          <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-secondary text-muted-foreground border border-border">
+                            Oculto
+                          </span>
+                        )}
                         {mat.level && (
                           <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border ${
                             mat.level === "BASICO" ? "bg-green-500/10 text-green-400 border-green-500/20" :
@@ -500,6 +517,17 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
                     </div>
 
                     <div className="flex gap-2">
+                      <button
+                        onClick={() => handleToggleVisibility(mat)}
+                        className={`p-2 rounded-xl transition-all border shrink-0 ${
+                          mat.visible !== false 
+                            ? "text-blue-500 border-blue-500/20 hover:bg-blue-500 hover:text-white shadow-sm" 
+                            : "text-muted-foreground border-border hover:bg-secondary"
+                        }`}
+                        title={mat.visible !== false ? "Ocultar para alumnos" : "Mostrar para alumnos"}
+                      >
+                        {mat.visible !== false ? <Eye size={14} /> : <EyeOff size={14} />}
+                      </button>
                       <button
                         onClick={() => setEditingMaterial(mat)}
                         className="p-2 rounded-xl text-primary hover:bg-primary hover:text-white transition-all border border-primary/20 shrink-0 group"
