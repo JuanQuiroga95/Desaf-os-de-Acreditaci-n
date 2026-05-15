@@ -3,29 +3,27 @@ const { PrismaPg } = require("@prisma/adapter-pg");
 const { Pool } = require("pg");
 const bcrypt = require("bcryptjs");
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("Seeding database with secure passwords...");
+  console.log("Reiniciando y sembrando datos específicos...");
 
-  // 1. Create Users
-  const adminPass = await bcrypt.hash("admin123", 10);
+  // Limpiar datos existentes (Opcional, pero ayuda a tener un estado limpio)
+  // await prisma.progress.deleteMany({});
+  // await prisma.enrollment.deleteMany({});
+  // await prisma.material.deleteMany({});
+  // await prisma.challenge.deleteMany({});
+  // await prisma.subject.deleteMany({});
+
   const teacherPass = await bcrypt.hash("docente123", 10);
   const studentPass = await bcrypt.hash("alumno123", 10);
 
-  const admin = await prisma.user.upsert({
-    where: { email: "admin@videla.edu.ar" },
-    update: { role: "ADMIN" },
-    create: {
-      email: "admin@videla.edu.ar",
-      name: "Director Ricardo",
-      password: adminPass, 
-      role: "ADMIN",
-    },
-  });
-
+  // 1. Usuarios
   const teacher = await prisma.user.upsert({
     where: { email: "juan@videla.edu.ar" },
     update: { role: "TEACHER" },
@@ -48,30 +46,24 @@ async function main() {
     },
   });
 
-  // 2. Create Subjects
-  const math = await prisma.subject.upsert({
-    where: { id: "cl_math_1" }, // We use a fixed ID for seeding consistency if possible, or just find by name
-    update: {},
-    create: {
-      id: "cl_math_1",
+  // 2. Materias
+  const math = await prisma.subject.create({
+    data: {
       name: "Matemática 1",
       description: "Fundamentos de álgebra, geometría y estadística básica.",
       teacherId: teacher.id,
     },
   });
 
-  const lang = await prisma.subject.upsert({
-    where: { id: "cl_lang_1" },
-    update: {},
-    create: {
-      id: "cl_lang_1",
+  const lang = await prisma.subject.create({
+    data: {
       name: "Lengua 1",
       description: "Comprensión lectora, gramática y producción de textos.",
       teacherId: teacher.id,
     },
   });
 
-  // 3. Enrollments
+  // 3. Inscripciones (Matricular al alumno en ambas)
   await prisma.enrollment.upsert({
     where: { studentId_subjectId: { studentId: student.id, subjectId: math.id } },
     update: {},
@@ -84,8 +76,8 @@ async function main() {
     create: { studentId: student.id, subjectId: lang.id }
   });
 
-  // 4. Create Challenges
-  const mathChallenge = await prisma.challenge.create({
+  // 4. Desafíos de Ejemplo
+  await prisma.challenge.create({
     data: {
       title: "Diagnóstico: Operaciones Básicas",
       objective: "Evaluar el dominio de suma, resta y multiplicación.",
@@ -101,7 +93,7 @@ async function main() {
     }
   });
 
-  const langChallenge = await prisma.challenge.create({
+  await prisma.challenge.create({
     data: {
       title: "Comprensión de Textos I",
       objective: "Identificar ideas principales en un texto narrativo.",
@@ -117,7 +109,7 @@ async function main() {
     }
   });
 
-  console.log("Seeding completed successfully!");
+  console.log("¡Sembrado completado!");
 }
 
 main()
@@ -127,5 +119,4 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
-    await pool.end();
   });

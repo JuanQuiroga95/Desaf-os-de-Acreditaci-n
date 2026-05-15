@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { LayoutWrapper } from "@/components/LayoutWrapper";
 import { cn } from "@/lib/utils";
 
+// layout.tsx - Main entry point 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
