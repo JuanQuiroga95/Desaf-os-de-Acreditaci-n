@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React from "react";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,7 @@ import {
   Brain,
   AlertTriangle,
   Download,
+  HelpCircle,
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import Link from "next/link";
@@ -54,6 +55,7 @@ export function Sidebar() {
           { name: "Materias", href: "/admin/subjects", icon: BookOpen },
           { name: "Docentes", href: "/admin/teachers", icon: Users },
           { name: "Usuarios", href: "/admin", icon: GraduationCap },
+          { name: "Manual de Uso", href: "/manual", icon: HelpCircle },
         ];
       case "teacher":
         return [
@@ -64,6 +66,7 @@ export function Sidebar() {
           { name: "Correcciones", href: "/docente/reviews", icon: Trophy },
           { name: "Alertas", href: "/docente/alertas", icon: AlertTriangle },
           { name: "Exportar Actas", href: "/docente/export", icon: Download },
+          { name: "Manual de Uso", href: "/manual", icon: HelpCircle },
         ];
       default:
         return [
@@ -73,6 +76,7 @@ export function Sidebar() {
           { name: "Tutor IA", href: "/tutor", icon: MessageSquare },
           { name: "Calendario", href: "/calendario", icon: Calendar },
           { name: "Simulacro IA", href: "/simulacro", icon: Brain },
+          { name: "Manual de Uso", href: "/manual", icon: HelpCircle },
         ];
     }
   };
