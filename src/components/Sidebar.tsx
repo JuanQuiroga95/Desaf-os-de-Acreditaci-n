@@ -104,7 +104,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 px-4 py-6 space-y-2">
+      <nav className="flex-1 min-h-0 overflow-y-auto px-4 py-6 space-y-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -126,7 +126,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 mt-auto space-y-4">
+      <div className="p-4 shrink-0 space-y-4">
         {user.role === "student" && (
           <div className="bg-secondary/50 rounded-2xl p-4 border border-border">
             <div className="flex justify-between items-center mb-2">
