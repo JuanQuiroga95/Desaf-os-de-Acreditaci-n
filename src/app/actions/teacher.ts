@@ -37,6 +37,27 @@ export async function getTeacherDashboard(teacherId: string) {
       )
     );
 
+    const allProgress = subjects.flatMap(s => s.challenges.flatMap(c => c.progress));
+    const gradedProgress = allProgress.filter(p => p.score !== null && p.score !== undefined);
+    
+    let promedioGeneral = "0.0";
+    if (gradedProgress.length > 0) {
+      const totalScore = gradedProgress.reduce((sum, p) => sum + p.score!, 0);
+      promedioGeneral = (totalScore / gradedProgress.length).toFixed(1);
+    }
+
+    const enrollments = await db.enrollment.findMany({ 
+      where: { subjectId: { in: subjects.map(s => s.id) } }, 
+      select: { studentId: true } 
+    });
+    const uniqueEnrolledStudents = new Set(enrollments.map(e => e.studentId)).size;
+    const activeStudents = new Set(allProgress.map(p => p.userId)).size;
+    
+    let participacion = 0;
+    if (uniqueEnrolledStudents > 0) {
+      participacion = Math.min(100, Math.round((activeStudents / uniqueEnrolledStudents) * 100));
+    }
+
     return { 
       success: true, 
       subjects: await Promise.all(subjects.map(async (s) => {
@@ -58,7 +79,12 @@ export async function getTeacherDashboard(teacherId: string) {
           challengesCount: s._count.challenges
         };
       })),
-      pendingSubmissions
+      })),
+      pendingSubmissions,
+      metrics: {
+        promedioGeneral,
+        participacion
+      }
     };
   } catch (error) {
     console.error("Teacher dashboard error:", error);

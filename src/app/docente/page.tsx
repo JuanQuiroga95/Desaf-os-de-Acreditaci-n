@@ -11,7 +11,7 @@ import Link from "next/link";
 export default function TeacherPage() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [data, setData] = useState<{ subjects: any[], pendingSubmissions: any[] } | null>(null);
+  const [data, setData] = useState<{ subjects: any[], pendingSubmissions: any[], metrics?: { promedioGeneral: string, participacion: number } } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [editingSubjectId, setEditingSubjectId] = useState<string | null>(null);
   const [newSubjectName, setNewSubjectName] = useState("");
@@ -27,7 +27,7 @@ export default function TeacherPage() {
       setIsLoading(true);
       const result = await getTeacherDashboard(user!.id);
       if (result.success && result.subjects) {
-        setData({ subjects: result.subjects || [], pendingSubmissions: result.pendingSubmissions || [] });
+        setData({ subjects: result.subjects || [], pendingSubmissions: result.pendingSubmissions || [], metrics: result.metrics });
       }
     } catch (error) {
       console.error("Error al cargar datos del docente:", error);
@@ -195,8 +195,8 @@ export default function TeacherPage() {
             </h3>
             <div className="space-y-6">
               {[
-                { label: "Promedio General", value: "8.4", color: "text-green-500" },
-                { label: "Participación", value: "92%", color: "text-blue-500" },
+                { label: "Promedio General", value: data?.metrics?.promedioGeneral || "-", color: "text-green-500" },
+                { label: "Participación", value: `${data?.metrics?.participacion || 0}%`, color: "text-blue-500" },
               ].map((stat, i) => (
                 <div key={i} className="flex items-center justify-between p-5 bg-card rounded-2xl border border-border">
                   <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{stat.label}</span>
