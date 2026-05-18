@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { loginAction } from "@/app/actions/auth";
+import { loginAction, validateUserAction } from "@/app/actions/auth";
 
 type Role = "student" | "teacher" | "admin" | null;
 
@@ -33,7 +33,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(false);
+    const savedUser = typeof window !== "undefined"
+      ? localStorage.getItem("videla_user")
+      : null;
+
+    if (savedUser) {
+      const parsed = JSON.parse(savedUser) as User;
+      validateUserAction(parsed.id).then((res) => {
+        if (!res.success) {
+          setUser(null);
+          localStorage.removeItem("videla_user");
+        }
+        setIsLoading(false);
+      }).catch(() => setIsLoading(false));
+    } else {
+      setIsLoading(false);
+    }
   }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
