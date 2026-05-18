@@ -50,6 +50,7 @@ const studentSections: Section[] = [
     ],
     tips: [
       { text: "La barra lateral muestra tu progreso global como alumno.", type: "info" },
+      { text: "Si querés celebrar tus logros, probá hacer click 5 veces seguidas en el logo del colegio para una sorpresa.", type: "success" },
     ],
   },
   {
@@ -80,8 +81,8 @@ const studentSections: Section[] = [
       { text: "Hacé click en 'Iniciar Desafío' para abrir el modal. Leé el objetivo y el contenido teórico antes de responder." },
       { text: "Según el tipo de pregunta, vas a escribir texto libre, elegir Verdadero/Falso o seleccionar una opción múltiple." },
       { text: "Si el desafío es un TP, podés subir un archivo (foto del trabajo en papel, PDF, etc.) con el botón de adjuntar." },
-      { text: "Una vez que enviás, el estado pasa a 'Enviado'. El docente lo revisa y te asigna nota y feedback." },
-      { text: "Los desafíos de Autoevaluación se corrigen automáticamente y ves tu nota al instante." },
+      { text: "Desafíos de Roleplay: No responderás un cuestionario tradicional, sino que se abrirá un Chat en vivo para que entrevistes a un personaje histórico/literario." },
+      { text: "Una vez que enviás, el estado pasa a 'Enviado'. El docente lo revisa y te asigna nota y feedback. En Roleplay o Autoevaluación, la IA te corrige al instante." },
       { text: "En el Explorador de Desafíos (/desafios) podés buscar por nombre, filtrar por tipo y ver tu estado en cada reto." },
     ],
     tips: [
@@ -185,6 +186,7 @@ const teacherSections: Section[] = [
     steps: [
       { text: "Al ingresar como docente llegás al panel en /docente. Muestra tus materias con cantidad de alumnos y desafíos." },
       { text: "La sección 'Entregas Pendientes' muestra en tiempo real los trabajos enviados por alumnos que aún no calificaste." },
+      { text: "La sección 'Rendimiento Grupal' muestra métricas reales (Promedio y Participación) calculadas a partir de las calificaciones de tus alumnos inscriptos." },
       { text: "Hacé click en cualquier materia para ir directamente a su gestión de materiales." },
     ],
   },
@@ -216,9 +218,10 @@ const teacherSections: Section[] = [
     steps: [
       { text: "Desde el menú lateral, entrá a 'Crear Encuentro' (/docente/new-challenge)." },
       { text: "Elegí la materia asociada, escribí el título y el objetivo pedagógico del desafío." },
-      { text: "Seleccioná el tipo: Módulo de Aprendizaje (con Tutor IA disponible), Diagnóstico (sin IA) o Autoevaluación (autocorrección automática)." },
-      { text: "Escribí el contenido teórico/contexto del desafío y agregá las preguntas. Cada pregunta puede ser: Texto libre, Verdadero/Falso u Opciones múltiples." },
-      { text: "Para importar desde un PDF: hacé click en 'Importar desde PDF (IA)', subí el archivo y la IA va a extraer automáticamente el título, objetivo y preguntas." },
+      { text: "Seleccioná el tipo: Módulo de Aprendizaje, Diagnóstico, Autoevaluación o Entrevista al Personaje (Roleplay)." },
+      { text: "Roleplay con IA: Completá qué personaje debe interpretar la IA, el contexto y la misión del alumno. La IA evaluará el chat automáticamente al finalizar." },
+      { text: "En tipos normales: Escribí la teoría y agregá preguntas (Texto libre, V/F u Opciones múltiples)." },
+      { text: "Importar desde PDF: Al subir un archivo, podés tildar la opción 'Escape Room (Anti-Resumen)'. La IA generará preguntas sobre detalles minúsculos del texto para evitar que el alumno use resúmenes de internet." },
       { text: "Revisá el contenido extraído en el modal de previsualización antes de aceptarlo — podés editarlo." },
       { text: "Hacé click en 'Publicar Desafío en el Aula' para que sea visible para los alumnos." },
     ],
