@@ -60,6 +60,7 @@ enum ChallengeType {
   REGULAR
   DIAGNOSTICO
   AUTOEVALUACION
+  ROLEPLAY
 }
 
 model Challenge {

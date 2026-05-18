@@ -17,6 +17,7 @@ export default function TeacherNewChallengePage() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [isAntiResumen, setIsAntiResumen] = useState(false);
   const [pdfPreview, setPdfPreview] = useState<{
     title: string; objective: string; theory: string;
     questions: { id: string; question: string; answer: string; type: string; options: string[] }[];
@@ -26,12 +27,15 @@ export default function TeacherNewChallengePage() {
     title: "",
     objective: "",
     subjectId: "",
-    type: "REGULAR" as "REGULAR" | "DIAGNOSTICO" | "AUTOEVALUACION",
+    type: "REGULAR" as "REGULAR" | "DIAGNOSTICO" | "AUTOEVALUACION" | "ROLEPLAY",
     content: {
       theory: "",
       questions: [
         { id: Date.now(), question: "", answer: "", type: "TEXT" as "TEXT" | "TRUE_FALSE" | "MULTIPLE_CHOICE", options: [""] }
-      ]
+      ],
+      roleplayPersonaje: "",
+      roleplayContexto: "",
+      roleplayObjetivo: ""
     }
   });
 
@@ -160,6 +164,7 @@ export default function TeacherNewChallengePage() {
 
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("antiResumen", String(isAntiResumen));
 
       const response = await fetch("/api/extract-pdf", {
         method: "POST",
@@ -268,6 +273,7 @@ export default function TeacherNewChallengePage() {
                 <option value="REGULAR">Módulo de Aprendizaje (Con IA)</option>
                 <option value="DIAGNOSTICO">Diagnóstico Inicial (Sin IA)</option>
                 <option value="AUTOEVALUACION">Autoevaluación (Sin IA)</option>
+                <option value="ROLEPLAY">Entrevista al Personaje (Roleplay con IA)</option>
               </select>
             </div>
           </section>
@@ -287,174 +293,231 @@ export default function TeacherNewChallengePage() {
         </div>
 
         <section className="bg-card border border-border rounded-[2.5rem] p-8 shadow-sm">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary flex items-center gap-3 italic">
+          {form.type === "ROLEPLAY" ? (
+            <div className="space-y-6">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary flex items-center gap-3 italic mb-8">
                 <PlusCircle size={16} />
-                Información del Desafío
+                Configuración del Personaje (Roleplay)
               </h2>
               
-              <div className="relative">
-                <input 
-                  type="file" 
-                  id="pdf-upload" 
-                  className="hidden" 
-                  accept="application/pdf"
-                  onChange={handlePdfImport}
-                  disabled={isExtracting}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-6 bg-secondary/10 border border-border rounded-2xl">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 block">Nombre del Personaje</label>
+                  <input 
+                    required
+                    value={form.content.roleplayPersonaje}
+                    onChange={e => setForm({...form, content: {...form.content, roleplayPersonaje: e.target.value}})}
+                    className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50"
+                    placeholder="Ej: Martín Fierro"
+                  />
+                </div>
+                
+                <div className="p-6 bg-secondary/10 border border-border rounded-2xl">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 block">Contexto / Capítulo</label>
+                  <input 
+                    required
+                    value={form.content.roleplayContexto}
+                    onChange={e => setForm({...form, content: {...form.content, roleplayContexto: e.target.value}})}
+                    className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50"
+                    placeholder="Ej: Canto I, cuando empieza a cantar"
+                  />
+                </div>
+              </div>
+
+              <div className="p-6 bg-secondary/10 border border-border rounded-2xl">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 block">Misión del Alumno (¿Qué le tiene que sacar al personaje?)</label>
+                <textarea 
+                  required
+                  value={form.content.roleplayObjetivo}
+                  onChange={e => setForm({...form, content: {...form.content, roleplayObjetivo: e.target.value}})}
+                  className="w-full h-32 bg-background border border-border rounded-xl p-4 font-medium outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                  placeholder="Ej: Averigua por qué el personaje decidió aislarse y qué opina de la justicia..."
                 />
-                <label 
-                  htmlFor="pdf-upload"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border border-primary/30 text-primary hover:bg-primary hover:text-white transition-all cursor-pointer ${isExtracting ? 'opacity-50 pointer-events-none' : ''}`}
-                >
-                  {isExtracting ? <Loader2 size={14} className="animate-spin" /> : <FileUp size={14} />}
-                  {isExtracting ? "Procesando..." : "Importar desde PDF (IA)"}
-                </label>
               </div>
             </div>
-          
-          <div className="space-y-6">
-            <div className="p-6 bg-secondary/10 border border-border rounded-2xl">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 block">Contenido Teórico / Contexto</label>
-              <textarea 
-                required
-                value={form.content.theory}
-                onChange={e => setForm({...form, content: {...form.content, theory: e.target.value}})}
-                className="w-full h-32 bg-background border border-border rounded-xl p-4 font-medium outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-                placeholder="Describe el escenario o la teoría necesaria..."
-              />
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex justify-between items-center px-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block">Preguntas de Validación</label>
-                <button 
-                  type="button" 
-                  onClick={addQuestion}
-                  className="flex items-center gap-2 text-[10px] font-black uppercase text-primary hover:underline"
-                >
-                  <Plus size={14} /> Añadir Pregunta
-                </button>
+          ) : (
+            <>
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary flex items-center gap-3 italic">
+                  <PlusCircle size={16} />
+                  Información del Desafío
+                </h2>
+                
+                <div className="flex items-center gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors border border-border px-3 py-2 rounded-xl bg-secondary/30">
+                    <input
+                      type="checkbox"
+                      checked={isAntiResumen}
+                      onChange={(e) => setIsAntiResumen(e.target.checked)}
+                      className="accent-primary w-4 h-4 rounded"
+                    />
+                    <span>Generar Escape Room<br/><span className="text-[8px] opacity-70">(Anti-Resumen)</span></span>
+                  </label>
+                  <div className="relative">
+                    <input 
+                      type="file" 
+                      id="pdf-upload" 
+                      className="hidden" 
+                      accept="application/pdf"
+                      onChange={handlePdfImport}
+                      disabled={isExtracting}
+                    />
+                    <label 
+                      htmlFor="pdf-upload"
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border border-primary/30 text-primary hover:bg-primary hover:text-white transition-all cursor-pointer ${isExtracting ? 'opacity-50 pointer-events-none' : ''}`}
+                    >
+                      {isExtracting ? <Loader2 size={14} className="animate-spin" /> : <FileUp size={14} />}
+                      {isExtracting ? "Procesando..." : "Importar desde PDF (IA)"}
+                    </label>
+                  </div>
+                </div>
               </div>
+            
+              <div className="space-y-6">
+                <div className="p-6 bg-secondary/10 border border-border rounded-2xl">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 block">Contenido Teórico / Contexto</label>
+                  <textarea 
+                    required
+                    value={form.content.theory}
+                    onChange={e => setForm({...form, content: {...form.content, theory: e.target.value}})}
+                    className="w-full h-32 bg-background border border-border rounded-xl p-4 font-medium outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                    placeholder="Describe el escenario o la teoría necesaria..."
+                  />
+                </div>
 
-              <AnimatePresence>
-                {form.content.questions.map((q, index) => (
-                  <motion.div 
-                    key={q.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="p-6 bg-secondary/10 border border-border rounded-2xl relative group"
-                  >
-                    {form.content.questions.length > 1 && (
-                      <button 
-                        type="button"
-                        onClick={() => removeQuestion(q.id)}
-                        className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center px-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block">Preguntas de Validación</label>
+                    <button 
+                      type="button" 
+                      onClick={addQuestion}
+                      className="flex items-center gap-2 text-[10px] font-black uppercase text-primary hover:underline"
+                    >
+                      <Plus size={14} /> Añadir Pregunta
+                    </button>
+                  </div>
+
+                  <AnimatePresence>
+                    {form.content.questions.map((q, index) => (
+                      <motion.div 
+                        key={q.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="p-6 bg-secondary/10 border border-border rounded-2xl relative group"
                       >
-                        <Trash2 size={16} />
-                      </button>
-                    )}
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="flex gap-4">
-                        <div className="flex-[3]">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Pregunta {index + 1}</label>
-                          <input 
-                            required
-                            value={q.question}
-                            onChange={e => updateQuestion(q.id, "question", e.target.value)}
-                            className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50"
-                            placeholder="Ej: ¿Cuál es el activo corriente total?"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Formato</label>
-                          <select
-                            value={q.type || "TEXT"}
-                            onChange={e => updateQuestion(q.id, "type", e.target.value)}
-                            className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 appearance-none"
-                            style={{ colorScheme: 'dark' }}
+                        {form.content.questions.length > 1 && (
+                          <button 
+                            type="button"
+                            onClick={() => removeQuestion(q.id)}
+                            className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
                           >
-                            <option value="TEXT">Texto Libre</option>
-                            <option value="TRUE_FALSE">V/F</option>
-                            <option value="MULTIPLE_CHOICE">Opciones</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {(!q.type || q.type === "TEXT") && (
-                        <div>
-                          <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Respuesta Esperada</label>
-                          <input 
-                            required
-                            value={q.answer}
-                            onChange={e => updateQuestion(q.id, "answer", e.target.value)}
-                            className="w-full bg-background border border-border rounded-xl p-4 font-mono font-bold outline-none focus:ring-2 focus:ring-primary/50"
-                            placeholder="Valor o concepto clave..."
-                          />
-                        </div>
-                      )}
-
-                      {q.type === "TRUE_FALSE" && (
-                        <div>
-                          <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Respuesta Correcta</label>
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                        <div className="grid grid-cols-1 gap-4">
                           <div className="flex gap-4">
-                            {q.options.map((opt: string) => (
-                              <button
-                                key={opt}
-                                type="button"
-                                onClick={() => updateQuestion(q.id, "answer", opt)}
-                                className={`flex-1 p-4 rounded-xl font-bold transition-all border ${q.answer === opt ? "bg-primary text-white border-primary" : "bg-background border-border hover:border-primary/50 text-foreground"}`}
-                              >
-                                {opt}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {q.type === "MULTIPLE_CHOICE" && (
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block">Opciones Múltiples</label>
-                            <button type="button" onClick={() => addOption(q.id)} className="text-[9px] font-black uppercase text-primary hover:underline flex items-center gap-1">
-                              <Plus size={12} /> Añadir
-                            </button>
-                          </div>
-                          {q.options.map((opt: string, optIndex: number) => (
-                            <div key={optIndex} className="flex gap-2 items-center">
-                              <button
-                                type="button"
-                                onClick={() => updateQuestion(q.id, "answer", opt)}
-                                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${q.answer === opt ? "border-primary bg-primary text-white" : "border-border hover:border-primary/50"}`}
-                              >
-                                {q.answer === opt && <CheckCircle2 size={16} />}
-                              </button>
+                            <div className="flex-[3]">
+                              <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Pregunta {index + 1}</label>
                               <input 
                                 required
-                                value={opt}
-                                onChange={e => {
-                                  updateOption(q.id, optIndex, e.target.value);
-                                  if (q.answer === opt) updateQuestion(q.id, "answer", e.target.value);
-                                }}
-                                className="flex-1 bg-background border border-border rounded-xl p-3 font-bold outline-none focus:ring-2 focus:ring-primary/50"
-                                placeholder={`Opción ${optIndex + 1}`}
+                                value={q.question}
+                                onChange={e => updateQuestion(q.id, "question", e.target.value)}
+                                className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50"
+                                placeholder="Ej: ¿Cuál es el activo corriente total?"
                               />
-                              {q.options.length > 2 && (
-                                <button type="button" onClick={() => removeOption(q.id, optIndex)} className="p-2 text-muted-foreground hover:text-red-500 shrink-0">
-                                  <X size={16} />
-                                </button>
-                              )}
                             </div>
-                          ))}
-                          <p className="text-[9px] text-muted-foreground uppercase mt-2">Marcá el círculo para indicar cuál es la opción correcta.</p>
+                            <div className="flex-1">
+                              <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Formato</label>
+                              <select
+                                value={q.type || "TEXT"}
+                                onChange={e => updateQuestion(q.id, "type", e.target.value)}
+                                className="w-full bg-background border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 appearance-none"
+                                style={{ colorScheme: 'dark' }}
+                              >
+                                <option value="TEXT">Texto Libre</option>
+                                <option value="TRUE_FALSE">V/F</option>
+                                <option value="MULTIPLE_CHOICE">Opciones</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          {(!q.type || q.type === "TEXT") && (
+                            <div>
+                              <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Respuesta Esperada</label>
+                              <input 
+                                required
+                                value={q.answer}
+                                onChange={e => updateQuestion(q.id, "answer", e.target.value)}
+                                className="w-full bg-background border border-border rounded-xl p-4 font-mono font-bold outline-none focus:ring-2 focus:ring-primary/50"
+                                placeholder="Valor o concepto clave..."
+                              />
+                            </div>
+                          )}
+
+                          {q.type === "TRUE_FALSE" && (
+                            <div>
+                              <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Respuesta Correcta</label>
+                              <div className="flex gap-4">
+                                {q.options.map((opt: string) => (
+                                  <button
+                                    key={opt}
+                                    type="button"
+                                    onClick={() => updateQuestion(q.id, "answer", opt)}
+                                    className={`flex-1 p-4 rounded-xl font-bold transition-all border ${q.answer === opt ? "bg-primary text-white border-primary" : "bg-background border-border hover:border-primary/50 text-foreground"}`}
+                                  >
+                                    {opt}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {q.type === "MULTIPLE_CHOICE" && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block">Opciones Múltiples</label>
+                                <button type="button" onClick={() => addOption(q.id)} className="text-[9px] font-black uppercase text-primary hover:underline flex items-center gap-1">
+                                  <Plus size={12} /> Añadir
+                                </button>
+                              </div>
+                              {q.options.map((opt: string, optIndex: number) => (
+                                <div key={optIndex} className="flex gap-2 items-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => updateQuestion(q.id, "answer", opt)}
+                                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${q.answer === opt ? "border-primary bg-primary text-white" : "border-border hover:border-primary/50"}`}
+                                  >
+                                    {q.answer === opt && <CheckCircle2 size={16} />}
+                                  </button>
+                                  <input 
+                                    required
+                                    value={opt}
+                                    onChange={e => {
+                                      updateOption(q.id, optIndex, e.target.value);
+                                      if (q.answer === opt) updateQuestion(q.id, "answer", e.target.value);
+                                    }}
+                                    className="flex-1 bg-background border border-border rounded-xl p-3 font-bold outline-none focus:ring-2 focus:ring-primary/50"
+                                    placeholder={`Opción ${optIndex + 1}`}
+                                  />
+                                  {q.options.length > 2 && (
+                                    <button type="button" onClick={() => removeOption(q.id, optIndex)} className="p-2 text-muted-foreground hover:text-red-500 shrink-0">
+                                      <X size={16} />
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                              <p className="text-[9px] text-muted-foreground uppercase mt-2">Marcá el círculo para indicar cuál es la opción correcta.</p>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
+            </>
+          )}
         </section>
 
         <button 

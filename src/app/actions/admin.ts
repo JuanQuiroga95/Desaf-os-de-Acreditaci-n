@@ -130,7 +130,7 @@ export async function deleteSubject(id: string) {
   }
 }
 
-export async function createChallenge(subjectId: string, title: string, objective: string, content: any, type: "REGULAR" | "DIAGNOSTICO" | "FINAL" = "REGULAR", fileUrl?: string) {
+export async function createChallenge(subjectId: string, title: string, objective: string, content: any, type: any = "REGULAR", fileUrl?: string) {
   try {
     const challenge = await db.challenge.create({
       data: { subjectId, title, objective, content, type, fileUrl }

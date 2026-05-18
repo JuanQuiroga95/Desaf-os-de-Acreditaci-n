@@ -2,6 +2,9 @@
 "use server";
 
 import { db } from "@/lib/db";
+import Groq from "groq-sdk";
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function getStudentDashboard(userId: string) {
   try {
@@ -116,6 +119,41 @@ export async function submitChallengeResponse(challengeId: string, userId: strin
       
       score = parseFloat(((correctCount / questions.length) * 10).toFixed(1));
       feedback = `Autocorrección completada: ${correctCount} correctas de ${questions.length}.`;
+    } else if (challenge && challenge.type === "ROLEPLAY" && answers && answers.chatLog) {
+      const objetivo = (challenge.content as any).roleplayObjetivo || "Interactuar con el personaje.";
+      const chatLogStr = answers.chatLog.map((m: any) => `${m.role.toUpperCase()}: ${m.content}`).join("\n");
+      
+      const evaluationPrompt = `Eres un profesor evaluando un roleplay (entrevista a personaje).
+      El alumno tenía el siguiente OBJETIVO: "${objetivo}".
+      
+      A continuación está el registro del chat (USER es el alumno, ASSISTANT es el personaje).
+      
+      CHAT LOG:
+      ${chatLogStr}
+      
+      Evalúa si el alumno cumplió el objetivo basándote en sus preguntas y argumentos.
+      Responde ÚNICAMENTE con un JSON en este formato exacto:
+      {
+        "score": (número del 1 al 10),
+        "feedback": "Comentario constructivo de 2 líneas sobre cómo lo hizo."
+      }`;
+
+      try {
+        const completion = await groq.chat.completions.create({
+          messages: [{ role: "system", content: evaluationPrompt }],
+          model: "llama-3.3-70b-versatile",
+          temperature: 0.1,
+          response_format: { type: "json_object" }
+        });
+        
+        const evaluation = JSON.parse(completion.choices[0]?.message?.content || "{}");
+        score = evaluation.score || 5;
+        feedback = evaluation.feedback || "Evaluación automática completada.";
+      } catch (err) {
+        console.error("Error evaluating roleplay:", err);
+        score = 5;
+        feedback = "Error en la evaluación de la IA. Revisión pendiente por el docente.";
+      }
     }
 
     const progress = await db.progress.upsert({

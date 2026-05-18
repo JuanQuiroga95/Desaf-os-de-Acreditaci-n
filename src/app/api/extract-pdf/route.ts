@@ -13,10 +13,12 @@ export async function POST(request: NextRequest) {
     }
 
     let buffer: Buffer;
+    let isAntiResumen = false;
     const contentType = request.headers.get("content-type") || "";
 
     if (contentType.includes("application/json")) {
-      const { url } = await request.json();
+      const { url, antiResumen } = await request.json();
+      isAntiResumen = !!antiResumen;
       if (!url) return NextResponse.json({ error: "No se proporcionó URL" }, { status: 400 });
       console.log("Fetching PDF from URL:", url);
       const res = await fetch(url);
@@ -26,6 +28,7 @@ export async function POST(request: NextRequest) {
     } else {
       const formData = await request.formData();
       const file = formData.get("file") as File;
+      isAntiResumen = formData.get("antiResumen") === "true";
       if (!file) return NextResponse.json({ error: "No se subió ningún archivo" }, { status: 400 });
       console.log("Processing uploaded file:", file.name);
       const bytes = await file.arrayBuffer();
@@ -74,21 +77,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "El PDF parece estar vacío o no se pudo leer el texto." }, { status: 400 });
     }
 
-    console.log("Sending text to Groq IA, length:", extractedText.length);
+    console.log("Sending text to Groq IA, length:", extractedText.length, "AntiResumen:", isAntiResumen);
+
+    const normalPrompt = `Eres un asistente pedagógico experto en educación secundaria. Tu tarea es convertir un texto extraído de un PDF (examen, práctico o guía de estudio) en un formato estructurado JSON.
+          
+          OBJETIVO: Fidelidad absoluta al contenido original. No resumas excesivamente, no simplifiques los ejercicios y mantén todos los valores numéricos y datos exactos.`;
+
+    const antiResumenPrompt = `Eres un experto en ludificación y comprensión lectora inmersiva.
+          OBJETIVO: Generar un "Escape Room Literario" basado en el texto proporcionado. Debes extraer preguntas extremadamente específicas (detalles minúsculos, colores, palabras exactas, lugares de fondo) que prueben que el alumno leyó el texto real y no un resumen de internet.`;
+
     const completion = await groq.chat.completions.create({
       messages: [
         {
           role: "system",
-          content: `Eres un asistente pedagógico experto en educación secundaria. Tu tarea es convertir un texto extraído de un PDF (examen, práctico o guía de estudio) en un formato estructurado JSON.
-          
-          OBJETIVO: Fidelidad absoluta al contenido original. No resumas excesivamente, no simplifiques los ejercicios y mantén todos los valores numéricos y datos exactos.
+          content: `${isAntiResumen ? antiResumenPrompt : normalPrompt}
 
           REGLAS DE EXTRACCIÓN:
           1. TÍTULO: Extrae el título principal del documento.
           2. OBJETIVO: Identifica o deduce el objetivo pedagógico (ej: "Evaluación de capacidades en álgebra y estadística").
-          3. TEORÍA: Extrae el marco teórico si existe. Si el PDF solo tiene ejercicios, genera un breve resumen conceptual (4-5 líneas) que sirva de apoyo para resolver esos ejercicios específicos.
+          3. TEORÍA: ${isAntiResumen ? 'No generes teoría, escribe un pequeño mensaje de inmersión tipo Escape Room (ej: "Para salir de aquí, debes demostrar que estuviste atento a los detalles...").' : 'Extrae el marco teórico si existe. Si el PDF solo tiene ejercicios, genera un breve resumen conceptual (4-5 líneas) que sirva de apoyo para resolver esos ejercicios específicos.'}
           4. PREGUNTAS:
-             - Crea una entrada en "questions" por cada ejercicio principal del PDF.
+             - ${isAntiResumen ? 'Crea una entrada en "questions" por cada detalle oscuro o minúsculo. Las preguntas deben requerir buscar obligatoriamente en el texto (ej. "¿Qué dice exactamente el cartel de la entrada?", "¿De qué color era el pañuelo en el segundo párrafo?").' : 'Crea una entrada en "questions" por cada ejercicio principal del PDF.'}
              - Si un ejercicio tiene varios incisos (a, b, c...), inclúyelos todos en la misma descripción de la pregunta para mantener el contexto, o sepáralos si son muy extensos.
              - MATEMÁTICAS: Mantén las expresiones matemáticas tal cual. Usa ^ para potencias, / para fracciones y descripciones claras para raíces.
              - TABLAS Y DATOS: Si el texto contiene datos tabulares o listas de valores (ej: una tabla de frecuencias o una lista de edades), represéntalos fielmente en formato Markdown dentro del campo "question".

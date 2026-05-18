@@ -13,6 +13,7 @@ import { useToast } from "@/context/ToastContext";
 import { useUI } from "@/context/UIContext";
 import Link from "next/link";
 import { MathTools } from "@/components/MathTools";
+import { RoleplayChat } from "@/components/RoleplayChat";
 
 export default function SubjectPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -87,23 +88,30 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
     setAnswers(initialAnswers);
   };
 
-  const handleSubmitChallenge = async (e?: React.FormEvent | React.MouseEvent) => {
-    if (e) e.preventDefault();
+  const handleSubmitChallenge = async (e?: React.FormEvent | React.MouseEvent | null, isRoleplayFinished = false, chatLog?: any[]) => {
+    if (e && (e as any).preventDefault) (e as any).preventDefault();
     
     if (!selectedChallenge) return;
 
-    // Validate that all questions are answered
-    const questions = selectedChallenge.content?.questions || [];
-    const allAnswered = questions.every((q: { id: string }) => answers[q.id]?.trim());
-    
-    if (!allAnswered) {
-      showToast("Por favor responde todas las preguntas", "error");
-      return;
+    let payload = answers;
+
+    if (selectedChallenge.type !== "ROLEPLAY") {
+      // Validate that all questions are answered
+      const questions = selectedChallenge.content?.questions || [];
+      const allAnswered = questions.every((q: { id: string }) => answers[q.id]?.trim());
+      
+      if (!allAnswered) {
+        showToast("Por favor responde todas las preguntas", "error");
+        return;
+      }
+    } else {
+      if (!isRoleplayFinished) return;
+      payload = { chatLog };
     }
     
     setIsSubmitting(true);
     try {
-      const res = await submitChallengeResponse(selectedChallenge.id, user!.id, answers);
+      const res = await submitChallengeResponse(selectedChallenge.id, user!.id, payload);
       if (res.success) {
         confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         if (res.score !== undefined && res.score !== null) {
@@ -342,7 +350,14 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
 
                 {/* Right Side: Resolution Studio */}
                 <div className="flex-1 flex flex-col overflow-hidden bg-secondary/5">
-                  {/* Internal Tabs */}
+                  {selectedChallenge.type === "ROLEPLAY" ? (
+                    <RoleplayChat 
+                      challenge={selectedChallenge} 
+                      onFinish={(chatLog) => handleSubmitChallenge(null, true, chatLog)} 
+                    />
+                  ) : (
+                    <>
+                      {/* Internal Tabs */}
                   <div className="flex border-b border-border bg-secondary/20 p-1.5 gap-1.5 shrink-0">
                     <button 
                       onClick={() => setInternalTab("QUESTIONS")}
@@ -546,7 +561,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                         Abandonar
                       </button>
                       <button 
-                        onClick={handleSubmitChallenge}
+                        onClick={(e) => handleSubmitChallenge(e)}
                         disabled={isSubmitting}
                         className="flex-1 py-4 bg-primary text-white rounded-xl font-black uppercase tracking-[0.3em] text-[10px] shadow-lg shadow-primary/30 flex items-center justify-center gap-3 disabled:opacity-50 hover:scale-[1.01] active:scale-95 transition-all relative overflow-hidden group"
                       >
@@ -555,6 +570,8 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                       </button>
                     </div>
                   </div>
+                    </>
+                  )}
                 </div>
               </div>
             </motion.div>
