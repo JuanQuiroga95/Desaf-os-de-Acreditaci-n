@@ -5,6 +5,7 @@ import React, { useEffect, useState, use } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { BookOpen, CheckCircle2, Play, ArrowLeft, Award, HelpCircle, Send, FileText, Target, Video, Dumbbell, MessageSquare, ClipboardList, BookMarked, Link2, Copy, Download, X as XIcon, Sparkles, Clock, Paperclip, FileUp, Loader2, Calculator } from "lucide-react";
+import { MaterialSummaryButton } from "@/components/MaterialSummaryButton";
 import { getSubjectChallenges, submitChallengeResponse } from "@/app/actions/student";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/context/ToastContext";
@@ -354,6 +355,46 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                   <div className="flex-1 overflow-y-auto custom-scrollbar">
                     {internalTab === "QUESTIONS" ? (
                       <div className="p-6 space-y-6">
+                        {/* Attempt History */}
+                        {selectedChallenge.progress?.length > 0 && (() => {
+                          const prog = selectedChallenge.progress[0];
+                          const isGraded = prog.score !== null && prog.score !== undefined;
+                          const isApproved = isGraded && prog.score >= 6;
+                          const submittedAt = prog.createdAt ? new Date(prog.createdAt) : null;
+                          return (
+                            <div className="p-5 bg-secondary/20 border border-border rounded-2xl space-y-3">
+                              <h4 className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                                <ClipboardList size={10} /> Tu Historial
+                              </h4>
+                              <div className="flex items-center gap-3 flex-wrap">
+                                {isGraded ? (
+                                  <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${
+                                    isApproved
+                                      ? "bg-green-500/20 text-green-400 border-green-500/30"
+                                      : "bg-orange-500/20 text-orange-400 border-orange-500/30"
+                                  }`}>
+                                    {isApproved ? "Aprobado" : "En Revisión"} · {prog.score}/10
+                                  </span>
+                                ) : (
+                                  <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border bg-primary/10 text-primary border-primary/30">
+                                    Enviado · Pendiente de corrección
+                                  </span>
+                                )}
+                                {submittedAt && (
+                                  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
+                                    {submittedAt.toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}
+                                  </span>
+                                )}
+                              </div>
+                              {prog.feedback && (
+                                <p className="text-xs text-foreground leading-relaxed bg-card border border-border rounded-xl p-3 italic">
+                                  {prog.feedback}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })()}
+
                         {/* Objective */}
                         <div className="p-5 bg-primary/5 border border-primary/20 rounded-2xl relative overflow-hidden group">
                           <h4 className="text-[8px] font-black uppercase text-primary mb-2 flex items-center gap-2 tracking-[0.2em]">
@@ -522,9 +563,19 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                   </p>
                   <h3 className="font-black uppercase italic text-lg leading-tight">{selectedMaterial.title}</h3>
                 </div>
-                <button onClick={() => setSelectedMaterial(null)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shrink-0">
-                  <XIcon size={16} />
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  {selectedMaterial.type === "THEORY" && selectedMaterial.content && (
+                    <MaterialSummaryButton
+                      content={selectedMaterial.content}
+                      title={selectedMaterial.title}
+                      type={selectedMaterial.type}
+                      userId={user!.id}
+                    />
+                  )}
+                  <button onClick={() => setSelectedMaterial(null)} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                    <XIcon size={16} />
+                  </button>
+                </div>
               </div>
               <div className="flex-1 overflow-y-auto p-8">
                 {selectedMaterial.type === "VIDEO" ? (

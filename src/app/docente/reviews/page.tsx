@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { Trophy, ArrowLeft, CheckCircle2, Award, Clock, Search, MessageSquare, HelpCircle, FileText, Paperclip, ExternalLink } from "lucide-react";
+import { Trophy, ArrowLeft, CheckCircle2, Award, Clock, Search, MessageSquare, HelpCircle, FileText, Paperclip, ExternalLink, Sparkles, Loader2, Zap } from "lucide-react";
 import { getTeacherDashboard, gradeSubmission } from "@/app/actions/teacher";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -19,6 +19,10 @@ export default function TeacherReviewsPage() {
   // Grading Modal
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [gradingData, setGradingData] = useState({ score: "", feedback: "" });
+
+  // AI Suggestion
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<{ nota: number | null; justificacion: string; feedback: string } | null>(null);
 
   useEffect(() => {
     if (user?.role === "teacher") {
@@ -43,6 +47,44 @@ export default function TeacherReviewsPage() {
   const handleOpenGrade = (sub: any) => {
     setSelectedSubmission(sub);
     setGradingData({ score: "", feedback: "" });
+    setAiSuggestion(null);
+  };
+
+  const handleAiSuggest = async () => {
+    if (!selectedSubmission) return;
+    try {
+      setAiLoading(true);
+      setAiSuggestion(null);
+      const res = await fetch("/api/ai-grade", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": user!.id,
+        },
+        body: JSON.stringify({
+          challengeTitle: selectedSubmission.challengeTitle,
+          questions: selectedSubmission.challengeContent?.questions || [],
+          answers: selectedSubmission.answers,
+          rubric: selectedSubmission.challengeContent?.theory || "",
+        }),
+      });
+      if (!res.ok) throw new Error("Error de IA");
+      const data = await res.json();
+      setAiSuggestion(data);
+    } catch (error) {
+      console.error("AI grading error:", error);
+      showToast("Error al obtener sugerencia de IA", "error");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const applyAiSuggestion = () => {
+    if (!aiSuggestion) return;
+    setGradingData({
+      score: aiSuggestion.nota !== null ? String(aiSuggestion.nota) : gradingData.score,
+      feedback: aiSuggestion.feedback || gradingData.feedback,
+    });
   };
 
   const handleGrade = async (e: React.FormEvent) => {
@@ -228,6 +270,83 @@ export default function TeacherReviewsPage() {
                       </h4>
                       <p className="text-xs text-muted-foreground whitespace-pre-wrap">{selectedSubmission.challengeContent.theory}</p>
                     </div>
+                  )}
+                </div>
+
+                {/* AI Suggestion */}
+                <div className="pt-4 border-t border-border space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                      <Sparkles size={12} className="text-primary" />
+                      Asistente IA
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleAiSuggest}
+                      disabled={aiLoading}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-primary/10 text-primary border border-primary/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all disabled:opacity-50"
+                    >
+                      {aiLoading ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={14} />
+                      )}
+                      {aiLoading ? "Evaluando..." : "Sugerencia IA"}
+                    </button>
+                  </div>
+
+                  {aiLoading && (
+                    <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl flex items-center gap-4">
+                      <Loader2 size={24} className="text-primary animate-spin shrink-0" />
+                      <div>
+                        <p className="text-xs font-black text-primary uppercase tracking-widest">Analizando respuestas...</p>
+                        <p className="text-[10px] text-muted-foreground mt-1">El modelo está evaluando el trabajo del alumno</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {aiSuggestion && !aiLoading && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-6 bg-primary/5 border border-primary/20 rounded-2xl space-y-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                          <Zap size={12} />
+                          Sugerencia del Modelo
+                        </p>
+                        <button
+                          type="button"
+                          onClick={applyAiSuggestion}
+                          className="px-4 py-2 bg-primary text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-md shadow-primary/20"
+                        >
+                          Aplicar Sugerencia
+                        </button>
+                      </div>
+
+                      {aiSuggestion.nota !== null && (
+                        <div className="flex items-center gap-3">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Nota sugerida:</span>
+                          <span className="text-3xl font-black text-primary">{aiSuggestion.nota}</span>
+                          <span className="text-[9px] text-muted-foreground font-bold">/10</span>
+                        </div>
+                      )}
+
+                      {aiSuggestion.justificacion && (
+                        <div>
+                          <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Justificación</p>
+                          <p className="text-xs font-medium text-foreground leading-relaxed">{aiSuggestion.justificacion}</p>
+                        </div>
+                      )}
+
+                      {aiSuggestion.feedback && (
+                        <div>
+                          <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Feedback para el alumno</p>
+                          <p className="text-xs font-medium text-foreground leading-relaxed italic">{aiSuggestion.feedback}</p>
+                        </div>
+                      )}
+                    </motion.div>
                   )}
                 </div>
 

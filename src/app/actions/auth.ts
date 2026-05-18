@@ -59,7 +59,13 @@ export async function loginAction(email: string, pass: string) {
 }
 
 export async function validateUserAction(userId: string) {
-  return { success: true }; // Bypass total para evitar bloqueos
+  try {
+    const user = await db.user.findUnique({ where: { id: userId }, select: { id: true, role: true } });
+    if (!user) return { success: false };
+    return { success: true, role: user.role.toLowerCase() };
+  } catch {
+    return { success: false };
+  }
 }
 
 export async function updateUserAction(id: string, data: { name?: string, email?: string }) {

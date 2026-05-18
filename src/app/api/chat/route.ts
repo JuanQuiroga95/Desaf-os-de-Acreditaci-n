@@ -5,6 +5,11 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "" });
 
 export async function POST(req: Request) {
   try {
+    const userId = req.headers.get("x-user-id");
+    if (!userId) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
     const { messages } = await req.json();
 
     const completion = await groq.chat.completions.create({

@@ -15,9 +15,11 @@ interface Message {
 }
 
 import { useUI } from "@/context/UIContext";
+import { useAuth } from "@/context/AuthContext";
 
 export function AITutor() {
   const { isAIBlocked } = useUI();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
@@ -55,7 +57,7 @@ export function AITutor() {
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-user-id": user?.id || "" },
         body: JSON.stringify({ messages: newMessages }),
       });
 

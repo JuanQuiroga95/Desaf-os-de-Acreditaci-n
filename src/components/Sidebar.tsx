@@ -9,12 +9,17 @@ import {
   MessageSquare,
   GraduationCap,
   Users,
+  Users2,
   Settings,
   PlusCircle,
   LogOut,
   User,
   Sun,
-  Moon
+  Moon,
+  Calendar,
+  Brain,
+  AlertTriangle,
+  Download,
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import Link from "next/link";
@@ -54,8 +59,11 @@ export function Sidebar() {
         return [
           { name: "Mis Clases", href: "/docente", icon: LayoutDashboard },
           { name: "Alumnos", href: "/docente/students", icon: Users },
+          { name: "Encuentros RAA", href: "/docente/encuentros", icon: Users2 },
           { name: "Crear Encuentro", href: "/docente/new-challenge", icon: PlusCircle },
           { name: "Correcciones", href: "/docente/reviews", icon: Trophy },
+          { name: "Alertas", href: "/docente/alertas", icon: AlertTriangle },
+          { name: "Exportar Actas", href: "/docente/export", icon: Download },
         ];
       default:
         return [
@@ -63,6 +71,8 @@ export function Sidebar() {
           { name: "Desafíos", href: "/desafios", icon: BookOpen },
           { name: "Logros", href: "/logros", icon: Trophy },
           { name: "Tutor IA", href: "/tutor", icon: MessageSquare },
+          { name: "Calendario", href: "/calendario", icon: Calendar },
+          { name: "Simulacro IA", href: "/simulacro", icon: Brain },
         ];
     }
   };

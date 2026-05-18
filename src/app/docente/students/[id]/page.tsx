@@ -3,8 +3,9 @@
 import React, { useEffect, useState, use } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Mail, Calendar, BookOpen, Target, CheckCircle2, Clock, AlertCircle, Award, FileText } from "lucide-react";
+import { ArrowLeft, Mail, Calendar, BookOpen, Target, CheckCircle2, Clock, AlertCircle, Award, FileText, Users2, MapPin, Laptop } from "lucide-react";
 import { getStudentLegajo } from "@/app/actions/teacher";
+import { getEncountersByStudent } from "@/app/actions/encounters";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
@@ -12,6 +13,7 @@ export default function StudentLegajoPage({ params }: { params: Promise<{ id: st
   const { id: studentId } = use(params);
   const { user, isLoading: authLoading } = useAuth();
   const [student, setStudent] = useState<any>(null);
+  const [encounters, setEncounters] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
@@ -24,10 +26,12 @@ export default function StudentLegajoPage({ params }: { params: Promise<{ id: st
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const res = await getStudentLegajo(studentId);
-      if (res.success) {
-        setStudent(res.student);
-      }
+      const [legajoRes, encountersRes] = await Promise.all([
+        getStudentLegajo(studentId),
+        getEncountersByStudent(studentId),
+      ]);
+      if (legajoRes.success) setStudent(legajoRes.student);
+      if (encountersRes.success) setEncounters(encountersRes.encounters);
     } catch (error) {
       console.error("Error cargando legajo:", error);
     } finally {
@@ -185,6 +189,78 @@ export default function StudentLegajoPage({ params }: { params: Promise<{ id: st
           </div>
         </aside>
       </div>
+
+      {/* RAA Encounters Section */}
+      <section className="mt-8 bg-card border border-border rounded-[3rem] p-10 shadow-sm">
+        <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-8 flex items-center gap-3">
+          <Users2 size={16} />
+          Historial de Encuentros RAA
+        </h2>
+        {encounters.length === 0 ? (
+          <div className="py-12 text-center border-2 border-dashed border-border rounded-[2.5rem]">
+            <Users2 className="mx-auto mb-4 text-muted-foreground opacity-20" size={40} />
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">
+              Sin encuentros registrados
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left text-[9px] font-black uppercase tracking-widest text-muted-foreground pb-4 pr-6">Materia</th>
+                  <th className="text-left text-[9px] font-black uppercase tracking-widest text-muted-foreground pb-4 pr-6">Fecha</th>
+                  <th className="text-left text-[9px] font-black uppercase tracking-widest text-muted-foreground pb-4 pr-6">Tipo</th>
+                  <th className="text-left text-[9px] font-black uppercase tracking-widest text-muted-foreground pb-4 pr-6">Estado</th>
+                  <th className="text-left text-[9px] font-black uppercase tracking-widest text-muted-foreground pb-4">Notas</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {encounters.map((enc: any) => {
+                  const statusColors: Record<string, string> = {
+                    PENDING: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+                    COMPLETED: "bg-green-500/10 text-green-600 border-green-500/20",
+                    ABSENT: "bg-red-500/10 text-red-500 border-red-500/20",
+                  };
+                  const statusLabels: Record<string, string> = {
+                    PENDING: "Pendiente",
+                    COMPLETED: "Completado",
+                    ABSENT: "Ausente",
+                  };
+                  return (
+                    <tr key={enc.id} className="hover:bg-secondary/10 transition-colors">
+                      <td className="py-4 pr-6">
+                        <span className="font-black text-sm">{enc.subject?.name ?? "—"}</span>
+                      </td>
+                      <td className="py-4 pr-6">
+                        <span className="text-[10px] font-bold text-muted-foreground">
+                          {new Date(enc.date).toLocaleDateString("es-AR")}
+                        </span>
+                      </td>
+                      <td className="py-4 pr-6">
+                        <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                          {enc.type === "PRESENCIAL" ? <MapPin size={10} /> : <Laptop size={10} />}
+                          {enc.type === "PRESENCIAL" ? "Presencial" : "Virtual"}
+                        </span>
+                      </td>
+                      <td className="py-4 pr-6">
+                        <span className={`px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${statusColors[enc.status] ?? statusColors.PENDING}`}>
+                          {statusLabels[enc.status] ?? enc.status}
+                        </span>
+                      </td>
+                      <td className="py-4">
+                        <span className="text-[10px] text-muted-foreground italic">
+                          {enc.notes || "—"}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

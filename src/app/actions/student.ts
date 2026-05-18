@@ -144,3 +144,146 @@ export async function submitChallengeResponse(challengeId: string, userId: strin
     return { success: false, message: "Error al enviar respuesta" };
   }
 }
+
+export async function getUserAchievements(userId: string) {
+  try {
+    const [progressList, user] = await Promise.all([
+      db.progress.findMany({
+        where: { userId, status: "COMPLETED" },
+        include: { challenge: { include: { subject: true } } },
+        orderBy: { createdAt: "asc" }
+      }),
+      db.user.findUnique({ where: { id: userId }, include: { enrollments: true } })
+    ]);
+
+    const totalCompleted = progressList.length;
+    const scores = progressList.filter(p => p.score !== null).map(p => p.score as number);
+    const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+    const perfectScores = scores.filter(s => s >= 9).length;
+    const subjectsWithProgress = new Set(progressList.map(p => p.challenge.subjectId)).size;
+
+    // Calcular racha de días
+    const dates = progressList.map(p => new Date(p.createdAt).toDateString());
+    const uniqueDates = [...new Set(dates)];
+    let streak = 0;
+    const today = new Date();
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      if (uniqueDates.includes(d.toDateString())) streak++;
+      else break;
+    }
+
+    const achievements = [
+      {
+        id: "primer_paso",
+        title: "Primer Paso",
+        desc: "Completaste tu primer desafío.",
+        icon: "Zap",
+        color: "text-yellow-500",
+        unlocked: totalCompleted >= 1,
+        progress: Math.min(totalCompleted, 1),
+        total: 1,
+      },
+      {
+        id: "cinco_desafios",
+        title: "En Carrera",
+        desc: "Completaste 5 desafíos.",
+        icon: "TrendingUp",
+        color: "text-blue-500",
+        unlocked: totalCompleted >= 5,
+        progress: Math.min(totalCompleted, 5),
+        total: 5,
+      },
+      {
+        id: "diez_desafios",
+        title: "Atleta del Saber",
+        desc: "Completaste 10 desafíos.",
+        icon: "Award",
+        color: "text-green-500",
+        unlocked: totalCompleted >= 10,
+        progress: Math.min(totalCompleted, 10),
+        total: 10,
+      },
+      {
+        id: "nota_perfecta",
+        title: "Excelencia Videla",
+        desc: "Obtuviste una nota mayor a 9 en al menos un desafío.",
+        icon: "Trophy",
+        color: "text-purple-500",
+        unlocked: perfectScores >= 1,
+        progress: Math.min(perfectScores, 1),
+        total: 1,
+      },
+      {
+        id: "multi_materia",
+        title: "Versátil",
+        desc: "Avanzaste en 2 o más materias.",
+        icon: "BookOpen",
+        color: "text-orange-500",
+        unlocked: subjectsWithProgress >= 2,
+        progress: Math.min(subjectsWithProgress, 2),
+        total: 2,
+      },
+      {
+        id: "racha_3",
+        title: "Constancia",
+        desc: "Estudiaste 3 días seguidos.",
+        icon: "Flame",
+        color: "text-red-500",
+        unlocked: streak >= 3,
+        progress: Math.min(streak, 3),
+        total: 3,
+      },
+      {
+        id: "promedio_alto",
+        title: "Alumno Destacado",
+        desc: "Mantuviste un promedio mayor a 7 en tus calificaciones.",
+        icon: "Star",
+        color: "text-pink-500",
+        unlocked: avgScore >= 7 && scores.length >= 3,
+        progress: scores.length >= 3 ? Math.round(avgScore * 10) : 0,
+        total: 70,
+      },
+    ];
+
+    return { success: true, achievements, stats: { totalCompleted, avgScore: Math.round(avgScore * 10) / 10, streak, subjectsWithProgress } };
+  } catch (error) {
+    console.error("Error getting achievements:", error);
+    return { success: false, achievements: [], stats: { totalCompleted: 0, avgScore: 0, streak: 0, subjectsWithProgress: 0 } };
+  }
+}
+
+export async function getAllChallengesWithProgress(userId: string) {
+  try {
+    const subjects = await db.subject.findMany({
+      include: {
+        challenges: {
+          include: {
+            progress: { where: { userId } }
+          }
+        }
+      }
+    });
+    return { success: true, subjects };
+  } catch (error) {
+    return { success: false, subjects: [] };
+  }
+}
+
+export async function getMyExamDates(userId: string) {
+  try {
+    const enrollments = await db.enrollment.findMany({ where: { studentId: userId }, select: { subjectId: true } });
+    const subjectIds = enrollments.map(e => e.subjectId);
+
+    const examDates = await db.examDate.findMany({
+      where: subjectIds.length > 0 ? { subjectId: { in: subjectIds } } : {},
+      include: { subject: true },
+      orderBy: { date: "asc" }
+    });
+
+    return { success: true, examDates };
+  } catch (error) {
+    return { success: false, examDates: [] };
+  }
+}
