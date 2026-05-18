@@ -79,7 +79,6 @@ export async function getTeacherDashboard(teacherId: string) {
           challengesCount: s._count.challenges
         };
       })),
-      })),
       pendingSubmissions,
       metrics: {
         promedioGeneral,
