@@ -32,7 +32,11 @@
       "mcp__plugin_claude-mem_mcp-search__smart_search",
       "mcp__plugin_claude-mem_mcp-search__search",
       "PowerShell(Get-Content *)",
-      "PowerShell(Get-ChildItem -LiteralPath \"C:\\\\Users\\\\Docente\\\\Desktop\\\\Proyectos\\\\previas\" -Filter \".env.local\" -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })"
+      "PowerShell(Get-ChildItem -LiteralPath \"C:\\\\Users\\\\Docente\\\\Desktop\\\\Proyectos\\\\previas\" -Filter \".env.local\" -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Docente\\\\Desktop\\\\Proyectos\\\\previas\" -Force)",
+      "Bash(Select-Object Name, Mode)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(git commit *)"
     ]
   }
 }

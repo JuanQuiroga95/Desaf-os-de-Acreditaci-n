@@ -32,6 +32,7 @@ export default function DesafiosPage() {
   const { user } = useAuth();
   const [subjects, setSubjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingMessage, setLoadingMessage] = useState("Cargando Desafíos...");
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<"ALL" | ChallengeType>("ALL");
   const [filterOpen, setFilterOpen] = useState(false);
@@ -40,6 +41,17 @@ export default function DesafiosPage() {
   useEffect(() => {
     loadData();
   }, [user]);
+
+  useEffect(() => {
+    const messages = ["Buscando desafíos...", "Preparando la arena...", "Cargando competencias...", "Afilando los lápices..."];
+    let i = Math.floor(Math.random() * messages.length);
+    setLoadingMessage(messages[i]);
+    const interval = setInterval(() => {
+      i = (i + 1) % messages.length;
+      setLoadingMessage(messages[i]);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -196,15 +208,21 @@ export default function DesafiosPage() {
           );
         })}
 
-        {isLoading &&
-          Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="bg-card border border-border p-10 rounded-[2.5rem] animate-pulse">
-              <div className="w-14 h-14 bg-muted rounded-2xl mb-8" />
-              <div className="h-8 bg-muted rounded-lg w-3/4 mb-4" />
-              <div className="h-4 bg-muted rounded-lg w-full mb-2" />
-              <div className="h-4 bg-muted rounded-lg w-5/6" />
+        {isLoading && (
+          <>
+            <div className="col-span-full mb-8 text-center animate-pulse">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">{loadingMessage}</p>
             </div>
-          ))}
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="bg-card border border-border p-10 rounded-[2.5rem] animate-pulse">
+                <div className="w-14 h-14 bg-muted rounded-2xl mb-8" />
+                <div className="h-8 bg-muted rounded-lg w-3/4 mb-4" />
+                <div className="h-4 bg-muted rounded-lg w-full mb-2" />
+                <div className="h-4 bg-muted rounded-lg w-5/6" />
+              </div>
+            ))}
+          </>
+        )}
 
         {!isLoading && filtered.length === 0 && (
           <div className="col-span-full p-20 text-center border-2 border-dashed border-border rounded-[3rem] opacity-50">

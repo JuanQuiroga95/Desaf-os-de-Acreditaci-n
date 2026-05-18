@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import { cn } from "@/lib/utils";
@@ -27,13 +27,43 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getStudentDashboard } from "@/app/actions/student";
+import confetti from "canvas-confetti";
+import { useToast } from "@/context/ToastContext";
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { showToast } = useToast();
   const [progress, setProgress] = React.useState(0);
+  const [clickCount, setClickCount] = React.useState(0);
+  const clickTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleLogoClick = () => {
+    setClickCount((prev) => {
+      const newCount = prev + 1;
+      if (newCount >= 5) {
+        confetti({
+          particleCount: 200,
+          spread: 100,
+          origin: { y: 0.5 },
+          colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
+          zIndex: 9999
+        });
+        showToast("¡Estás on fire! 🔥 Sigue así.", "success");
+        return 0;
+      }
+      return newCount;
+    });
+
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+    }
+    clickTimeoutRef.current = setTimeout(() => {
+      setClickCount(0);
+    }, 1000);
+  };
 
   React.useEffect(() => {
     if (user?.role === "student" && user?.id) {
@@ -91,7 +121,10 @@ export function Sidebar() {
   return (
     <aside className="w-64 h-screen border-r border-border bg-card flex flex-col fixed left-0 top-0 z-50">
       <div className="p-6 flex items-center gap-3">
-        <div className="w-12 h-12 relative overflow-hidden rounded-full border border-border shadow-sm bg-white flex items-center justify-center p-0.5">
+        <div 
+          onClick={handleLogoClick}
+          className="w-12 h-12 relative overflow-hidden rounded-full border border-border shadow-sm bg-white flex items-center justify-center p-0.5 cursor-pointer hover:scale-105 transition-transform"
+        >
           <img 
             src="/logo.png" 
             alt="Escuela Ricardo Videla" 

@@ -51,6 +51,7 @@ export default function LogrosPage() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [stats, setStats] = useState<Stats>({ totalCompleted: 0, avgScore: 0, streak: 0, subjectsWithProgress: 0 });
   const [loading, setLoading] = useState(true);
+  const [loadingMessage, setLoadingMessage] = useState("Cargando Logros...");
 
   useEffect(() => {
     if (!isLoading && (!user || user.role !== "student")) {
@@ -70,11 +71,24 @@ export default function LogrosPage() {
     }
   }, [user]);
 
+  useEffect(() => {
+    const messages = ["Contando tus medallas...", "Puliendo los trofeos...", "Calculando tu racha de victorias...", "Revisando tu vitrina..."];
+    let i = Math.floor(Math.random() * messages.length);
+    setLoadingMessage(messages[i]);
+    const interval = setInterval(() => {
+      i = (i + 1) % messages.length;
+      setLoadingMessage(messages[i]);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
+
   if (isLoading || loading) {
     return (
       <div className="p-8 max-w-7xl mx-auto">
         <div className="animate-pulse space-y-8">
-          <div className="h-16 bg-secondary rounded-[2.5rem] w-1/3" />
+          <div className="h-16 bg-secondary rounded-[2.5rem] w-1/3 flex items-center px-8">
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">{loadingMessage}</p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[...Array(7)].map((_, i) => (
               <div key={i} className="h-64 bg-secondary rounded-[2.5rem]" />

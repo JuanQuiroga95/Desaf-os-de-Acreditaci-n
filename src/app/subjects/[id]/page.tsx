@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useEffect, useState, use } from "react";
+import confetti from "canvas-confetti";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { BookOpen, CheckCircle2, Play, ArrowLeft, Award, HelpCircle, Send, FileText, Target, Video, Dumbbell, MessageSquare, ClipboardList, BookMarked, Link2, Copy, Download, X as XIcon, Sparkles, Clock, Paperclip, FileUp, Loader2, Calculator } from "lucide-react";
@@ -22,8 +23,20 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
   const [isUploading, setIsUploading] = useState(false);
   const [subject, setSubject] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingMessage, setLoadingMessage] = useState("Cargando Materia...");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedChallenge, setSelectedChallenge] = useState<any>(null);
+
+  useEffect(() => {
+    const messages = ["Afilando los lápices...", "Preparando tus desafíos...", "Calculando probabilidades de éxito...", "Conectando neuronas...", "Buscando los apuntes perdidos..."];
+    let i = Math.floor(Math.random() * messages.length);
+    setLoadingMessage(messages[i]);
+    const interval = setInterval(() => {
+      i = (i + 1) % messages.length;
+      setLoadingMessage(messages[i]);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (selectedChallenge) {
@@ -92,6 +105,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
     try {
       const res = await submitChallengeResponse(selectedChallenge.id, user!.id, answers);
       if (res.success) {
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         if (res.score !== undefined && res.score !== null) {
           showToast(`¡Desafío enviado! ${res.feedback} Calificación: ${res.score}/10`, "success");
         } else {
@@ -114,7 +128,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
     }
   }, [authLoading, isLoading, user, router]);
 
-  if (authLoading || isLoading) return <div className="p-20 text-center font-black animate-pulse uppercase tracking-widest text-primary">Cargando Materia...</div>;
+  if (authLoading || isLoading) return <div className="p-20 text-center font-black animate-pulse uppercase tracking-widest text-primary">{loadingMessage}</div>;
   if (!user) return null;
 
   return (
