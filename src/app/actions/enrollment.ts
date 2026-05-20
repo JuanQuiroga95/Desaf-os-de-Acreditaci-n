@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/session";
 
 export async function getSubjectEnrollments(subjectId: string) {
   try {
@@ -17,6 +18,7 @@ export async function getSubjectEnrollments(subjectId: string) {
 }
 
 export async function enrollStudent(studentId: string, subjectId: string) {
+  await requireAuth(["admin", "teacher"]);
   try {
     await db.enrollment.upsert({
       where: { studentId_subjectId: { studentId, subjectId } },
@@ -31,6 +33,7 @@ export async function enrollStudent(studentId: string, subjectId: string) {
 }
 
 export async function unenrollStudent(studentId: string, subjectId: string) {
+  await requireAuth(["admin", "teacher"]);
   try {
     await db.enrollment.delete({
       where: { studentId_subjectId: { studentId, subjectId } },

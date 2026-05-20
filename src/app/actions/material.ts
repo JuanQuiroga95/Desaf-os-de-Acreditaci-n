@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/session";
 
 export async function getMaterialsBySubject(subjectId: string) {
   try {
@@ -24,6 +25,7 @@ export async function createMaterial(data: {
   fileUrl?: string;
   challengeId?: string;
 }) {
+  await requireAuth(["teacher", "admin"]);
   try {
     const material = await db.material.create({ data });
     revalidatePath(`/docente/materiales/${data.subjectId}`);
@@ -39,6 +41,7 @@ export async function updateMaterial(
   subjectId: string,
   data: { title?: string; content?: string; level?: string; fileUrl?: string; visible?: boolean }
 ) {
+  await requireAuth(["teacher", "admin"]);
   try {
     const material = await db.material.update({ where: { id }, data });
     revalidatePath(`/docente/materiales/${subjectId}`);
@@ -50,6 +53,7 @@ export async function updateMaterial(
 }
 
 export async function deleteMaterial(id: string, subjectId: string) {
+  await requireAuth(["teacher", "admin"]);
   try {
     await db.material.delete({ where: { id } });
     revalidatePath(`/docente/materiales/${subjectId}`);

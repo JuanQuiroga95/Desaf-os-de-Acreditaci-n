@@ -2,60 +2,45 @@
 
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { createSession, destroySession, getSession } from "@/lib/session";
 
 export async function loginAction(email: string, pass: string) {
   try {
-    console.log(`Intentando login para: ${email}`);
-    
-    // Verificar conexión a DB
-    try {
-      await db.$connect();
-    } catch (dbError) {
-      console.error("Error de conexión a base de datos:", dbError);
-      return { success: false, message: "Error de conexión a base de datos" };
-    }
-
     const user = await db.user.findUnique({ where: { email } });
     
     if (!user) {
-      console.log(`Usuario no encontrado: ${email}`);
       return { success: false, message: "Usuario no encontrado" };
     }
 
-    console.log(`Usuario encontrado: ${user.email}, rol: ${user.role}`);
-
-    // Login simplificado para asegurar entrada inmediata
-    // Probamos tanto el pass plano como el hashed (por si el seed no impactó bien)
-    if (user.password === pass) {
-      console.log("Login exitoso (password plano)");
-      return { 
-        success: true, 
-        user: { id: user.id, name: user.name, role: user.role.toLowerCase(), email: user.email } 
-      };
+    const isMatch = await bcrypt.compare(pass, user.password);
+    if (!isMatch) {
+      return { success: false, message: "Credenciales inválidas" };
     }
 
-    // Si no es plano, probamos con bcrypt
-    try {
-      const isMatch = await bcrypt.compare(pass, user.password);
-      if (isMatch) {
-        console.log("Login exitoso (bcrypt)");
-        return { 
-          success: true, 
-          user: { id: user.id, name: user.name, role: user.role.toLowerCase(), email: user.email } 
-        };
-      }
-    } catch (bcryptError) {
-      console.error("Error al comparar con bcrypt:", bcryptError);
-    }
+    const sessionUser = { id: user.id, name: user.name, role: user.role.toLowerCase() as "student" | "teacher" | "admin", email: user.email };
+    
+    // Create secure HTTP-only cookie session
+    await createSession(sessionUser);
 
-    console.log("Credenciales inválidas");
-    return { success: false, message: "Credenciales inválidas" };
+    return { 
+      success: true, 
+      user: sessionUser
+    };
   } catch (error) {
-    console.error("Login Error Crítico:", error);
-    // Retornamos el error más descriptivo posible para debug
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return { success: false, message: `Error de servidor: ${errorMessage}` };
+    console.error("Login Error:", error);
+    return { success: false, message: "Error de servidor" };
   }
+}
+
+export async function logoutAction() {
+  await destroySession();
+  return { success: true };
+}
+
+export async function getSessionAction() {
+  const session = await getSession();
+  if (!session) return { success: false };
+  return { success: true, user: session };
 }
 
 export async function validateUserAction(userId: string) {
@@ -69,14 +54,19 @@ export async function validateUserAction(userId: string) {
 }
 
 export async function updateUserAction(id: string, data: { name?: string, email?: string }) {
+  const session = await getSession();
+  if (!session || session.id !== id) return { success: false, message: "No autorizado" };
+
   try {
     const user = await db.user.update({
       where: { id },
       data
     });
+    const updatedSession = { id: user.id, name: user.name, role: user.role.toLowerCase() as "student" | "teacher" | "admin", email: user.email };
+    await createSession(updatedSession);
     return {
       success: true,
-      user: { id: user.id, name: user.name, role: user.role.toLowerCase(), email: user.email }
+      user: updatedSession
     };
   } catch (error) {
     console.error("Error updating user:", error);
@@ -85,11 +75,14 @@ export async function updateUserAction(id: string, data: { name?: string, email?
 }
 
 export async function updatePasswordAction(id: string, currentPassword: string, newPassword: string) {
+  const session = await getSession();
+  if (!session || session.id !== id) return { success: false, message: "No autorizado" };
+
   try {
     const user = await db.user.findUnique({ where: { id } });
     if (!user) return { success: false, message: "Usuario no encontrado" };
 
-    const isMatch = user.password === currentPassword || await bcrypt.compare(currentPassword, user.password);
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) return { success: false, message: "La contraseña actual es incorrecta" };
 
     const hashed = await bcrypt.hash(newPassword, 10);
@@ -100,4 +93,3 @@ export async function updatePasswordAction(id: string, currentPassword: string, 
     return { success: false, message: "Error al actualizar contraseña" };
   }
 }
-

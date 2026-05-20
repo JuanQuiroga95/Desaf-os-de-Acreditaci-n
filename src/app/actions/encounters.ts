@@ -1,6 +1,7 @@
 "use server";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/session";
 
 export async function createEncounter(data: {
   date: string;
@@ -11,6 +12,7 @@ export async function createEncounter(data: {
   studentId: string;
   teacherId: string;
 }) {
+  await requireAuth(["teacher", "admin"]);
   try {
     const encounter = await db.encounter.create({
       data: {
@@ -32,6 +34,7 @@ export async function createEncounter(data: {
 }
 
 export async function updateEncounterStatus(id: string, status: string) {
+  await requireAuth(["teacher", "admin"]);
   try {
     await db.encounter.update({ where: { id }, data: { status } });
     revalidatePath("/docente/encuentros");
@@ -42,6 +45,7 @@ export async function updateEncounterStatus(id: string, status: string) {
 }
 
 export async function deleteEncounter(id: string) {
+  await requireAuth(["teacher", "admin"]);
   try {
     await db.encounter.delete({ where: { id } });
     revalidatePath("/docente/encuentros");
@@ -90,6 +94,7 @@ export async function createExamDate(data: {
   notes?: string;
   subjectId: string;
 }) {
+  await requireAuth(["teacher", "admin"]);
   try {
     const examDate = await db.examDate.create({
       data: {
@@ -109,6 +114,7 @@ export async function createExamDate(data: {
 }
 
 export async function deleteExamDate(id: string) {
+  await requireAuth(["teacher", "admin"]);
   try {
     await db.examDate.delete({ where: { id } });
     revalidatePath("/admin/subjects");

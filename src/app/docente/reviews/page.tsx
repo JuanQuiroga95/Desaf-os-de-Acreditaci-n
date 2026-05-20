@@ -162,6 +162,11 @@ export default function TeacherReviewsPage() {
                         {sub.challengeType === "DIAGNOSTICO" ? "Diagnóstico" : "Examen Final"}
                       </span>
                     )}
+                    {sub.attempts > 1 && (
+                      <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-500 border-blue-500/20">
+                        Intento {sub.attempts}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

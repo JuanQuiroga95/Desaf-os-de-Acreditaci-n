@@ -17,22 +17,20 @@ const ThemeContext = createContext<ThemeContextType>({
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("dark");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("videla_theme") as Theme | null;
-    if (stored === "light" || stored === "dark") {
-      setThemeState(stored);
+  const [theme, setThemeState] = useState<Theme>(() => {
+    // Read from localStorage synchronously during init to avoid FOUC
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("videla_theme") as Theme | null;
+      if (stored === "light" || stored === "dark") return stored;
     }
-    setMounted(true);
-  }, []);
+    return "dark";
+  });
 
+  // Apply theme attribute immediately on mount and changes
   useEffect(() => {
-    if (!mounted) return;
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("videla_theme", theme);
-  }, [theme, mounted]);
+  }, [theme]);
 
   const setTheme = (t: Theme) => setThemeState(t);
   const toggleTheme = () => setThemeState((prev) => (prev === "dark" ? "light" : "dark"));

@@ -23,7 +23,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
       {!isLoginPage && user && <Sidebar />}
       <main className={cn(
         "flex-1 min-h-screen bg-background transition-all duration-300",
-        !isLoginPage && user ? "ml-64" : ""
+        !isLoginPage && user ? "lg:ml-64 pt-16 lg:pt-0" : ""
       )}>
         {children}
       </main>

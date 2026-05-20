@@ -3,10 +3,12 @@
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
+import { requireAuth } from "@/lib/session";
 
 // --- GESTIÓN DE USUARIOS (ADMIN) ---
 
 export async function createUser(name: string, email: string, pass: string, role: "ADMIN" | "TEACHER" | "STUDENT") {
+  await requireAuth(["admin"]);
   try {
     const hashedPassword = await bcrypt.hash(pass, 10);
     const user = await db.user.create({
@@ -20,6 +22,7 @@ export async function createUser(name: string, email: string, pass: string, role
 }
 
 export async function updateUser(id: string, data: { name?: string, email?: string, role?: "ADMIN" | "TEACHER" | "STUDENT" }) {
+  await requireAuth(["admin"]);
   try {
     const user = await db.user.update({
       where: { id },
@@ -33,6 +36,7 @@ export async function updateUser(id: string, data: { name?: string, email?: stri
 }
 
 export async function deleteUser(id: string) {
+  await requireAuth(["admin"]);
   try {
     await db.user.delete({ where: { id } });
     revalidatePath("/admin");
@@ -96,6 +100,7 @@ export async function getDashboardStats() {
 // --- GESTIÓN DE MATERIAS & DESAFÍOS ---
 
 export async function createSubject(name: string, description: string, teacherId: string) {
+  await requireAuth(["admin"]);
   try {
     const subject = await db.subject.create({
       data: { name, description, teacherId }
@@ -108,6 +113,7 @@ export async function createSubject(name: string, description: string, teacherId
 }
 
 export async function updateSubject(id: string, data: { name?: string, description?: string, teacherId?: string }) {
+  await requireAuth(["admin"]);
   try {
     const subject = await db.subject.update({
       where: { id },
@@ -121,6 +127,7 @@ export async function updateSubject(id: string, data: { name?: string, descripti
 }
 
 export async function deleteSubject(id: string) {
+  await requireAuth(["admin"]);
   try {
     await db.subject.delete({ where: { id } });
     revalidatePath("/admin");
@@ -131,6 +138,7 @@ export async function deleteSubject(id: string) {
 }
 
 export async function createChallenge(subjectId: string, title: string, objective: string, content: any, type: any = "REGULAR", fileUrl?: string) {
+  await requireAuth(["admin", "teacher"]);
   try {
     const challenge = await db.challenge.create({
       data: { subjectId, title, objective, content, type, fileUrl }
@@ -144,6 +152,7 @@ export async function createChallenge(subjectId: string, title: string, objectiv
 }
 
 export async function updateChallenge(id: string, subjectId: string, data: { title?: string, objective?: string, content?: any, type?: any, fileUrl?: string }) {
+  await requireAuth(["admin", "teacher"]);
   try {
     const challenge = await db.challenge.update({
       where: { id },
@@ -159,6 +168,7 @@ export async function updateChallenge(id: string, subjectId: string, data: { tit
 }
 
 export async function deleteChallenge(id: string, subjectId: string) {
+  await requireAuth(["admin", "teacher"]);
   try {
     await db.challenge.delete({ where: { id } });
     revalidatePath("/docente");

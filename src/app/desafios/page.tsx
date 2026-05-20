@@ -55,14 +55,20 @@ export default function DesafiosPage() {
 
   const loadData = async () => {
     setIsLoading(true);
-    if (user?.role === "STUDENT") {
-      const result = await getAllChallengesWithProgress(user.id);
-      setSubjects(result.subjects);
-    } else {
-      const result = await getAllSubjects();
-      setSubjects(result);
+    try {
+      if (user?.role === "student") {
+        const result = await getAllChallengesWithProgress(user.id);
+        setSubjects(result.subjects || []);
+      } else {
+        const result = await getAllSubjects();
+        setSubjects(result || []);
+      }
+    } catch (error) {
+      console.error("Error loading data:", error);
+      showToast("Error de conexión al cargar los desafíos", "error");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   // Close dropdown on outside click
@@ -147,7 +153,7 @@ export default function DesafiosPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filtered.map((challenge: any) => {
           const isCompleted =
-            user?.role === "STUDENT" &&
+            user?.role === "student" &&
             challenge.progress?.length > 0 &&
             challenge.progress[0].status === "COMPLETED";
           const challengeType: ChallengeType = challenge.type as ChallengeType;
@@ -171,7 +177,7 @@ export default function DesafiosPage() {
                     {TYPE_LABELS[challengeType] || challenge.type}
                   </span>
                   {/* Completion badge (students only) */}
-                  {user?.role === "STUDENT" && (
+                  {user?.role === "student" && (
                     isCompleted ? (
                       <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border bg-green-500/20 text-green-400 border-green-500/30 flex items-center gap-1">
                         <CheckCircle2 size={10} />

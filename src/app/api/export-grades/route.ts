@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getVerifiedSession } from "@/lib/session";
+import { z } from "zod";
+
+const ExportSchema = z.object({
+  subjectId: z.string().min(1, "El ID de la materia es requerido")
+});
 
 export async function POST(req: Request) {
-  const userId = req.headers.get("x-user-id");
-  if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-
-  const { subjectId } = await req.json();
+  const session = await getVerifiedSession();
+  if (!session || (session.role !== "teacher" && session.role !== "admin")) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
 
   try {
+    const body = await req.json();
+    const { subjectId } = ExportSchema.parse(body);
     const subject = await db.subject.findUnique({
       where: { id: subjectId },
       include: {
@@ -75,6 +83,9 @@ export async function POST(req: Request) {
       }
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.errors[0].message }, { status: 400 });
+    }
     console.error("Export error:", error);
     return NextResponse.json({ error: "Error al exportar" }, { status: 500 });
   }

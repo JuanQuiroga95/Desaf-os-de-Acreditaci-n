@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { requireAuth } from "@/lib/session";
 
 export async function getTeacherDashboard(teacherId: string) {
   try {
@@ -32,6 +33,7 @@ export async function getTeacherDashboard(teacherId: string) {
           challengeContent: c.content,
           subjectName: s.name,
           answers: p.answers,
+          attempts: p.attempts,
           createdAt: p.createdAt
         }))
       )
@@ -58,27 +60,29 @@ export async function getTeacherDashboard(teacherId: string) {
       participacion = Math.min(100, Math.round((activeStudents / uniqueEnrolledStudents) * 100));
     }
 
+    // Get enrollment counts per subject in a single query instead of N+1
+    const subjectEnrollments = await db.enrollment.groupBy({
+      by: ['subjectId'],
+      where: { subjectId: { in: subjects.map(s => s.id) } },
+      _count: { studentId: true }
+    });
+    const enrollCountMap = new Map(subjectEnrollments.map(e => [e.subjectId, e._count.studentId]));
+
     return { 
       success: true, 
-      subjects: await Promise.all(subjects.map(async (s) => {
-        // Count from progress
-        const uniqueStudents = new Set();
+      subjects: subjects.map(s => {
+        const uniqueStudents = new Set<string>();
         s.challenges.forEach(c => {
           c.progress.forEach(p => uniqueStudents.add(p.userId));
-        });
-        
-        // Count from enrollments (this is the most accurate for assigned students)
-        const enrollments = await db.enrollment.count({
-          where: { subjectId: s.id }
         });
         
         return {
           id: s.id,
           name: s.name,
-          studentsCount: Math.max(uniqueStudents.size, enrollments),
+          studentsCount: Math.max(uniqueStudents.size, enrollCountMap.get(s.id) || 0),
           challengesCount: s._count.challenges
         };
-      })),
+      }),
       pendingSubmissions,
       metrics: {
         promedioGeneral,
@@ -92,11 +96,24 @@ export async function getTeacherDashboard(teacherId: string) {
 }
 
 export async function gradeSubmission(progressId: string, score: number, feedback: string) {
+  await requireAuth(["teacher", "admin"]);
   try {
-    await db.progress.update({
+    const progress = await db.progress.update({
       where: { id: progressId },
-      data: { score, feedback }
+      data: { score, feedback },
+      include: { challenge: true }
     });
+    
+    // Notify student
+    const { createNotification } = await import("./notifications");
+    await createNotification(
+      progress.userId,
+      "Desafío Corregido",
+      `Tu entrega de "${progress.challenge.title}" ha sido calificada con un ${score}.`,
+      "GRADE",
+      "/desafios"
+    );
+
     return { success: true };
   } catch (error) {
     console.error("Grading error:", error);
@@ -106,77 +123,43 @@ export async function gradeSubmission(progressId: string, score: number, feedbac
 
 export async function getTeacherStudents(teacherId: string) {
   try {
+    // Single query that gets both enrollments and progress-based students
     const subjects = await db.subject.findMany({
       where: { teacherId },
       include: {
+        enrollments: {
+          include: { student: { select: { id: true, name: true, email: true } } }
+        },
         challenges: {
           include: {
             progress: {
-              include: {
-                user: true
-              }
+              include: { user: { select: { id: true, name: true, email: true } } }
             }
           }
         }
       }
     });
 
-    const studentsMap = new Map();
+    const studentsMap = new Map<string, { id: string; name: string; email: string; subjects: Set<string> }>();
 
-    // 1. Get students from enrollments (enrolled but maybe haven't started challenges)
-    const subjectEnrollments = await db.subject.findMany({
-      where: { teacherId },
-      include: {
-        enrollments: {
-          include: { student: true }
-        }
-      }
-    });
-
-    subjectEnrollments.forEach(subject => {
+    subjects.forEach(subject => {
+      // From enrollments
       subject.enrollments.forEach(enrollment => {
-        const student = enrollment.student;
-        if (!studentsMap.has(student.id)) {
-          studentsMap.set(student.id, {
-            id: student.id,
-            name: student.name,
-            email: student.email,
-            subjects: new Set([subject.name])
-          });
+        const s = enrollment.student;
+        if (!studentsMap.has(s.id)) {
+          studentsMap.set(s.id, { id: s.id, name: s.name, email: s.email, subjects: new Set([subject.name]) });
         } else {
-          studentsMap.get(student.id).subjects.add(subject.name);
+          studentsMap.get(s.id)!.subjects.add(subject.name);
         }
       });
-    });
 
-    // 2. Get students from progress (in case there are progress records without explicit enrollment, though rare)
-    const subjectsWithProgress = await db.subject.findMany({
-      where: { teacherId },
-      include: {
-        challenges: {
-          include: {
-            progress: {
-              include: {
-                user: true
-              }
-            }
-          }
-        }
-      }
-    });
-
-    subjectsWithProgress.forEach(subject => {
+      // From progress (in case no enrollment exists)
       subject.challenges.forEach(challenge => {
         challenge.progress.forEach(p => {
           if (!studentsMap.has(p.user.id)) {
-            studentsMap.set(p.user.id, {
-              id: p.user.id,
-              name: p.user.name,
-              email: p.user.email,
-              subjects: new Set([subject.name])
-            });
+            studentsMap.set(p.user.id, { id: p.user.id, name: p.user.name, email: p.user.email, subjects: new Set([subject.name]) });
           } else {
-            studentsMap.get(p.user.id).subjects.add(subject.name);
+            studentsMap.get(p.user.id)!.subjects.add(subject.name);
           }
         });
       });
@@ -207,6 +190,7 @@ export async function updateSubjectName(subjectId: string, newName: string) {
   }
 }
 export async function resetChallengeSubmissions(challengeId: string) {
+  await requireAuth(["teacher", "admin"]);
   try {
     await db.progress.deleteMany({
       where: { challengeId }

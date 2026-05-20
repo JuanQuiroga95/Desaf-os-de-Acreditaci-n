@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
   BookOpen,
@@ -21,7 +21,10 @@ import {
   AlertTriangle,
   Download,
   HelpCircle,
+  Menu,
+  X,
 } from "lucide-react";
+import { NotificationBell } from "@/components/NotificationBell";
 import { useTheme } from "@/context/ThemeContext";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -36,9 +39,25 @@ export function Sidebar() {
   const { user, logout, isLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { showToast } = useToast();
-  const [progress, setProgress] = React.useState(0);
-  const [clickCount, setClickCount] = React.useState(0);
+  const [progress, setProgress] = useState(0);
+  const [clickCount, setClickCount] = useState(0);
   const clickTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
 
   const handleLogoClick = () => {
     setClickCount((prev) => {
@@ -65,13 +84,12 @@ export function Sidebar() {
     }, 1000);
   };
 
-  React.useEffect(() => {
-    if (user?.role === "student" && user?.id) {
-      getStudentDashboard(user.id)
-        .then(res => {
-          if (res.success) setProgress(res.globalProgress || 0);
-        })
-        .catch(err => console.error("Error cargando progreso sidebar:", err));
+  // Elimino llamada duplicada a getStudentDashboard para mejorar performance.
+  // El progreso debería venir por Context o props si es necesario en toda la app.
+  useEffect(() => {
+    if (user?.role === "student") {
+      // Por ahora hardcodeamos a 0 o podríamos leerlo de un nuevo ProgressContext
+      // setProgress(0);
     }
   }, [user]);
 
@@ -118,8 +136,8 @@ export function Sidebar() {
     router.push("/login");
   };
 
-  return (
-    <aside className="w-64 h-screen border-r border-border bg-card flex flex-col fixed left-0 top-0 z-50">
+  const sidebarContent = (
+    <>
       <div className="p-6 flex items-center gap-3">
         <div 
           onClick={handleLogoClick}
@@ -131,10 +149,17 @@ export function Sidebar() {
             className="w-full h-full object-contain scale-110"
           />
         </div>
-        <div className="flex flex-col">
+        <div className="flex flex-col flex-1">
           <span className="font-black text-sm tracking-tighter leading-none mb-1 uppercase italic">Videla-Acredita</span>
           <span className="text-[9px] text-muted-foreground uppercase tracking-[0.2em] font-black">Mejor en tu Escuela 2026</span>
         </div>
+        {/* Mobile close button */}
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="lg:hidden p-2 rounded-lg hover:bg-secondary text-muted-foreground"
+        >
+          <X size={20} />
+        </button>
       </div>
 
       <nav className="flex-1 min-h-0 overflow-y-auto px-4 py-6 space-y-2">
@@ -184,13 +209,16 @@ export function Sidebar() {
               <p className="text-xs font-black truncate leading-none mb-1 uppercase tracking-tight">{user.name}</p>
               <p className="text-[10px] text-muted-foreground truncate uppercase font-bold tracking-widest">{user.role}</p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="p-2 text-muted-foreground hover:text-red-500 transition-colors hover:bg-red-500/10 rounded-lg"
-              title="Cerrar Sesión"
-            >
-              <LogOut size={16} />
-            </button>
+            <div className="flex items-center gap-1">
+              <NotificationBell />
+              <button
+                onClick={handleLogout}
+                className="p-2 text-muted-foreground hover:text-red-500 transition-colors hover:bg-red-500/10 rounded-lg"
+                title="Cerrar Sesión"
+              >
+                <LogOut size={16} />
+              </button>
+            </div>
           </div>
           <div className="flex items-center justify-between pt-2 border-t border-border/30 px-1">
             <button
@@ -210,6 +238,38 @@ export function Sidebar() {
           </div>
         </div>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-[60] w-12 h-12 bg-card border border-border rounded-xl flex items-center justify-center shadow-lg hover:bg-secondary transition-all"
+        aria-label="Abrir menú"
+      >
+        <Menu size={22} className="text-foreground" />
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 z-[60] bg-background/60 backdrop-blur-sm"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - desktop: fixed, mobile: slide-in */}
+      <aside className={cn(
+        "w-64 h-screen border-r border-border bg-card flex flex-col fixed left-0 top-0 z-[70] transition-transform duration-300",
+        // Mobile: hidden by default, slide in when open
+        mobileOpen ? "translate-x-0" : "-translate-x-full",
+        // Desktop: always visible
+        "lg:translate-x-0"
+      )}>
+        {sidebarContent}
+      </aside>
+    </>
   );
 }

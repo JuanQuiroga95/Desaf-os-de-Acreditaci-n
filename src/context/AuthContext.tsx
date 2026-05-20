@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { loginAction, validateUserAction } from "@/app/actions/auth";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { loginAction, logoutAction, getSessionAction } from "@/app/actions/auth";
 
 type Role = "student" | "teacher" | "admin" | null;
 
@@ -18,47 +17,38 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   isLoading: boolean;
+  refreshSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("videla_user");
-      return saved ? JSON.parse(saved) : null;
-    }
-    return null;
-  });
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const savedUser = typeof window !== "undefined"
-      ? localStorage.getItem("videla_user")
-      : null;
-
-    if (savedUser) {
-      const parsed = JSON.parse(savedUser) as User;
-      validateUserAction(parsed.id).then((res) => {
-        if (!res.success) {
-          setUser(null);
-          localStorage.removeItem("videla_user");
-        }
-        setIsLoading(false);
-      }).catch(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
+  const refreshSession = useCallback(async () => {
+    try {
+      const res = await getSessionAction();
+      if (res.success && res.user) {
+        setUser(res.user as User);
+      } else {
+        setUser(null);
+      }
+    } catch {
+      setUser(null);
     }
   }, []);
+
+  useEffect(() => {
+    refreshSession().finally(() => setIsLoading(false));
+  }, [refreshSession]);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     try {
       const result = await loginAction(email, password);
 
       if (result.success && result.user) {
-        const userToSave = result.user as User;
-        setUser(userToSave);
-        localStorage.setItem("videla_user", JSON.stringify(userToSave));
+        setUser(result.user as User);
         return { success: true };
       }
 
@@ -69,13 +59,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await logoutAction();
     setUser(null);
-    localStorage.removeItem("videla_user");
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading, refreshSession }}>
       {children}
     </AuthContext.Provider>
   );

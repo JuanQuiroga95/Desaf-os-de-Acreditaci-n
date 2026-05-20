@@ -163,6 +163,7 @@ export async function submitChallengeResponse(challengeId: string, userId: strin
       update: {
         status: "COMPLETED",
         answers: answers,
+        attempts: { increment: 1 },
         ...(score !== null && { score }),
         ...(feedback !== null && { feedback })
       },
@@ -173,8 +174,26 @@ export async function submitChallengeResponse(challengeId: string, userId: strin
         answers: answers,
         score,
         feedback
+      },
+      include: {
+        user: true,
+        challenge: {
+          include: { subject: true }
+        }
       }
     });
+
+    // Notify teacher
+    if (progress.challenge.subject.teacherId) {
+      const { createNotification } = await import("./notifications");
+      await createNotification(
+        progress.challenge.subject.teacherId,
+        "Nueva Entrega",
+        `El alumno ${progress.user.name} entregó el desafío "${progress.challenge.title}" de ${progress.challenge.subject.name}.`,
+        "SUBMISSION",
+        "/docente/reviews"
+      );
+    }
 
     return { success: true, progress, score, feedback };
   } catch (error) {

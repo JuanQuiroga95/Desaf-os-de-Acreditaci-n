@@ -50,6 +50,7 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {process.env.NODE_ENV !== "production" && (
           <div className="bg-secondary/30 border border-border p-6 rounded-3xl space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-widest text-primary">Credenciales de Acceso (Demo)</h3>
             <div className="grid grid-cols-2 gap-4 text-[10px]">
@@ -67,6 +68,7 @@ export default function LoginPage() {
               </div>
             </div>
           </div>
+          )}
         </div>
 
         <form onSubmit={handleLogin} className="bg-card border border-border p-8 md:p-10 rounded-[2.5rem] shadow-2xl space-y-6">

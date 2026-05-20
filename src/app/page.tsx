@@ -46,22 +46,18 @@ export default function StudentDashboard() {
     </div>
   );
 
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    } else if (!authLoading && user?.role === "admin") {
+      router.push("/admin");
+    } else if (!authLoading && user?.role === "teacher") {
+      router.push("/docente");
+    }
+  }, [authLoading, user, router]);
+
   if (authLoading) return <Spinner />;
-
-  if (!user) {
-    router.push("/login");
-    return null;
-  }
-
-  if (user.role === "admin") {
-    router.push("/admin");
-    return null;
-  }
-
-  if (user.role === "teacher") {
-    router.push("/docente");
-    return null;
-  }
+  if (!user || user.role === "admin" || user.role === "teacher") return <Spinner />;
 
   if (isLoading) return <Spinner />;
 

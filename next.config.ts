@@ -5,20 +5,11 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   trailingSlash: false,
+  turbopack: {},
   webpack: (config) => {
     config.resolve.alias.canvas = false;
     return config;
-  },
-  experimental: {
-    turbo: {
-      resolveAlias: {
-        canvas: './src/lib/mock-canvas.js',
-      },
-    },
   },
 };
 
