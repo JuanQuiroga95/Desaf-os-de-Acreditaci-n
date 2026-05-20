@@ -93,3 +93,34 @@ export async function updatePasswordAction(id: string, currentPassword: string, 
     return { success: false, message: "Error al actualizar contraseña" };
   }
 }
+
+export async function requestCredentialRecoveryAction(data: { name: string; email: string; role: string; message: string }) {
+  try {
+    const admins = await db.user.findMany({
+      where: { role: "ADMIN" }
+    });
+
+    if (admins.length === 0) {
+      return { success: false, message: "No se encontraron administradores registrados en el sistema." };
+    }
+
+    // Crear la notificación para cada administrador
+    for (const admin of admins) {
+      await db.notification.create({
+        data: {
+          userId: admin.id,
+          title: "Recuperación de Credenciales",
+          message: `El usuario ${data.name} (${data.role}) solicita recuperar sus credenciales. Contacto/Email provisto: ${data.email || 'No especificado'}. Detalle: ${data.message || 'Sin observaciones'}`,
+          type: "RECOVERY",
+          link: "/admin/users"
+        }
+      });
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error creating recovery notification:", error);
+    return { success: false, message: "Error interno al procesar la solicitud." };
+  }
+}
+

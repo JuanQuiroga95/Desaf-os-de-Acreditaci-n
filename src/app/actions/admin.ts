@@ -211,3 +211,19 @@ export async function getAllSubjects() {
     }
   });
 }
+
+export async function adminResetUserPassword(userId: string, newPass: string) {
+  await requireAuth(["admin"]);
+  try {
+    const hashedPassword = await bcrypt.hash(newPass, 10);
+    await db.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword }
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Error resetting user password:", error);
+    return { success: false, error: "Error al cambiar la contraseña" };
+  }
+}
+

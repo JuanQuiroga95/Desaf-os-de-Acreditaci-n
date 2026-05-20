@@ -102,7 +102,7 @@ export function Sidebar() {
           { name: "Control Admin", href: "/admin", icon: LayoutDashboard },
           { name: "Materias", href: "/admin/subjects", icon: BookOpen },
           { name: "Docentes", href: "/admin/teachers", icon: Users },
-          { name: "Usuarios", href: "/admin", icon: GraduationCap },
+          { name: "Usuarios", href: "/admin/users", icon: Users },
           { name: "Manual de Uso", href: "/manual", icon: HelpCircle },
         ];
       case "teacher":
