@@ -8,6 +8,14 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  console.log("Cleaning up previous database seed data to prevent duplicates...");
+  await prisma.progress.deleteMany({});
+  await prisma.challenge.deleteMany({});
+  await prisma.material.deleteMany({});
+  await prisma.enrollment.deleteMany({});
+  await prisma.subject.deleteMany({});
+  await prisma.notification.deleteMany({});
+
   console.log("Seeding database with secure passwords...");
 
   // 1. Create Users

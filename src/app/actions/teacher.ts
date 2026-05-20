@@ -243,13 +243,13 @@ export async function getAtRiskStudents(teacherId: string) {
 
         const daysSinceActivity = lastActivity
           ? Math.floor((now.getTime() - lastActivity.getTime()) / (1000 * 60 * 60 * 24))
-          : 999;
+          : null;
 
         const scores = subjectProgress.filter(p => p.score !== null).map(p => p.score as number);
         const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
 
         const risks: string[] = [];
-        if (daysSinceActivity > 7) risks.push(`Sin actividad hace ${daysSinceActivity} días`);
+        if (daysSinceActivity !== null && daysSinceActivity > 7) risks.push(`Sin actividad hace ${daysSinceActivity} días`);
         if (progressPercent === 0 && totalChallenges > 0) risks.push("No inició ningún desafío");
         if (avgScore !== null && avgScore < 5) risks.push(`Promedio bajo: ${avgScore.toFixed(1)}`);
         if (completedChallenges < totalChallenges * 0.3 && totalChallenges > 2) risks.push(`Solo completó ${progressPercent}% de los desafíos`);
