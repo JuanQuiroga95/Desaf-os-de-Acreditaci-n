@@ -17,7 +17,7 @@ async function main() {
 
   const admin = await prisma.user.upsert({
     where: { email: "admin@videla.edu.ar" },
-    update: { role: "ADMIN" },
+    update: { role: "ADMIN", password: adminPass },
     create: {
       email: "admin@videla.edu.ar",
       name: "Director Ricardo",
@@ -28,7 +28,7 @@ async function main() {
 
   const teacher = await prisma.user.upsert({
     where: { email: "juan@videla.edu.ar" },
-    update: { role: "TEACHER" },
+    update: { role: "TEACHER", password: teacherPass },
     create: {
       email: "juan@videla.edu.ar",
       name: "Juan Prof",
@@ -39,7 +39,7 @@ async function main() {
 
   const student = await prisma.user.upsert({
     where: { email: "pedro@videla.edu.ar" },
-    update: { role: "STUDENT" },
+    update: { role: "STUDENT", password: studentPass },
     create: {
       email: "pedro@videla.edu.ar",
       name: "Pedro Estudiante",
