@@ -209,9 +209,9 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 shrink-0 space-y-4">
+      <div className="p-3 shrink-0 space-y-3">
         {user.role === "student" && (
-          <div className="bg-secondary/50 rounded-2xl p-4 border border-border">
+          <div className="bg-secondary/50 rounded-2xl p-3 border border-border">
             <div className="flex justify-between items-center mb-2">
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Tu Progreso</span>
               <span className="text-xs font-bold text-primary">{progress}%</span>
@@ -225,10 +225,14 @@ export function Sidebar() {
           </div>
         )}
 
-        <div className="flex flex-col gap-2 p-4 rounded-2xl bg-secondary/30 border border-border/50">
+        <div className="flex flex-col gap-2 p-3 rounded-2xl bg-secondary/30 border border-border/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-black text-sm uppercase shrink-0 border border-primary/10">
-              {user.name.charAt(0)}
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-black text-sm uppercase shrink-0 border border-primary/10 overflow-hidden">
+              {user.avatarId ? (
+                <img src={user.avatarId} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                user.name.charAt(0)
+              )}
             </div>
             <div className="flex-1 overflow-hidden">
               <p className="text-xs font-black truncate leading-none mb-1 uppercase tracking-tight">{user.name}</p>
@@ -238,34 +242,34 @@ export function Sidebar() {
               <NotificationBell />
               <button
                 onClick={handleLogout}
-                className="p-2 text-muted-foreground hover:text-red-500 transition-colors hover:bg-red-500/10 rounded-lg"
+                className="p-1.5 text-muted-foreground hover:text-red-500 transition-colors hover:bg-red-500/10 rounded-lg"
                 title="Cerrar Sesión"
               >
                 <LogOut size={16} />
               </button>
             </div>
           </div>
-          <div className="flex items-center justify-between pt-2 border-t border-border/30 px-1">
+          <div className="flex items-center justify-between pt-2 border-t border-border/30 px-1 gap-1">
             <button
               onClick={toggleTheme}
-              className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-all"
+              className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-all"
             >
-              {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
-              {theme === "dark" ? "Modo Claro" : "Modo Oscuro"}
+              {theme === "dark" ? <Sun size={12} /> : <Moon size={12} />}
+              {theme === "dark" ? "Claro" : "Oscuro"}
             </button>
             <Link
               href="/perfil"
-              className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-all"
+              className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-all"
             >
-              <User size={14} />
-              Mi Perfil
+              <User size={12} />
+              Perfil
             </Link>
             <button
               onClick={handleInstallClick}
-              className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-all bg-primary/10 px-2 py-1 rounded-md text-primary"
+              className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-all bg-primary/10 px-2 py-1 rounded-md text-primary"
             >
-              <Download size={14} />
-              Instalar App
+              <Download size={12} />
+              Instalar
             </button>
           </div>
         </div>
@@ -294,7 +298,7 @@ export function Sidebar() {
 
       {/* Sidebar - desktop: fixed, mobile: slide-in */}
       <aside className={cn(
-        "w-64 h-screen border-r border-border bg-card flex flex-col fixed left-0 top-0 z-[70] transition-transform duration-300",
+        "w-64 h-[100dvh] border-r border-border bg-card flex flex-col fixed left-0 top-0 z-[70] transition-transform duration-300",
         // Mobile: hidden by default, slide in when open
         mobileOpen ? "translate-x-0" : "-translate-x-full",
         // Desktop: always visible
