@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   trailingSlash: false,
+  turbopack: {},
   webpack: (config) => {
     config.resolve.alias.canvas = false;
     return config;
