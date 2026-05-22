@@ -49,7 +49,6 @@ export function Sidebar() {
     setMobileOpen(false);
   }, [pathname]);
 
-  // Prevent body scroll when mobile sidebar is open
   useEffect(() => {
     if (mobileOpen) {
       document.body.style.overflow = "hidden";
@@ -58,6 +57,29 @@ export function Sidebar() {
     }
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
+
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    } else {
+      showToast("Para instalar en iPhone: Toca 'Compartir' y luego 'Agregar a Inicio'. En Android: Toca los 3 puntos y 'Instalar App'.", "success");
+    }
+  };
 
   const handleLogoClick = () => {
     setClickCount((prev) => {
@@ -238,6 +260,13 @@ export function Sidebar() {
               <User size={14} />
               Mi Perfil
             </Link>
+            <button
+              onClick={handleInstallClick}
+              className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-all bg-primary/10 px-2 py-1 rounded-md text-primary"
+            >
+              <Download size={14} />
+              Instalar App
+            </button>
           </div>
         </div>
       </div>
