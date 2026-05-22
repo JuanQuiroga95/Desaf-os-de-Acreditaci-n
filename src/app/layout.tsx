@@ -13,6 +13,13 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Videla-Acredita | Escuela Ricardo Videla",
   description: "Plataforma de acreditación técnica para alumnos de la Escuela N° 4-012 Ing. Ricardo Videla",
+  manifest: "/manifest.json",
+  themeColor: "#3b82f6",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Videla-Acredita",
+  },
 };
 
 import { UIProvider } from "@/context/UIContext";

@@ -264,7 +264,7 @@ export function ChallengeModal({ challenge, subject, onClose, onSubmit, answers,
                   Abandonar
                 </button>
                 <button 
-                  onClick={(e) => onSubmit(e)}
+                  onClick={(e) => onSubmit(e, false, undefined, answers["fileUrl"])}
                   disabled={isSubmitting}
                   className="flex-1 py-4 bg-primary text-white rounded-xl font-black uppercase tracking-[0.3em] text-[10px] shadow-lg shadow-primary/30 flex items-center justify-center gap-3 disabled:opacity-50 hover:scale-[1.01] active:scale-95 transition-all relative overflow-hidden group"
                 >

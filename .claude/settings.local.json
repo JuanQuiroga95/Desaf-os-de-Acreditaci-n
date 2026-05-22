@@ -36,7 +36,9 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Docente\\\\Desktop\\\\Proyectos\\\\previas\" -Force)",
       "Bash(Select-Object Name, Mode)",
       "Bash(Format-Table -AutoSize)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(Select-Object Name, FullName)",
+      "Bash(Format-Table)"
     ]
   }
 }

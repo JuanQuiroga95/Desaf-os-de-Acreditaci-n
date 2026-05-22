@@ -85,7 +85,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
     setAnswers(initialAnswers);
   };
 
-  const handleSubmitChallenge = async (e?: React.FormEvent | React.MouseEvent | null, isRoleplayFinished = false, chatLog?: any[]) => {
+  const handleSubmitChallenge = async (e?: React.FormEvent | React.MouseEvent | null, isRoleplayFinished = false, chatLog?: any[], fileUrl?: string) => {
     if (e && (e as any).preventDefault) (e as any).preventDefault();
     if (!selectedChallenge) return;
 
@@ -95,8 +95,8 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
       const questions = selectedChallenge.content?.questions || [];
       const allAnswered = questions.every((q: { id: string }) => answers[q.id]?.trim());
       
-      if (!allAnswered) {
-        showToast("Por favor responde todas las preguntas", "error");
+      if (!allAnswered && !fileUrl) {
+        showToast("Por favor responde todas las preguntas o sube un archivo", "error");
         return;
       }
     } else {
@@ -106,7 +106,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
     
     setIsSubmitting(true);
     try {
-      const res = await submitChallengeResponse(selectedChallenge.id, user!.id, payload);
+      const res = await submitChallengeResponse(selectedChallenge.id, user!.id, payload, fileUrl || null);
       if (res.success) {
         confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         if (res.score !== undefined && res.score !== null) {

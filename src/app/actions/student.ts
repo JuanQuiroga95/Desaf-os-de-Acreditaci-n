@@ -98,7 +98,7 @@ export async function getSubjectChallenges(subjectId: string, userId: string) {
   }
 }
 
-export async function submitChallengeResponse(challengeId: string, userId: string, answers: Record<string, any> | null = null) {
+export async function submitChallengeResponse(challengeId: string, userId: string, answers: Record<string, any> | null = null, fileUrl: string | null = null) {
   try {
     const challenge = await db.challenge.findUnique({ where: { id: challengeId } });
     
@@ -163,6 +163,7 @@ export async function submitChallengeResponse(challengeId: string, userId: strin
       update: {
         status: "COMPLETED",
         answers: answers,
+        fileUrl: fileUrl,
         attempts: { increment: 1 },
         ...(score !== null && { score }),
         ...(feedback !== null && { feedback })
@@ -172,6 +173,7 @@ export async function submitChallengeResponse(challengeId: string, userId: strin
         challengeId,
         status: "COMPLETED",
         answers: answers,
+        fileUrl: fileUrl,
         score,
         feedback
       },
@@ -183,6 +185,14 @@ export async function submitChallengeResponse(challengeId: string, userId: strin
       }
     });
 
+    // Otorgar monedas Videla (ej. 10 por desafío) si es su primer intento completado
+    if (progress.attempts === 1) {
+      await db.user.update({
+        where: { id: userId },
+        data: { coins: { increment: 10 } }
+      });
+    }
+
     // Notify teacher
     if (progress.challenge.subject.teacherId) {
       const { createNotification } = await import("./notifications");
@@ -193,6 +203,17 @@ export async function submitChallengeResponse(challengeId: string, userId: strin
         "SUBMISSION",
         "/docente/reviews"
       );
+
+      // Send Email to teacher
+      const { sendNotificationEmail } = await import("./emails");
+      const teacher = await db.user.findUnique({ where: { id: progress.challenge.subject.teacherId } });
+      if (teacher?.email) {
+        await sendNotificationEmail(
+          teacher.email,
+          "Nueva Entrega de Alumno - Videla Acredita",
+          `<h3>¡Hola ${teacher.name}!</h3><p>El alumno <b>${progress.user.name}</b> acaba de entregar el desafío <b>${progress.challenge.title}</b> de la materia ${progress.challenge.subject.name}.</p><p>Ingresa a la plataforma para corregirlo.</p>`
+        );
+      }
     }
 
     return { success: true, progress, score, feedback };

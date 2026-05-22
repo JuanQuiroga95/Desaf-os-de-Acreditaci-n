@@ -114,6 +114,17 @@ export async function gradeSubmission(progressId: string, score: number, feedbac
       "/desafios"
     );
 
+    // Enviar Email
+    const { sendNotificationEmail } = await import("./emails");
+    const user = await db.user.findUnique({ where: { id: progress.userId } });
+    if (user?.email) {
+      await sendNotificationEmail(
+        user.email,
+        "Tu desafío ha sido corregido - Videla Acredita",
+        `<h3>¡Hola ${user.name}!</h3><p>Tu entrega de <b>${progress.challenge.title}</b> ha sido calificada con un <b>${score}</b>.</p><p>Comentario del profesor: <i>${feedback}</i></p><p>Ingresa a la plataforma para ver más detalles.</p>`
+      );
+    }
+
     return { success: true };
   } catch (error) {
     console.error("Grading error:", error);

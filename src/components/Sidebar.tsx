@@ -112,6 +112,7 @@ export function Sidebar() {
           { name: "Encuentros RAA", href: "/docente/encuentros", icon: Users2 },
           { name: "Crear Encuentro", href: "/docente/new-challenge", icon: PlusCircle },
           { name: "Correcciones", href: "/docente/reviews", icon: Trophy },
+          { name: "Mensajes", href: "/mensajes", icon: MessageSquare },
           { name: "Alertas", href: "/docente/alertas", icon: AlertTriangle },
           { name: "Exportar Actas", href: "/docente/export", icon: Download },
           { name: "Manual de Uso", href: "/manual", icon: HelpCircle },
@@ -121,9 +122,11 @@ export function Sidebar() {
           { name: "Mis Materias", href: "/", icon: LayoutDashboard },
           { name: "Desafíos", href: "/desafios", icon: BookOpen },
           { name: "Logros", href: "/logros", icon: Trophy },
-          { name: "Tutor IA", href: "/tutor", icon: MessageSquare },
+          { name: "Mensajes", href: "/mensajes", icon: MessageSquare },
+          { name: "Tutor IA", href: "/tutor", icon: Brain },
           { name: "Calendario", href: "/calendario", icon: Calendar },
           { name: "Simulacro IA", href: "/simulacro", icon: Brain },
+          { name: "Tienda", href: "/tienda", icon: Trophy },
           { name: "Manual de Uso", href: "/manual", icon: HelpCircle },
         ];
     }
