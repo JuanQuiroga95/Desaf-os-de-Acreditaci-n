@@ -23,9 +23,11 @@ import {
   HelpCircle,
   Menu,
   X,
+  Compass,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useTheme } from "@/context/ThemeContext";
+import { useTour } from "@/context/TourContext";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -39,6 +41,7 @@ export function Sidebar() {
   const { user, logout, isLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { showToast } = useToast();
+  const { hasTour, resetTour } = useTour();
   const [progress, setProgress] = useState(0);
   const [clickCount, setClickCount] = useState(0);
   const clickTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -249,6 +252,15 @@ export function Sidebar() {
               </button>
             </div>
           </div>
+          {hasTour && (
+            <button
+              onClick={resetTour}
+              className="flex items-center justify-center gap-2 py-2 w-full rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-[10px] font-black uppercase tracking-widest transition-colors border border-primary/20 group"
+            >
+              <Compass size={14} className="group-hover:rotate-45 transition-transform duration-300" />
+              Instrucciones
+            </button>
+          )}
           <div className="flex items-center justify-between pt-2 border-t border-border/30 px-1 gap-1">
             <button
               onClick={toggleTheme}

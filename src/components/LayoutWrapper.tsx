@@ -4,7 +4,6 @@ import React from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { AITutor } from "@/components/AITutor";
 import { TourOverlay } from "@/components/TourOverlay";
-import { TourButton } from "@/components/TourButton";
 import { TourProvider } from "@/context/TourContext";
 import { useAuth } from "@/context/AuthContext";
 import { usePathname } from "next/navigation";
@@ -35,7 +34,6 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
           <>
             <AITutor />
             <TourOverlay />
-            <TourButton />
           </>
         )}
       </div>
