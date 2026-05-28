@@ -73,15 +73,14 @@ body {
   position: fixed;
   inset: 0;
   z-index: 9998;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(2px);
+  background: transparent;
   pointer-events: all;
 }
 
 /* Spotlight ring around the target element */
 .tour-spotlight {
   box-shadow:
-    0 0 0 9999px rgba(0, 0, 0, 0.75),
+    0 0 0 9999px rgba(0, 0, 0, 0.65),
     0 0 20px rgba(59, 130, 246, 0.3);
   border-radius: 1rem;
   border: 2px solid rgba(59, 130, 246, 0.5);
@@ -154,12 +153,12 @@ body {
 @keyframes tour-pulse {
   0%, 100% {
     box-shadow:
-      0 0 0 9999px rgba(0, 0, 0, 0.75),
+      0 0 0 9999px rgba(0, 0, 0, 0.65),
       0 0 15px rgba(59, 130, 246, 0.3);
   }
   50% {
     box-shadow:
-      0 0 0 9999px rgba(0, 0, 0, 0.75),
+      0 0 0 9999px rgba(0, 0, 0, 0.65),
       0 0 30px rgba(59, 130, 246, 0.5);
   }
 }
