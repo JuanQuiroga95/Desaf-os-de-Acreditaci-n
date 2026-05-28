@@ -104,7 +104,7 @@ export default function LogrosPage() {
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <header className="mb-16">
-        <h1 className="text-6xl font-black tracking-tighter mb-4 uppercase italic leading-none">
+        <h1 data-tour-id="logros-title" className="text-6xl font-black tracking-tighter mb-4 uppercase italic leading-none">
           Tus <span className="text-primary">Logros</span>
         </h1>
         <div className="flex items-center gap-6">
@@ -116,7 +116,7 @@ export default function LogrosPage() {
       </header>
 
       {/* Stats bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-14">
+      <div data-tour-id="logros-stats" className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-14">
         {[
           { label: "Desafíos completados", value: stats.totalCompleted, suffix: "" },
           { label: "Promedio general", value: stats.avgScore, suffix: "/10" },

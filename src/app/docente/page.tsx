@@ -59,13 +59,14 @@ export default function TeacherPage() {
     <div className="p-8 max-w-7xl mx-auto">
       <header className="mb-12 flex justify-between items-end">
         <div>
-          <h1 className="text-6xl font-black tracking-tighter mb-2 uppercase italic leading-none">Panel <span className="text-primary">Docente</span></h1>
+          <h1 data-tour-id="docente-title" className="text-6xl font-black tracking-tighter mb-2 uppercase italic leading-none">Panel <span className="text-primary">Docente</span></h1>
           <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-[0.4em] leading-relaxed">
             Gestión Académica • <span className="text-foreground">{user.name}</span>
           </p>
         </div>
         <Link 
           href="/docente/new-challenge"
+          data-tour-id="docente-nuevo-desafio"
           className="bg-primary text-primary-foreground px-8 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-2xl shadow-primary/30"
         >
           <PlusCircle size={20} />
@@ -76,7 +77,7 @@ export default function TeacherPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
         <div className="lg:col-span-8 space-y-8">
           {/* Subjects Section */}
-          <section className="bg-card border border-border rounded-[3rem] p-10 shadow-sm relative overflow-hidden">
+          <section data-tour-id="docente-materias" className="bg-card border border-border rounded-[3rem] p-10 shadow-sm relative overflow-hidden">
             <h2 className="text-xl font-black mb-10 flex items-center gap-3 italic uppercase text-[10px] tracking-[0.2em] text-primary">
               <BookOpen size={18} />
               Tus Materias Asignadas
@@ -146,7 +147,7 @@ export default function TeacherPage() {
           </section>
 
           {/* Submissions Section */}
-          <section className="bg-card border border-border rounded-[3rem] p-10 shadow-sm relative overflow-hidden">
+          <section data-tour-id="docente-entregas" className="bg-card border border-border rounded-[3rem] p-10 shadow-sm relative overflow-hidden">
             <h2 className="text-xl font-black mb-10 flex items-center gap-3 italic uppercase text-[10px] tracking-[0.2em] text-primary">
               <Clock size={18} />
               Entregas Pendientes
@@ -188,7 +189,7 @@ export default function TeacherPage() {
         </div>
 
         <aside className="lg:col-span-4 space-y-8">
-          <div className="bg-secondary/20 border border-border rounded-[2.5rem] p-8 shadow-sm">
+          <div data-tour-id="docente-rendimiento" className="bg-secondary/20 border border-border rounded-[2.5rem] p-8 shadow-sm">
             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-8 flex items-center gap-3">
               <TrendingUp size={16} />
               Rendimiento Grupal

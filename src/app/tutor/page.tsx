@@ -45,7 +45,7 @@ export default function TutorPage() {
     <div className="p-8 max-w-5xl mx-auto h-[calc(100vh-64px)] flex flex-col">
       <header className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none flex items-center gap-4">
+          <h1 data-tour-id="tutor-title" className="text-5xl font-black tracking-tighter uppercase italic leading-none flex items-center gap-4">
             Tutor <span className="text-primary">IA</span>
             <Sparkles className="text-primary animate-pulse" size={32} />
           </h1>
@@ -108,7 +108,7 @@ export default function TutorPage() {
         </div>
 
         <div className="p-8 border-t border-border bg-secondary/10">
-          <div className="relative max-w-4xl mx-auto">
+          <div data-tour-id="tutor-input" className="relative max-w-4xl mx-auto">
             <input 
               value={input}
               onChange={(e) => setInput(e.target.value)}

@@ -102,10 +102,10 @@ export default function AdminPage() {
     <div className="p-8 max-w-7xl mx-auto">
       <header className="mb-12 flex justify-between items-end">
         <div>
-          <h1 className="text-6xl font-black tracking-tighter mb-2 uppercase italic leading-none">Control <span className="text-primary">Admin</span></h1>
+          <h1 data-tour-id="admin-title" className="text-6xl font-black tracking-tighter mb-2 uppercase italic leading-none">Control <span className="text-primary">Admin</span></h1>
           <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-[0.4em]">Gestión Centralizada • Ciclo 2026</p>
         </div>
-        <div className="flex gap-4">
+        <div data-tour-id="admin-actions" className="flex gap-4">
           <button onClick={() => setIsUserModalOpen(true)} className="bg-secondary text-foreground px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 border border-border hover:bg-border transition-all shadow-sm">
             <UserPlus size={18} />
             Nuevo Usuario
@@ -117,7 +117,7 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <div data-tour-id="admin-stats" className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         {[
           { label: "Docentes Activos", value: users.filter(u => u.role === "TEACHER").length, icon: Briefcase, color: "text-blue-500" },
           { label: "Materias Creadas", value: subjects.length, icon: BookOpen, color: "text-green-500" },
@@ -194,7 +194,7 @@ export default function AdminPage() {
       </div>
 
       {/* Analytics Section */}
-      <section className="mt-12 bg-card border border-border rounded-[3rem] p-10 shadow-sm">
+      <section data-tour-id="admin-analytics" className="mt-12 bg-card border border-border rounded-[3rem] p-10 shadow-sm">
         <h2 className="text-xl font-black mb-10 flex items-center gap-3 italic uppercase text-[10px] tracking-[0.2em] text-primary">
           <TrendingUp size={18} />
           Rendimiento Académico Global

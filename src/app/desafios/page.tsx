@@ -98,7 +98,7 @@ export default function DesafiosPage() {
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <header className="mb-12">
-        <h1 className="text-6xl font-black tracking-tighter mb-4 uppercase italic leading-none">
+        <h1 data-tour-id="desafios-title" className="text-6xl font-black tracking-tighter mb-4 uppercase italic leading-none">
           Explorador de <span className="text-primary">Desafíos</span>
         </h1>
         <div className="flex items-center gap-6">
@@ -110,7 +110,7 @@ export default function DesafiosPage() {
       </header>
 
       <div className="flex gap-4 mb-12">
-        <div className="flex-1 relative">
+        <div data-tour-id="desafios-search" className="flex-1 relative">
           <Search className="absolute left-6 top-5 text-muted-foreground" size={20} />
           <input
             type="text"
@@ -122,7 +122,7 @@ export default function DesafiosPage() {
         </div>
 
         {/* Filter dropdown */}
-        <div ref={filterRef} className="relative">
+        <div ref={filterRef} data-tour-id="desafios-filter" className="relative">
           <button
             onClick={() => setFilterOpen((v) => !v)}
             className="px-10 py-5 bg-secondary rounded-[2rem] border border-border font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-border transition-all"

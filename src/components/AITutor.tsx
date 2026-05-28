@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { MessageSquare, X, Send, Bot, User, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,6 +21,7 @@ import { useAuth } from "@/context/AuthContext";
 export function AITutor() {
   const { isAIBlocked } = useUI();
   const { user } = useAuth();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
@@ -58,7 +60,7 @@ export function AITutor() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-user-id": user?.id || "" },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({ messages: newMessages, currentPath: pathname }),
       });
 
       const data = await response.json();

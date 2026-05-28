@@ -88,9 +88,9 @@ export default function MensajesPage() {
       {/* Lista de Contactos */}
       <div className={`w-full md:w-1/3 bg-card border border-border rounded-2xl flex flex-col overflow-hidden shadow-sm ${selectedContact ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-6 border-b border-border bg-secondary/10">
-          <h2 className="text-lg font-black uppercase tracking-widest italic">Mensajes</h2>
+          <h2 data-tour-id="mensajes-title" className="text-lg font-black uppercase tracking-widest italic">Mensajes</h2>
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <div data-tour-id="mensajes-contacts" className="flex-1 overflow-y-auto">
           {isLoadingContacts ? (
             <div className="p-8 text-center text-muted-foreground"><Loader2 className="animate-spin mx-auto" /></div>
           ) : contacts.length === 0 ? (

@@ -64,7 +64,7 @@ export default function StudentDashboard() {
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <header className="mb-12">
-        <h1 className="text-6xl font-black tracking-tighter mb-4 italic uppercase leading-none">
+        <h1 data-tour-id="dashboard-title" className="text-6xl font-black tracking-tighter mb-4 italic uppercase leading-none">
           Mis Materias <br /><span className="text-primary">Asignadas</span>
         </h1>
         <div className="flex items-center gap-6">
@@ -75,7 +75,7 @@ export default function StudentDashboard() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div data-tour-id="subject-card" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {data?.subjects.map((sub) => {
           const isLocked = sub.status === "locked";
           return (

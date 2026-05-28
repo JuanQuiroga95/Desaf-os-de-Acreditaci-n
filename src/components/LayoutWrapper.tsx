@@ -3,6 +3,9 @@
 import React from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { AITutor } from "@/components/AITutor";
+import { TourOverlay } from "@/components/TourOverlay";
+import { TourButton } from "@/components/TourButton";
+import { TourProvider } from "@/context/TourContext";
 import { useAuth } from "@/context/AuthContext";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -19,15 +22,24 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="flex">
-      {!isLoginPage && user && <Sidebar />}
-      <main className={cn(
-        "flex-1 min-h-screen bg-background transition-all duration-300",
-        !isLoginPage && user ? "lg:ml-64 pt-16 lg:pt-0" : ""
-      )}>
-        {children}
-      </main>
-      {!isLoginPage && user && <AITutor />}
-    </div>
+    <TourProvider>
+      <div className="flex">
+        {!isLoginPage && user && <Sidebar />}
+        <main className={cn(
+          "flex-1 min-h-screen bg-background transition-all duration-300",
+          !isLoginPage && user ? "lg:ml-64 pt-16 lg:pt-0" : ""
+        )}>
+          {children}
+        </main>
+        {!isLoginPage && user && (
+          <>
+            <AITutor />
+            <TourOverlay />
+            <TourButton />
+          </>
+        )}
+      </div>
+    </TourProvider>
   );
 }
+
