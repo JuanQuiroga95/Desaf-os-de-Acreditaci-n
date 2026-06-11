@@ -143,9 +143,16 @@ export function ChallengeModal({ challenge, subject, onClose, onSubmit, answers,
                           <span className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-[10px] font-black text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-inner shrink-0">
                             {index + 1}
                           </span>
-                          <label className="flex-1 text-[11px] font-black uppercase text-foreground leading-relaxed tracking-widest pt-1.5">
-                            Punto {index + 1}
-                          </label>
+                          <div className="flex-1">
+                            <label className="text-[11px] font-black uppercase text-foreground leading-relaxed tracking-widest pt-1.5 block">
+                              Punto {index + 1}
+                            </label>
+                            {q.question && (
+                              <p className="text-sm text-muted-foreground mt-2 leading-relaxed font-medium">
+                                {q.question}
+                              </p>
+                            )}
+                          </div>
                         </div>
                         {(!q.type || q.type === "TEXT") && (
                           <input 
