@@ -21,6 +21,11 @@ export function ChallengeModal({ challenge, subject, onClose, onSubmit, answers,
   const [isUploading, setIsUploading] = useState(false);
   const { showToast } = useToast();
 
+  const prog = challenge.progress?.[0];
+  const isGraded = prog?.score !== null && prog?.score !== undefined;
+  const allowRedo = prog?.allowRedo === true;
+  const isReadOnly = isGraded && !allowRedo;
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md">
       <motion.div 
@@ -90,9 +95,7 @@ export function ChallengeModal({ challenge, subject, onClose, onSubmit, answers,
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               {internalTab === "QUESTIONS" ? (
                 <div className="p-6 space-y-6">
-                  {challenge.progress?.length > 0 && (() => {
-                    const prog = challenge.progress[0];
-                    const isGraded = prog.score !== null && prog.score !== undefined;
+                  {prog && (() => {
                     const isApproved = isGraded && prog.score >= 6;
                     const submittedAt = prog.createdAt ? new Date(prog.createdAt) : null;
                     return (
@@ -112,6 +115,11 @@ export function ChallengeModal({ challenge, subject, onClose, onSubmit, answers,
                           ) : (
                             <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border bg-primary/10 text-primary border-primary/30">
                               Enviado · Pendiente de corrección
+                            </span>
+                          )}
+                          {allowRedo && (
+                            <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border bg-orange-500/10 text-orange-400 border-orange-500/30">
+                              Recuperatorio Habilitado
                             </span>
                           )}
                           {submittedAt && (
@@ -157,11 +165,12 @@ export function ChallengeModal({ challenge, subject, onClose, onSubmit, answers,
                         {(!q.type || q.type === "TEXT") && (
                           <input 
                             required
+                            disabled={isReadOnly}
                             value={answers[q.id] || ""}
                             onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
                             onFocus={() => setLastFocusedInput(q.id)}
-                            className="w-full bg-background border border-border rounded-xl p-3 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-inner"
-                            placeholder="Tu respuesta..."
+                            className="w-full bg-background border border-border rounded-xl p-3 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-inner disabled:opacity-70 disabled:bg-secondary/50"
+                            placeholder={isReadOnly ? "" : "Tu respuesta..."}
                           />
                         )}
                         {(q.type === "TRUE_FALSE" || q.type === "MULTIPLE_CHOICE") && (
@@ -187,6 +196,7 @@ export function ChallengeModal({ challenge, subject, onClose, onSubmit, answers,
                                   checked={answers[q.id] === opt}
                                   onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
                                   className="hidden"
+                                  disabled={isReadOnly}
                                 />
                                 <span className={`text-[11px] font-bold ${answers[q.id] === opt ? "text-foreground" : "text-muted-foreground"}`}>
                                   {opt}
@@ -217,8 +227,9 @@ export function ChallengeModal({ challenge, subject, onClose, onSubmit, answers,
                       value={answers["notes"] || ""}
                       onChange={(e) => setAnswers({...answers, notes: e.target.value})}
                       onFocus={() => setLastFocusedInput("notes")}
-                      className="w-full h-full min-h-[300px] bg-card border-2 border-border rounded-2xl p-6 pt-16 outline-none focus:ring-4 focus:ring-primary/5 font-mono text-sm leading-relaxed resize-none shadow-xl transition-all"
-                      placeholder="Escribí acá tu razonamiento o cálculos..."
+                      disabled={isReadOnly}
+                      className="w-full h-full min-h-[300px] bg-card border-2 border-border rounded-2xl p-6 pt-16 outline-none focus:ring-4 focus:ring-primary/5 font-mono text-sm leading-relaxed resize-none shadow-xl transition-all disabled:opacity-70 disabled:bg-secondary/50"
+                      placeholder={isReadOnly ? "" : "Escribí acá tu razonamiento o cálculos..."}
                     />
                   </div>
 
@@ -235,10 +246,11 @@ export function ChallengeModal({ challenge, subject, onClose, onSubmit, answers,
                     </div>
                     
                     <div className="flex items-center gap-3">
-                      <input type="file" id="student-file" className="hidden" 
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0]; if (!file) return;
-                          setIsUploading(true);
+                      {!isReadOnly && (
+                        <input type="file" id="student-file" className="hidden" 
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0]; if (!file) return;
+                            setIsUploading(true);
                           try {
                             const response = await fetch(`/api/upload?filename=${file.name}`, { method: 'POST', body: file });
                             const blob = await response.json();
@@ -247,12 +259,13 @@ export function ChallengeModal({ challenge, subject, onClose, onSubmit, answers,
                           } catch (err) { showToast("Error al subir", "error"); } finally { setIsUploading(false); }
                         }}
                       />
-                      <label htmlFor="student-file"
-                        className={`flex-1 flex items-center justify-center gap-3 py-4 bg-background border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary hover:bg-primary/5 transition-all ${isUploading ? 'opacity-50' : ''}`}
+                      )}
+                      <label htmlFor={isReadOnly ? "" : "student-file"}
+                        className={`flex-1 flex items-center justify-center gap-3 py-4 bg-background border-2 border-dashed border-border rounded-xl transition-all ${isUploading || isReadOnly ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary hover:bg-primary/5'}`}
                       >
                         {isUploading ? <Loader2 size={16} className="animate-spin text-primary" /> : <FileUp size={16} className="text-primary" />}
                         <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                          {answers["fileUrl"] ? "Cambiar Archivo" : "Subir Escaneos"}
+                          {answers["fileUrl"] ? (isReadOnly ? "Archivo Adjunto" : "Cambiar Archivo") : "Subir Escaneos"}
                         </span>
                       </label>
                     </div>
@@ -268,16 +281,18 @@ export function ChallengeModal({ challenge, subject, onClose, onSubmit, answers,
                   onClick={onClose}
                   className="px-6 py-4 bg-secondary text-foreground rounded-xl font-black uppercase tracking-widest text-[9px] border border-border hover:bg-border transition-all"
                 >
-                  Abandonar
+                  {isReadOnly ? "Cerrar" : "Abandonar"}
                 </button>
-                <button 
-                  onClick={(e) => onSubmit(e, false, undefined, answers["fileUrl"])}
-                  disabled={isSubmitting}
-                  className="flex-1 py-4 bg-primary text-white rounded-xl font-black uppercase tracking-[0.3em] text-[10px] shadow-lg shadow-primary/30 flex items-center justify-center gap-3 disabled:opacity-50 hover:scale-[1.01] active:scale-95 transition-all relative overflow-hidden group"
-                >
-                  <Send size={16} />
-                  {isSubmitting ? "Enviando..." : "Enviar a Acreditación"}
-                </button>
+                {!isReadOnly && (
+                  <button 
+                    onClick={(e) => onSubmit(e, false, undefined, answers["fileUrl"])}
+                    disabled={isSubmitting}
+                    className="flex-1 py-4 bg-primary text-white rounded-xl font-black uppercase tracking-[0.3em] text-[10px] shadow-lg shadow-primary/30 flex items-center justify-center gap-3 disabled:opacity-50 hover:scale-[1.01] active:scale-95 transition-all relative overflow-hidden group"
+                  >
+                    <Send size={16} />
+                    {isSubmitting ? "Enviando..." : allowRedo ? "Enviar Recuperación" : "Enviar a Acreditación"}
+                  </button>
+                )}
               </div>
             </div>
               </>

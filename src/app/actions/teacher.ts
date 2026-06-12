@@ -34,7 +34,9 @@ export async function getTeacherDashboard(teacherId: string) {
           subjectName: s.name,
           answers: p.answers,
           attempts: p.attempts,
-          createdAt: p.createdAt
+          createdAt: p.createdAt,
+          allowRedo: p.allowRedo,
+          originalScore: p.originalScore
         }))
       )
     );
@@ -81,7 +83,9 @@ export async function getTeacherDashboard(teacherId: string) {
           attempts: p.attempts,
           createdAt: p.createdAt,
           score: p.score,
-          feedback: p.feedback
+          feedback: p.feedback,
+          allowRedo: p.allowRedo,
+          originalScore: p.originalScore
         }))
       )
     );
@@ -114,12 +118,22 @@ export async function getTeacherDashboard(teacherId: string) {
   }
 }
 
-export async function gradeSubmission(progressId: string, score: number, feedback: string) {
+export async function gradeSubmission(progressId: string, score: number, feedback: string, allowRedo: boolean = false) {
   await requireAuth(["teacher", "admin"]);
   try {
+    const progressData = await db.progress.findUnique({ where: { id: progressId } });
+    
+    // Si estamos permitiendo recuperar, guardamos la nota actual como originalScore
+    let originalScore = progressData?.originalScore;
+    if (allowRedo && !originalScore && progressData?.score) {
+      originalScore = progressData.score;
+    } else if (allowRedo && !originalScore && !progressData?.score) {
+      originalScore = score;
+    }
+
     const progress = await db.progress.update({
       where: { id: progressId },
-      data: { score, feedback },
+      data: { score, feedback, allowRedo, originalScore },
       include: { challenge: true }
     });
     

@@ -94,6 +94,8 @@ model Progress {
   answers     Json?
   fileUrl     String?
   attempts    Int       @default(1)
+  allowRedo   Boolean   @default(false)
+  originalScore Float?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 

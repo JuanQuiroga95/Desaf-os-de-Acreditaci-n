@@ -20,7 +20,7 @@ export default function TeacherReviewsPage() {
   
   // Grading Modal
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
-  const [gradingData, setGradingData] = useState({ score: "", feedback: "" });
+  const [gradingData, setGradingData] = useState({ score: "", feedback: "", allowRedo: false });
 
   // AI Suggestion
   const [aiLoading, setAiLoading] = useState(false);
@@ -51,7 +51,8 @@ export default function TeacherReviewsPage() {
     setSelectedSubmission(sub);
     setGradingData({ 
       score: sub.score !== undefined && sub.score !== null ? String(sub.score) : "", 
-      feedback: sub.feedback || "" 
+      feedback: sub.feedback || "",
+      allowRedo: sub.allowRedo || false
     });
     setAiSuggestion(null);
   };
@@ -97,7 +98,7 @@ export default function TeacherReviewsPage() {
     e.preventDefault();
     if (!gradingData.score) return;
     
-    const res = await gradeSubmission(selectedSubmission.id, parseFloat(gradingData.score), gradingData.feedback);
+    const res = await gradeSubmission(selectedSubmission.id, parseFloat(gradingData.score), gradingData.feedback, gradingData.allowRedo);
     if (res.success) {
       showToast("Calificación enviada", "success");
       setSelectedSubmission(null);
@@ -200,6 +201,11 @@ export default function TeacherReviewsPage() {
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Enviado</p>
                   <p className="text-xs font-bold">{new Date(sub.createdAt).toLocaleDateString()} {new Date(sub.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                 </div>
+                {activeTab === "graded" && sub.score !== undefined && sub.score !== null && (
+                  <div className="bg-primary/10 text-primary px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-primary/20 text-center">
+                    Nota: {sub.score}/10
+                  </div>
+                )}
                 <button 
                   onClick={() => handleOpenGrade(sub)}
                   className={`px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg ${activeTab === "pending" ? "bg-primary text-white shadow-primary/20" : "bg-secondary text-foreground border border-border hover:bg-border"}`}
@@ -382,19 +388,51 @@ export default function TeacherReviewsPage() {
                 </div>
 
                 <form onSubmit={handleGrade} className="space-y-6 pt-4 border-t border-border">
+                  {selectedSubmission.attempts > 1 && selectedSubmission.originalScore !== null && selectedSubmission.originalScore !== undefined && (
+                    <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-2xl flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-orange-500 flex items-center gap-2 mb-1">
+                          <Sparkles size={12} /> Recuperatorio
+                        </p>
+                        <p className="text-xs font-bold text-orange-500/80">Nota original: {selectedSubmission.originalScore}/10</p>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          const currentScore = parseFloat(gradingData.score || "0");
+                          const avg = ((currentScore + selectedSubmission.originalScore) / 2).toFixed(1);
+                          setGradingData({...gradingData, score: avg});
+                        }} 
+                        className="px-4 py-2 bg-orange-500/20 text-orange-500 rounded-xl text-[9px] font-black uppercase hover:bg-orange-500/30 transition-all"
+                      >
+                        Promediar Nota
+                      </button>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="col-span-1">
-                      <label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block tracking-widest">Nota (1-10)</label>
-                      <input 
-                        required 
-                        type="number" 
-                        min="1" 
-                        max="10" 
-                        step="0.5" 
-                        value={gradingData.score} 
-                        onChange={e => setGradingData({...gradingData, score: e.target.value})} 
-                        className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-black text-2xl text-center focus:ring-2 focus:ring-primary/50 outline-none" 
-                      />
+                    <div className="col-span-1 space-y-4">
+                      <div>
+                        <label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block tracking-widest">Nota (1-10)</label>
+                        <input 
+                          required 
+                          type="number" 
+                          min="1" 
+                          max="10" 
+                          step="0.5" 
+                          value={gradingData.score} 
+                          onChange={e => setGradingData({...gradingData, score: e.target.value})} 
+                          className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-black text-2xl text-center focus:ring-2 focus:ring-primary/50 outline-none" 
+                        />
+                      </div>
+                      <label className="flex items-center gap-3 p-3 bg-secondary/20 border border-border rounded-xl cursor-pointer hover:bg-secondary/40 transition-all">
+                        <input 
+                          type="checkbox" 
+                          checked={gradingData.allowRedo}
+                          onChange={(e) => setGradingData({...gradingData, allowRedo: e.target.checked})}
+                          className="w-4 h-4 rounded text-primary focus:ring-primary"
+                        />
+                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Permitir Recuperación</span>
+                      </label>
                     </div>
                     <div className="col-span-2">
                       <label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block tracking-widest">Feedback Pedagógico</label>

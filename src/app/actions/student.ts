@@ -165,8 +165,9 @@ export async function submitChallengeResponse(challengeId: string, userId: strin
         answers: answers,
         fileUrl: fileUrl,
         attempts: { increment: 1 },
-        ...(score !== null && { score }),
-        ...(feedback !== null && { feedback })
+        allowRedo: false, // reset allowRedo so it can be graded again
+        ...(score !== null ? { score } : { score: null }), // if score is null, clear the score for a redo
+        ...(feedback !== null ? { feedback } : { feedback: null })
       },
       create: {
         userId,
