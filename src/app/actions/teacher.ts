@@ -68,6 +68,24 @@ export async function getTeacherDashboard(teacherId: string) {
     });
     const enrollCountMap = new Map(subjectEnrollments.map(e => [e.subjectId, e._count.studentId]));
 
+    const gradedSubmissions = subjects.flatMap(s => 
+      s.challenges.flatMap(c => 
+        c.progress.filter(p => p.score !== null && p.score !== undefined).map(p => ({
+          id: p.id,
+          studentName: p.user?.name || "Desconocido",
+          challengeTitle: c.title,
+          challengeType: c.type,
+          challengeContent: c.content,
+          subjectName: s.name,
+          answers: p.answers,
+          attempts: p.attempts,
+          createdAt: p.createdAt,
+          score: p.score,
+          feedback: p.feedback
+        }))
+      )
+    );
+
     return { 
       success: true, 
       subjects: subjects.map(s => {
@@ -84,6 +102,7 @@ export async function getTeacherDashboard(teacherId: string) {
         };
       }),
       pendingSubmissions,
+      gradedSubmissions,
       metrics: {
         promedioGeneral,
         participacion

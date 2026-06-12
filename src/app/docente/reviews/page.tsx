@@ -13,6 +13,8 @@ export default function TeacherReviewsPage() {
   const { user, isLoading: authLoading } = useAuth();
   const { showToast } = useToast();
   const [submissions, setSubmissions] = useState<any[]>([]);
+  const [gradedSubmissions, setGradedSubmissions] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<"pending" | "graded">("pending");
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -36,6 +38,7 @@ export default function TeacherReviewsPage() {
       const res = await getTeacherDashboard(user!.id);
       if (res.success) {
         setSubmissions(res.pendingSubmissions || []);
+        setGradedSubmissions(res.gradedSubmissions || []);
       }
     } catch (error) {
       console.error("Error cargando entregas:", error);
@@ -46,7 +49,10 @@ export default function TeacherReviewsPage() {
 
   const handleOpenGrade = (sub: any) => {
     setSelectedSubmission(sub);
-    setGradingData({ score: "", feedback: "" });
+    setGradingData({ 
+      score: sub.score !== undefined && sub.score !== null ? String(sub.score) : "", 
+      feedback: sub.feedback || "" 
+    });
     setAiSuggestion(null);
   };
 
@@ -107,6 +113,14 @@ export default function TeacherReviewsPage() {
     s.subjectName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const filteredGradedSubmissions = gradedSubmissions.filter(s => 
+    s.studentName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    s.challengeTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.subjectName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const currentList = activeTab === "pending" ? filteredSubmissions : filteredGradedSubmissions;
+
   if (authLoading || isLoading) return <div className="p-20 text-center font-black animate-pulse uppercase tracking-widest text-primary">Cargando Entregas...</div>;
   if (!user || user.role !== "teacher") return <div className="p-20 text-center font-black uppercase tracking-widest text-primary">Acceso Denegado</div>;
 
@@ -134,17 +148,27 @@ export default function TeacherReviewsPage() {
 
       <div className="bg-card border border-border rounded-[2.5rem] overflow-hidden shadow-sm">
         <div className="p-8 border-b border-border flex items-center justify-between bg-secondary/10">
-          <h2 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-            <Clock size={16} className="text-primary" />
-            Entregas por Calificar
-          </h2>
+          <div className="flex gap-4">
+            <button 
+              onClick={() => setActiveTab("pending")}
+              className={`text-xs font-black uppercase tracking-widest px-4 py-2 rounded-full transition-all ${activeTab === "pending" ? "bg-primary text-white" : "text-muted-foreground hover:bg-secondary"}`}
+            >
+              Pendientes
+            </button>
+            <button 
+              onClick={() => setActiveTab("graded")}
+              className={`text-xs font-black uppercase tracking-widest px-4 py-2 rounded-full transition-all ${activeTab === "graded" ? "bg-primary text-white" : "text-muted-foreground hover:bg-secondary"}`}
+            >
+              Corregidas
+            </button>
+          </div>
           <span className="text-[10px] font-black text-muted-foreground uppercase bg-secondary px-4 py-2 rounded-full border border-border">
-            Total: {filteredSubmissions.length}
+            Total: {currentList.length}
           </span>
         </div>
         
         <div className="divide-y divide-border">
-          {filteredSubmissions.map((sub) => (
+          {currentList.map((sub) => (
             <div key={sub.id} className="p-8 flex items-center justify-between hover:bg-secondary/20 transition-all group">
               <div className="flex items-center gap-8">
                 <div className="w-16 h-16 rounded-[1.25rem] bg-primary/10 text-primary flex items-center justify-center font-black text-2xl group-hover:bg-primary group-hover:text-white transition-all">
@@ -178,18 +202,20 @@ export default function TeacherReviewsPage() {
                 </div>
                 <button 
                   onClick={() => handleOpenGrade(sub)}
-                  className="bg-primary text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-primary/20"
+                  className={`px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg ${activeTab === "pending" ? "bg-primary text-white shadow-primary/20" : "bg-secondary text-foreground border border-border hover:bg-border"}`}
                 >
-                  Corregir
+                  {activeTab === "pending" ? "Corregir" : "Re-corregir"}
                 </button>
               </div>
             </div>
           ))}
           
-          {filteredSubmissions.length === 0 && (
+          {currentList.length === 0 && (
             <div className="p-20 text-center">
               <CheckCircle2 size={48} className="mx-auto mb-4 text-green-500 opacity-20" />
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">¡Sin entregas pendientes!</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">
+                {activeTab === "pending" ? "¡Sin entregas pendientes!" : "No hay entregas corregidas aún"}
+              </p>
             </div>
           )}
         </div>

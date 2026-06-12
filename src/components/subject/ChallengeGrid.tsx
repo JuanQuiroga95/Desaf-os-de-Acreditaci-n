@@ -71,9 +71,13 @@ export function ChallengeGrid({ subject, onOpenChallenge }: ChallengeGridProps) 
               </div>
               
               {isCompleted ? (
-                <div className="bg-secondary/30 text-muted-foreground px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-border">
-                  Completado
-                </div>
+                <button 
+                  onClick={() => onOpenChallenge(challenge)}
+                  className="bg-secondary/30 text-foreground px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-border hover:bg-border transition-all flex items-center gap-2"
+                >
+                  <Award size={14} />
+                  Ver Resultado
+                </button>
               ) : (isLocked || isFinalLocked) ? (
                 <div className="bg-secondary/30 text-muted-foreground px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-border flex items-center gap-2">
                   <Clock size={14} /> Bloqueado
