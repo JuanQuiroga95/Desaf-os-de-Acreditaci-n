@@ -159,7 +159,7 @@ export default function UnidadesPage() {
         imageUrls.push(blob.url);
       }
 
-      if (type === "THEORY" || type === "VIDEO") {
+      if (type === "THEORY" || type === "VIDEO" || type === "TP_TEMPLATE") {
         const content = type === "VIDEO" && itemForm.videoMode === "url" ? itemForm.content : itemForm.content;
         await createMaterial({
           subjectId: selectedSubjectId, type: type as any, title: itemForm.title, content, fileUrl, unitId
@@ -273,13 +273,14 @@ export default function UnidadesPage() {
                             <div className="flex gap-2">
                               <button onClick={() => setShowItemModal({ unitId: unit.id, type: "THEORY" })} className="text-[9px] font-black uppercase tracking-widest text-primary hover:underline">+ Teoría</button>
                               <button onClick={() => setShowItemModal({ unitId: unit.id, type: "VIDEO" })} className="text-[9px] font-black uppercase tracking-widest text-primary hover:underline">+ Video</button>
+                              <button onClick={() => setShowItemModal({ unitId: unit.id, type: "TP_TEMPLATE" })} className="text-[9px] font-black uppercase tracking-widest text-primary hover:underline">+ Trabajo Práctico</button>
                             </div>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {unit.materials.map((m: any) => (
                               <div key={m.id} className="p-4 border border-border rounded-2xl bg-secondary/5 flex justify-between">
                                 <div>
-                                  <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${m.type === 'VIDEO' ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-500'}`}>{m.type}</span>
+                                  <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${m.type === 'VIDEO' ? 'bg-red-500/10 text-red-500' : m.type === 'TP_TEMPLATE' ? 'bg-amber-500/10 text-amber-500' : 'bg-blue-500/10 text-blue-500'}`}>{m.type === 'TP_TEMPLATE' ? 'TRABAJO PRÁCTICO' : m.type}</span>
                                   <h4 className="font-bold mt-1">{m.title}</h4>
                                 </div>
                                 <button onClick={() => handleDeleteMaterial(m.id)} className="text-muted-foreground hover:text-red-500"><Trash2 size={14}/></button>
@@ -378,7 +379,7 @@ export default function UnidadesPage() {
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-card border border-border w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="font-black uppercase italic tracking-tighter text-xl">
-                  {showItemModal.type === "THEORY" ? "Nueva Teoría" : showItemModal.type === "VIDEO" ? "Nuevo Video" : showItemModal.type === "EXERCISE" ? "Nuevo Ejercicio" : "Nuevo Encuentro"}
+                  {showItemModal.type === "THEORY" ? "Nueva Teoría" : showItemModal.type === "VIDEO" ? "Nuevo Video" : showItemModal.type === "EXERCISE" ? "Nuevo Ejercicio" : showItemModal.type === "TP_TEMPLATE" ? "Nuevo Trabajo Práctico" : "Nuevo Encuentro"}
                 </h3>
                 <button onClick={() => setShowItemModal(null)}><X size={20} /></button>
               </div>
@@ -398,21 +399,24 @@ export default function UnidadesPage() {
                   </>
                 )}
 
-                {(showItemModal.type === "EXERCISE" || showItemModal.type === "THEORY" || showItemModal.type === "ENCOUNTER") && (
-                  <textarea value={itemForm.content} onChange={e => setItemForm({...itemForm, content: e.target.value})} placeholder={showItemModal.type === "ENCOUNTER" ? "Notas (opcional)" : "Contenido / Enunciado"} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none resize-none" rows={4} />
+                {(showItemModal.type === "EXERCISE" || showItemModal.type === "THEORY" || showItemModal.type === "ENCOUNTER" || showItemModal.type === "TP_TEMPLATE") && (
+                  <textarea value={itemForm.content} onChange={e => setItemForm({...itemForm, content: e.target.value})} placeholder={showItemModal.type === "ENCOUNTER" ? "Notas (opcional)" : "Contenido / Enunciado / Instrucciones"} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none resize-none" rows={4} />
                 )}
 
-                {showItemModal.type === "VIDEO" && (
+                {(showItemModal.type === "VIDEO" || showItemModal.type === "TP_TEMPLATE") && (
                   <div className="space-y-4">
-                    <div className="flex gap-2">
-                      <button type="button" onClick={() => setItemForm({...itemForm, videoMode: "url"})} className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${itemForm.videoMode === "url" ? "bg-primary text-white" : "border-border"}`}>Link</button>
-                      <button type="button" onClick={() => setItemForm({...itemForm, videoMode: "file"})} className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${itemForm.videoMode === "file" ? "bg-primary text-white" : "border-border"}`}>Archivo</button>
-                    </div>
-                    {itemForm.videoMode === "url" ? (
+                    {showItemModal.type === "VIDEO" ? (
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => setItemForm({...itemForm, videoMode: "url"})} className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${itemForm.videoMode === "url" ? "bg-primary text-white" : "border-border"}`}>Link</button>
+                        <button type="button" onClick={() => setItemForm({...itemForm, videoMode: "file"})} className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${itemForm.videoMode === "file" ? "bg-primary text-white" : "border-border"}`}>Archivo</button>
+                      </div>
+                    ) : null}
+                    {itemForm.videoMode === "url" && showItemModal.type === "VIDEO" ? (
                       <input required value={itemForm.content} onChange={e => setItemForm({...itemForm, content: e.target.value})} placeholder="URL del video (Ej: YouTube)" className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none" />
                     ) : (
                       <div className="w-full border-2 border-dashed border-border rounded-xl p-4 text-center">
-                        <input type="file" accept="video/*" onChange={e => setItemForm({...itemForm, file: e.target.files?.[0] || null})} className="w-full text-[10px]" />
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground mb-2">Archivo (Opcional para Teoría, Obligatorio para Video si eligió archivo)</p>
+                        <input type="file" accept={showItemModal.type === "VIDEO" ? "video/*" : ".pdf,.doc,.docx"} onChange={e => setItemForm({...itemForm, file: e.target.files?.[0] || null})} className="w-full text-[10px]" />
                       </div>
                     )}
                   </div>

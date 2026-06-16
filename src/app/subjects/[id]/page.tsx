@@ -85,6 +85,23 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
     setAnswers(initialAnswers);
   };
 
+  const handleSelectMaterial = (mat: any) => {
+    if (mat.challengeId) {
+      let challenge = subject?.challenges?.find((c: any) => c.id === mat.challengeId);
+      if (!challenge && subject?.units) {
+        for (const unit of subject.units) {
+          challenge = unit.challenges?.find((c: any) => c.id === mat.challengeId);
+          if (challenge) break;
+        }
+      }
+      if (challenge) {
+        handleOpenChallenge(challenge);
+        return;
+      }
+    }
+    setSelectedMaterial(mat);
+  };
+
   const handleSubmitChallenge = async (e?: React.FormEvent | React.MouseEvent | null, isRoleplayFinished = false, chatLog?: any[], fileUrl?: string) => {
     if (e && (e as any).preventDefault) (e as any).preventDefault();
     if (!selectedChallenge) return;
@@ -177,7 +194,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                 </div>
                 <div className="lg:col-span-4">
                   {unit.materials.length > 0 ? (
-                    <MaterialsSidebar subject={{ ...subject, materials: unit.materials }} onSelectMaterial={setSelectedMaterial} />
+                    <MaterialsSidebar subject={{ ...subject, materials: unit.materials }} onSelectMaterial={handleSelectMaterial} />
                   ) : (
                     <div className="p-8 text-center bg-secondary/5 border-2 border-dashed border-border rounded-[2rem]">
                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No hay materiales</p>
@@ -192,7 +209,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
             <div className="lg:col-span-8 space-y-6">
               <ChallengeGrid subject={subject} onOpenChallenge={handleOpenChallenge} />
             </div>
-            <MaterialsSidebar subject={subject} onSelectMaterial={setSelectedMaterial} />
+            <MaterialsSidebar subject={subject} onSelectMaterial={handleSelectMaterial} />
           </div>
         )}
       </div>

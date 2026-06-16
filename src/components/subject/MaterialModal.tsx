@@ -42,7 +42,7 @@ export function MaterialModal({ material, user, onClose }: MaterialModalProps) {
         <div className="flex-1 overflow-y-auto p-8">
           {material.type === "VIDEO" ? (
             material.fileUrl ? (
-              <video src={material.fileUrl} controls preload="metadata" playsInline className="w-full rounded-2xl border border-border" />
+              <video src={material.fileUrl} controls preload="auto" controlsList="nodownload" playsInline className="w-full rounded-2xl border border-border" />
             ) : (
               <a href={material.content} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-3 p-6 bg-secondary/20 rounded-2xl border border-border hover:border-primary/50 transition-all group">
