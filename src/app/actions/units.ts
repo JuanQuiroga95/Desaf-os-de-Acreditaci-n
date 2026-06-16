@@ -1,6 +1,6 @@
 "use server";
 
-import prisma from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
 export async function createUnit(data: {
@@ -10,7 +10,7 @@ export async function createUnit(data: {
   subjectId: string;
 }) {
   try {
-    const unit = await prisma.unit.create({
+    const unit = await db.unit.create({
       data,
     });
     revalidatePath(`/docente/materiales/${data.subjectId}`);
@@ -23,7 +23,7 @@ export async function createUnit(data: {
 
 export async function getUnitsBySubject(subjectId: string) {
   try {
-    const units = await prisma.unit.findMany({
+    const units = await db.unit.findMany({
       where: { subjectId },
       orderBy: { order: "asc" },
       include: {
@@ -55,7 +55,7 @@ export async function updateUnit(
   }
 ) {
   try {
-    const unit = await prisma.unit.update({
+    const unit = await db.unit.update({
       where: { id },
       data,
     });
@@ -69,7 +69,7 @@ export async function updateUnit(
 
 export async function deleteUnit(id: string, subjectId: string) {
   try {
-    await prisma.unit.delete({
+    await db.unit.delete({
       where: { id },
     });
     revalidatePath(`/docente/materiales/${subjectId}`);
