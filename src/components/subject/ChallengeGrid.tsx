@@ -12,7 +12,7 @@ export function ChallengeGrid({ subject, onOpenChallenge }: ChallengeGridProps) 
       <h2 className="text-xl font-black mb-8 flex items-center justify-between italic uppercase text-[10px] tracking-[0.2em] text-primary">
         <span className="flex items-center gap-3">
           <BookOpen size={18} />
-          Hoja de Ruta: 4 Encuentros Obligatorios
+          Hoja de Ruta: Actividades a Resolver
         </span>
         <span className="bg-primary/10 px-3 py-1 rounded-full text-[8px] font-black border border-primary/20">80% Asistencia Requerida</span>
       </h2>
@@ -22,7 +22,7 @@ export function ChallengeGrid({ subject, onOpenChallenge }: ChallengeGridProps) 
           const isCompleted = (challenge.progress?.length || 0) > 0 && challenge.progress[0].status === "COMPLETED";
           const isGraded = isCompleted && (challenge.progress[0]?.score !== null && challenge.progress[0]?.score !== undefined);
           
-          let label = `Encuentro ${i + 1}`;
+          let label = `Actividad ${i + 1}`;
           let colorClass = "bg-secondary text-muted-foreground";
           let icon = <span className="font-black">{i + 1}</span>;
 
