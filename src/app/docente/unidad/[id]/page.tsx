@@ -844,7 +844,7 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
             <h3 className="text-[10px] font-black uppercase tracking-widest text-primary mb-6">Resumen de materiales</h3>
             <div className="space-y-3">
               {TABS.map((tab) => {
-                const count = tab.key === "CHALLENGES" ? challenges.length : materials.filter((m) => m.type === tab.key).length;
+                const count = tab.key === "CHALLENGES" ? standaloneChallenges.length : tab.key === "ENCOUNTER" ? encounters.length : materials.filter((m) => m.type === tab.key).length;
                 const Icon = tab.icon;
                 return (
                   <div key={tab.key} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">

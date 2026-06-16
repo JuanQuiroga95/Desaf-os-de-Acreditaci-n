@@ -81,7 +81,7 @@ export function ChallengeModal({ challenge, subject, onClose, onSubmit, answers,
                   onClick={() => setInternalTab("THEORY")}
                   className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${internalTab === "THEORY" ? "bg-primary text-white shadow-md shadow-primary/20" : "hover:bg-secondary text-muted-foreground"}`}
                 >
-                  <FileText size={12} /> Teoría
+                  <FileText size={12} /> Teoría / Ejercicios
                 </button>
               )}
               <button 
@@ -155,6 +155,23 @@ export function ChallengeModal({ challenge, subject, onClose, onSubmit, answers,
                   )}
 
                   <div className="space-y-6">
+                    
+                  {!challenge.content?.questions?.length && (
+                    <div className="p-6 bg-card border border-border rounded-2xl shadow-sm hover:border-primary/20 transition-all group">
+                      <label className="text-[11px] font-black uppercase text-foreground leading-relaxed tracking-widest pt-1.5 block mb-4">
+                        Tu Resolución
+                      </label>
+                      <textarea 
+                        required
+                        disabled={isReadOnly}
+                        value={answers["resolution"] || ""}
+                        onChange={(e) => setAnswers({...answers, resolution: e.target.value})}
+                        className="w-full bg-background border border-border rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-inner disabled:opacity-70 disabled:bg-secondary/50 resize-none min-h-[200px]"
+                        placeholder={isReadOnly ? "" : "Escribí o pegá tu respuesta acá..."}
+                      />
+                    </div>
+                  )}
+
                     {challenge.content?.questions?.map((q: any, index: number) => (
                       <div key={q.id} className="p-6 bg-card border border-border rounded-2xl shadow-sm hover:border-primary/20 transition-all group">
                         <div className="flex items-start gap-3 mb-4">

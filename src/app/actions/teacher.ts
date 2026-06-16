@@ -9,7 +9,7 @@ export async function getTeacherDashboard(teacherId: string) {
       where: { teacherId },
       include: {
         _count: {
-          select: { challenges: true }
+          select: { challenges: { where: { materials: { none: {} } } } }
         },
         challenges: {
           include: {
