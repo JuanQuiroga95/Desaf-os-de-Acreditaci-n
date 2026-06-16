@@ -251,114 +251,32 @@ function UnidadesContent() {
             units.map((unit) => (
               <div key={unit.id} className="bg-card border border-border rounded-[2rem] overflow-hidden shadow-sm">
                 <div 
-                  className="p-6 bg-secondary/10 flex items-center justify-between cursor-pointer hover:bg-secondary/20 transition-all"
-                  onClick={() => setExpandedUnit(expandedUnit === unit.id ? null : unit.id)}
+                  className="p-6 bg-secondary/10 flex items-center justify-between cursor-pointer hover:bg-secondary/20 transition-all group"
+                  onClick={() => router.push(`/docente/unidad/${unit.id}`)}
                 >
                   <div className="flex items-center gap-4">
-                    {expandedUnit === unit.id ? <ChevronDown className="text-primary" /> : <ChevronRight className="text-primary" />}
+                    <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary border border-primary/30 group-hover:scale-110 transition-transform">
+                      <FileText size={20} />
+                    </div>
                     <div>
-                      <h2 className="font-black text-xl">{unit.name}</h2>
-                      {unit.description && <p className="text-sm text-muted-foreground">{unit.description}</p>}
+                      <h2 className="font-black text-2xl tracking-tight">{unit.name}</h2>
+                      {unit.description && <p className="text-sm text-muted-foreground mt-1">{unit.description}</p>}
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleDeleteUnit(unit.id); }}
-                      className="p-2 rounded-xl text-muted-foreground hover:bg-red-500 hover:text-white transition-all"
+                      className="p-3 rounded-xl text-muted-foreground hover:bg-red-500 hover:text-white transition-all border border-border bg-background shadow-sm hover:shadow-red-500/20"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={18} />
+                    </button>
+                    <button 
+                      className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:scale-105 transition-all font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-primary/20"
+                    >
+                      Ver Unidad <ChevronRight size={14} />
                     </button>
                   </div>
                 </div>
-
-                <AnimatePresence>
-                  {expandedUnit === unit.id && (
-                    <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="border-t border-border overflow-hidden">
-                      <div className="p-6 space-y-6">
-                        
-                        {/* Materiales Section */}
-                        <div>
-                          <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                              <FileText size={14} /> Materiales (Teoría / Videos)
-                            </h3>
-                            <div className="flex gap-2">
-                              <button onClick={() => setShowItemModal({ unitId: unit.id, type: "THEORY" })} className="text-[9px] font-black uppercase tracking-widest text-primary hover:underline">+ Teoría</button>
-                              <button onClick={() => setShowItemModal({ unitId: unit.id, type: "VIDEO" })} className="text-[9px] font-black uppercase tracking-widest text-primary hover:underline">+ Video</button>
-                              <button onClick={() => setShowItemModal({ unitId: unit.id, type: "TP_TEMPLATE" })} className="text-[9px] font-black uppercase tracking-widest text-primary hover:underline">+ Trabajo Práctico</button>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {unit.materials.map((m: any) => (
-                              <div key={m.id} className="p-4 border border-border rounded-2xl bg-secondary/5 flex justify-between">
-                                <div>
-                                  <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${m.type === 'VIDEO' ? 'bg-red-500/10 text-red-500' : m.type === 'TP_TEMPLATE' ? 'bg-amber-500/10 text-amber-500' : 'bg-blue-500/10 text-blue-500'}`}>{m.type === 'TP_TEMPLATE' ? 'TRABAJO PRÁCTICO' : m.type}</span>
-                                  <h4 className="font-bold mt-1">{m.title}</h4>
-                                </div>
-                                <button onClick={() => handleDeleteMaterial(m.id)} className="text-muted-foreground hover:text-red-500"><Trash2 size={14}/></button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Ejercicios Section */}
-                        <div>
-                          <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                              <Dumbbell size={14} /> Ejercicios
-                            </h3>
-                            <button onClick={() => setShowItemModal({ unitId: unit.id, type: "EXERCISE" })} className="text-[9px] font-black uppercase tracking-widest text-primary hover:underline">+ Ejercicio</button>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {unit.challenges.map((c: any) => (
-                              <div key={c.id} className="p-4 border border-border rounded-2xl bg-secondary/5 flex justify-between">
-                                <div>
-                                  <h4 className="font-bold">{c.title}</h4>
-                                  <span className="text-xs text-muted-foreground">{c.images?.length || 0} imágenes adjuntas</span>
-                                </div>
-                                <button onClick={() => handleDeleteChallenge(c.id)} className="text-muted-foreground hover:text-red-500"><Trash2 size={14}/></button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Encuentros Section */}
-                        <div>
-                          <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                              <Users2 size={14} /> Encuentros
-                            </h3>
-                            <button onClick={() => setShowItemModal({ unitId: unit.id, type: "ENCOUNTER" })} className="text-[9px] font-black uppercase tracking-widest text-primary hover:underline">+ Encuentro</button>
-                          </div>
-                          <div className="space-y-3">
-                            {unit.encounters.map((enc: any) => (
-                              <div key={enc.id} className="p-4 border border-border rounded-2xl bg-secondary/5 flex justify-between items-center">
-                                <div>
-                                  <h4 className="font-bold">{enc.student.name}</h4>
-                                  <div className="flex gap-3 text-xs text-muted-foreground mt-1">
-                                    <span className="flex items-center gap-1"><Calendar size={12}/> {new Date(enc.date).toLocaleDateString()}</span>
-                                    <span>{enc.type}</span>
-                                    <span>{enc.images?.length || 0} imágenes</span>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className={`px-2 py-1 text-[9px] rounded-lg border font-bold uppercase ${
-                                    enc.status === "COMPLETED" ? "bg-green-500/10 text-green-500 border-green-500/20" :
-                                    enc.status === "ABSENT" ? "bg-red-500/10 text-red-500 border-red-500/20" :
-                                    "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
-                                  }`}>{enc.status}</span>
-                                  <button onClick={() => updateEncounterStatus(enc.id, "COMPLETED")} className="p-1.5 hover:bg-green-500/20 rounded-md text-green-500"><CheckCircle2 size={14}/></button>
-                                  <button onClick={() => handleDeleteEncounter(enc.id)} className="p-1.5 hover:bg-red-500/20 rounded-md text-red-500"><Trash2 size={14}/></button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
             ))
           )}

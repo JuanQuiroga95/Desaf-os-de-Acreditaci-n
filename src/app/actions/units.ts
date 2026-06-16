@@ -79,3 +79,39 @@ export async function deleteUnit(id: string, subjectId: string) {
     return { success: false, error: error.message };
   }
 }
+
+export async function getUnitById(unitId: string) {
+  try {
+    const unit = await db.unit.findUnique({
+      where: { id: unitId },
+      include: { subject: true }
+    });
+    return { success: true, unit };
+  } catch {
+    return { success: false, error: "Error al cargar la unidad" };
+  }
+}
+
+export async function getMaterialsByUnit(unitId: string) {
+  try {
+    const materials = await db.material.findMany({
+      where: { unitId },
+      orderBy: [{ type: "asc" }, { order: "asc" }, { createdAt: "asc" }],
+    });
+    return { success: true, materials };
+  } catch {
+    return { success: false, error: "Error al cargar materiales" };
+  }
+}
+
+export async function getChallengesByUnit(unitId: string) {
+  try {
+    const challenges = await db.challenge.findMany({
+      where: { unitId },
+      orderBy: { createdAt: "desc" }
+    });
+    return { success: true, challenges };
+  } catch {
+    return { success: false, error: "Error al cargar desafíos" };
+  }
+}
