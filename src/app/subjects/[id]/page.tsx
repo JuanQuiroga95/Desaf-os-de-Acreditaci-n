@@ -205,7 +205,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                     <ChallengeGrid subject={{ ...subject, challenges: standaloneChallenges }} onOpenChallenge={handleOpenChallenge} />
                   ) : (
                     <div className="p-8 text-center bg-secondary/5 border-2 border-dashed border-border rounded-[2rem]">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No hay desafíos independientes en esta unidad</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No hay encuentros en esta unidad</p>
                     </div>
                   )}
                   {unit.encounters?.length > 0 && (

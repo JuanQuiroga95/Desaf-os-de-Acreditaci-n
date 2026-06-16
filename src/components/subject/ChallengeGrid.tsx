@@ -98,7 +98,7 @@ export function ChallengeGrid({ subject, onOpenChallenge }: ChallengeGridProps) 
         {(!subject?.challenges || subject?.challenges.length === 0) && (
           <div className="p-16 text-center border-2 border-dashed border-border rounded-[2.5rem] bg-secondary/5">
             <HelpCircle className="mx-auto mb-4 text-muted-foreground opacity-20" size={48} />
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">No hay desafíos publicados todavía.</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-6">No hay encuentros cargados aún.</p>
           </div>
         )}
       </div>

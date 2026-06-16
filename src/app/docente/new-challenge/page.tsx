@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { PlusCircle, Save, ArrowLeft, Trash2, Plus, X, CheckCircle2, FileUp, Loader2, Settings, Target, HelpCircle } from "lucide-react";
 import { getTeacherDashboard } from "@/app/actions/teacher";
 import { createChallenge } from "@/app/actions/admin";
@@ -10,7 +11,7 @@ import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function TeacherNewChallengePage() {
+function TeacherNewChallengeContent() {
   const { user, isLoading: authLoading } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
@@ -205,12 +206,16 @@ export default function TeacherNewChallengePage() {
       return;
     }
     
-    const res = await createChallenge(form.subjectId, form.title, form.objective, form.content, form.type);
+    const res = await createChallenge(form.subjectId, form.title, form.objective, form.content, form.type, undefined, unitId || undefined);
     if (res.success) {
-      showToast("¡Desafío publicado con éxito!", "success");
-      router.push("/docente");
+      showToast("¡Encuentro publicado con éxito!", "success");
+      if (unitId) {
+        router.push(`/docente/unidad/${unitId}`);
+      } else {
+        router.push("/docente");
+      }
     } else {
-      showToast("Error al publicar el desafío", "error");
+      showToast("Error al publicar el encuentro", "error");
     }
   };
 
@@ -223,7 +228,7 @@ export default function TeacherNewChallengePage() {
         <Link href="/docente" className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest mb-4 hover:underline">
           <ArrowLeft size={14} /> Volver al Panel
         </Link>
-        <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">Nuevo <span className="text-primary">Desafío</span></h1>
+        <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">Nuevo <span className="text-primary">Encuentro</span></h1>
       </header>
 
       <form onSubmit={handleSubmit} className="space-y-8">
@@ -251,7 +256,7 @@ export default function TeacherNewChallengePage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Título del Desafío</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Título del Encuentro</label>
               <input 
                 required 
                 value={form.title} 
@@ -287,7 +292,7 @@ export default function TeacherNewChallengePage() {
               value={form.objective} 
               onChange={e => setForm({...form, objective: e.target.value})}
               className="w-full h-[180px] bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-              placeholder="¿Qué competencia técnica va a acreditar el alumno con este desafío?"
+              placeholder="¿Qué competencia técnica va a acreditar el alumno con este encuentro?"
             />
           </section>
         </div>
@@ -340,7 +345,7 @@ export default function TeacherNewChallengePage() {
               <div className="flex justify-between items-center mb-8">
                 <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary flex items-center gap-3 italic">
                   <PlusCircle size={16} />
-                  Información del Desafío
+                  Información del Encuentro
                 </h2>
                 
                 <div className="flex items-center gap-6">
@@ -525,7 +530,7 @@ export default function TeacherNewChallengePage() {
           className="w-full py-6 bg-primary text-white rounded-[2rem] font-black uppercase tracking-[0.4em] text-xs shadow-2xl shadow-primary/30 hover:scale-[1.01] transition-all flex items-center justify-center gap-3"
         >
           <Save size={20} />
-          Publicar Desafío en el Aula
+          Publicar Encuentro en el Aula
         </button>
       </form>
 
@@ -649,5 +654,14 @@ export default function TeacherNewChallengePage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+
+export default function TeacherNewChallengePage() {
+  return (
+    <Suspense fallback={<div className="p-20 text-center font-black animate-pulse uppercase tracking-widest text-primary">Cargando...</div>}>
+      <TeacherNewChallengeContent />
+    </Suspense>
   );
 }

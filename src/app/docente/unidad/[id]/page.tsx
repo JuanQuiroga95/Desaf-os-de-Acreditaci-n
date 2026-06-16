@@ -399,7 +399,7 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
       {/* Tabs */}
       <div className="flex gap-2 mb-8 flex-wrap">
         {TABS.map((tab) => {
-          const count = tab.key === "CHALLENGES" ? standaloneChallenges.length : tab.key === "ENCOUNTER" ? encounters.length : materials.filter((m) => m.type === tab.key).length;
+          const count = tab.key === "CHALLENGES" ? standaloneChallenges.length : materials.filter((m) => m.type === tab.key).length;
           const Icon = tab.icon;
           return (
             <button
@@ -440,7 +440,7 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
             </div>
           )}
 
-          {(activeTab === "CHALLENGES" ? standaloneChallenges.length === 0 : activeTab === "ENCOUNTER" ? encounters.length === 0 : tabMaterials.length === 0) && !showForm && (
+          {(activeTab === "CHALLENGES" ? standaloneChallenges.length === 0 : tabMaterials.length === 0) && !showForm && (
             <div className="p-16 text-center border-2 border-dashed border-border rounded-[2.5rem] bg-secondary/5">
               <activeTabDef.icon className={`mx-auto mb-4 opacity-20 ${activeTabDef.color}`} size={48} />
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-6">
@@ -457,31 +457,7 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
 
           <AnimatePresence>
             {
-            activeTab === "ENCOUNTER" ? (
-              encounters.map((enc: any) => (
-                <motion.div key={enc.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border rounded-[2rem] p-6 shadow-sm">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="font-black text-lg">{enc.student.name}</h4>
-                      <div className="flex gap-3 text-xs text-muted-foreground mt-1">
-                        <span className="flex items-center gap-1"><Calendar size={12}/> {new Date(enc.date).toLocaleDateString()}</span>
-                        <span>{enc.type}</span>
-                        {enc.notes && <span>· {enc.notes}</span>}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`px-3 py-1 text-[10px] rounded-lg border font-black uppercase ${
-                        enc.status === "COMPLETED" ? "bg-green-500/10 text-green-500 border-green-500/20" :
-                        enc.status === "ABSENT" ? "bg-red-500/10 text-red-500 border-red-500/20" :
-                        "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
-                      }`}>{enc.status}</span>
-                      <button onClick={() => handleUpdateEncounterStatus(enc.id, "COMPLETED")} className="p-2 hover:bg-green-500/20 rounded-xl text-green-500 border border-border"><CheckCircle2 size={16}/></button>
-                      <button onClick={() => handleDeleteEncounter(enc.id)} className="p-2 hover:bg-red-500/20 rounded-xl text-red-500 border border-border"><Trash2 size={16}/></button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))
-            ) : activeTab === "CHALLENGES" ? (
+            activeTab === "CHALLENGES" ? (
               standaloneChallenges.map((chall) => (
                 <motion.div
                   key={chall.id}
@@ -632,23 +608,7 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                   
-                  {activeTab === "ENCOUNTER" && (
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Alumno</label>
-                        <select required value={form.studentId} onChange={e => setForm({...form, studentId: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50">
-                          <option value="">Seleccionar...</option>
-                          {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Fecha</label>
-                        <input type="date" required value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50" style={{colorScheme: 'dark'}} />
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab !== "ENCOUNTER" && (<div>
+                  <div>
                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Título</label>
                     <input
                       required
@@ -656,7 +616,6 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
                       onChange={(e) => setForm({ ...form, title: e.target.value })}
                       className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50"
                       placeholder={
-                        activeTab === "ENCOUNTER" ? "Notas del encuentro (opcional)" :
                         activeTab === "THEORY" ? "Ej: Fracciones y operaciones básicas" :
                         activeTab === "VIDEO" ? "Ej: Video explicativo — Racionales" :
                         activeTab === "EXERCISE" ? "Ej: Suma y resta de fracciones" :
@@ -665,7 +624,7 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
                         "Rúbrica de evaluación"
                       }
                     />
-                  </div>)}
+                  </div>
 
                   {activeTab === "EXERCISE" && (
                     <div>
@@ -830,7 +789,16 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
 
         {/* Sidebar */}
         <aside className="lg:col-span-4 space-y-6">
-          {!showForm && (
+          {!showForm && activeTab === "CHALLENGES" && (
+            <Link
+              href={`/docente/new-challenge?subjectId=${subjectId}&unitId=${unitId}`}
+              className="w-full py-5 bg-primary text-white rounded-[2rem] font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 hover:scale-[1.02] transition-all shadow-2xl shadow-primary/20"
+            >
+              <Plus size={18} />
+              Agregar {activeTabDef.label}
+            </Link>
+          )}
+          {!showForm && activeTab !== "CHALLENGES" && (
             <button
               onClick={() => setShowForm(true)}
               className="w-full py-5 bg-primary text-white rounded-[2rem] font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 hover:scale-[1.02] transition-all shadow-2xl shadow-primary/20"
@@ -844,7 +812,7 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
             <h3 className="text-[10px] font-black uppercase tracking-widest text-primary mb-6">Resumen de materiales</h3>
             <div className="space-y-3">
               {TABS.map((tab) => {
-                const count = tab.key === "CHALLENGES" ? standaloneChallenges.length : tab.key === "ENCOUNTER" ? encounters.length : materials.filter((m) => m.type === tab.key).length;
+                const count = tab.key === "CHALLENGES" ? standaloneChallenges.length : materials.filter((m) => m.type === tab.key).length;
                 const Icon = tab.icon;
                 return (
                   <div key={tab.key} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">

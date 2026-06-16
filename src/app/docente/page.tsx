@@ -70,7 +70,7 @@ export default function TeacherPage() {
           className="bg-primary text-primary-foreground px-8 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-2xl shadow-primary/30"
         >
           <PlusCircle size={20} />
-          Nuevo Desafío
+          Nuevo Encuentro
         </Link>
       </header>
 
@@ -128,7 +128,7 @@ export default function TeacherPage() {
                       <span className="text-4xl font-black tracking-tighter">{sub.studentsCount}</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Desafíos</span>
+                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Encuentros</span>
                       <span className="text-4xl font-black tracking-tighter">{sub.challengesCount}</span>
                     </div>
                   </div>
