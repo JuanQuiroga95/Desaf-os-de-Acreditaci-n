@@ -128,7 +128,7 @@ export default function TeacherPage() {
                       <span className="text-4xl font-black tracking-tighter">{sub.studentsCount}</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Encuentros</span>
+                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Desafíos</span>
                       <span className="text-4xl font-black tracking-tighter">{sub.challengesCount}</span>
                     </div>
                   </div>

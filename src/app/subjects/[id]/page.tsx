@@ -28,6 +28,13 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
   
   const [selectedChallenge, setSelectedChallenge] = useState<any>(null);
   const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
+  const [activeUnitId, setActiveUnitId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (subject?.units?.length > 0 && !activeUnitId) {
+      setActiveUnitId(subject.units[0].id);
+    }
+  }, [subject, activeUnitId]);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -86,6 +93,13 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
   };
 
   const handleSelectMaterial = (mat: any) => {
+    if ((mat.type === "EXERCISE" || mat.type === "TP_TEMPLATE") && mat.challengeId) {
+      const challenge = subject?.units?.flatMap((u: any) => u.challenges || []).find((c: any) => c.id === mat.challengeId);
+      if (challenge) {
+        handleOpenChallenge(challenge);
+        return;
+      }
+    }
     if (mat.challengeId) {
       let challenge = subject?.challenges?.find((c: any) => c.id === mat.challengeId);
       if (!challenge && subject?.units) {
@@ -156,19 +170,42 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
       <SubjectHeader subject={subject} />
 
       <div className="space-y-12 mt-8">
+        
+        {subject?.units?.length > 0 && (
+          <div className="flex gap-4 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+            {subject.units.map((unit: any) => (
+              <button
+                key={unit.id}
+                onClick={() => setActiveUnitId(unit.id)}
+                className={`px-6 py-4 rounded-[2rem] font-black text-[10px] uppercase tracking-widest border transition-all whitespace-nowrap ${
+                  activeUnitId === unit.id 
+                    ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20" 
+                    : "bg-secondary/30 border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                }`}
+              >
+                {unit.name}
+              </button>
+            ))}
+          </div>
+        )}
+        
         {subject?.units?.length > 0 ? (
-          subject.units.map((unit: any) => (
+          subject.units.filter((u: any) => u.id === activeUnitId).map((unit: any) => {
+            const standaloneChallenges = (unit.challenges || []).filter(
+              (c: any) => !(unit.materials || []).some((m: any) => m.challengeId === c.id)
+            );
+            return (
             <div key={unit.id} className="bg-card border border-border rounded-[2.5rem] p-8 shadow-sm">
               <h2 className="text-3xl font-black mb-2">{unit.name}</h2>
               {unit.description && <p className="text-muted-foreground mb-6">{unit.description}</p>}
               
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
                 <div className="lg:col-span-8 space-y-6">
-                  {unit.challenges.length > 0 ? (
-                    <ChallengeGrid subject={{ ...subject, challenges: unit.challenges }} onOpenChallenge={handleOpenChallenge} />
+                  {standaloneChallenges.length > 0 ? (
+                    <ChallengeGrid subject={{ ...subject, challenges: standaloneChallenges }} onOpenChallenge={handleOpenChallenge} />
                   ) : (
                     <div className="p-8 text-center bg-secondary/5 border-2 border-dashed border-border rounded-[2rem]">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No hay ejercicios en esta unidad</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No hay desafíos independientes en esta unidad</p>
                     </div>
                   )}
                   {unit.encounters?.length > 0 && (
@@ -203,8 +240,9 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
                 </div>
               </div>
             </div>
-          ))
+          )})
         ) : (
+          
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-8 space-y-6">
               <ChallengeGrid subject={subject} onOpenChallenge={handleOpenChallenge} />
