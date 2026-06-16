@@ -9,18 +9,20 @@ import {
   Pencil, Check, X as XIcon, RotateCcw
 } from "lucide-react";
 import { getMaterialsBySubject, createMaterial, deleteMaterial, updateMaterial } from "@/app/actions/material";
-import { deleteChallenge, createChallenge, updateChallenge } from "@/app/actions/admin";
-import { getUnitById, getMaterialsByUnit, getChallengesByUnit } from "@/app/actions/units";
+import { deleteChallenge, createChallenge, updateChallenge, getAllUsers } from "@/app/actions/admin";
+import { createEncounter, deleteEncounter, updateEncounterStatus } from "@/app/actions/encounters";
+import { getUnitById, getMaterialsByUnit, getChallengesByUnit, getEncountersByUnit } from "@/app/actions/units";
 import { updateSubjectName, resetChallengeSubmissions } from "@/app/actions/teacher";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
 import { upload } from "@vercel/blob/client";
-import { Sparkles, Zap, Eye, EyeOff } from "lucide-react";
+import { Sparkles, Zap, Eye, EyeOff, Users2, Calendar, CheckCircle2 } from "lucide-react";
 
-type Tab = "THEORY" | "VIDEO" | "EXERCISE" | "PROMPT" | "RUBRIC" | "TP_TEMPLATE" | "CHALLENGES";
+type Tab = "THEORY" | "VIDEO" | "EXERCISE" | "PROMPT" | "RUBRIC" | "TP_TEMPLATE" | "CHALLENGES" | "ENCOUNTER";
 
 const TABS: { key: Tab; label: string; icon: React.ElementType; color: string }[] = [
+  { key: "ENCOUNTER", label: "Encuentros", icon: Users2, color: "text-indigo-400" },
   { key: "CHALLENGES", label: "Desafíos", icon: Zap, color: "text-amber-400" },
   { key: "THEORY", label: "Teoría", icon: FileText, color: "text-blue-400" },
   { key: "VIDEO", label: "Videos", icon: Video, color: "text-red-400" },
@@ -51,6 +53,8 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
   const [newName, setNewName] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
   const [challenges, setChallenges] = useState<any[]>([]);
+  const [encounters, setEncounters] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
   const [isConverting, setIsConverting] = useState<string | null>(null);
   const [editingChallenge, setEditingChallenge] = useState<any>(null);
   const [editingMaterial, setEditingMaterial] = useState<any>(null);
@@ -64,6 +68,8 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
     videoMode: "url" as "url" | "file",
     theoryMode: "text" as "text" | "file",
     file: null as File | null,
+    studentId: "",
+    date: "",
   });
 
   useEffect(() => {
@@ -73,13 +79,18 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [mats, challs, unitRes] = await Promise.all([
+      const [mats, challs, unitRes, encRes, usersRes] = await Promise.all([
+
         getMaterialsByUnit(unitId),
         getChallengesByUnit(unitId),
         getUnitById(unitId),
+        getEncountersByUnit(unitId),
+        getAllUsers(),
       ]);
       if (mats.success) setMaterials(mats.materials || []);
       if (challs.success) setChallenges(challs.challenges || []);
+      if (encRes.success) setEncounters(encRes.encounters || []);
+      setStudents(usersRes.filter((u: any) => u.role === "STUDENT"));
       if (unitRes.success && unitRes.unit) {
         setUnit(unitRes.unit);
         setSubject(unitRes.unit.subject);
@@ -105,7 +116,7 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
   };
 
   const resetForm = () => {
-    setForm({ title: "", content: "", level: "BASICO", videoMode: "url", theoryMode: "text", file: null });
+    setForm({ title: "", content: "", level: "BASICO", videoMode: "url", theoryMode: "text", file: null, studentId: "", date: "" });
     setShowForm(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -116,6 +127,17 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
 
     setIsSaving(true);
     try {
+      
+      if (activeTab === "ENCOUNTER") {
+        if (!form.studentId || !form.date) { showToast("Faltan datos", "error"); setIsSaving(false); return; }
+        const res = await createEncounter({
+          subjectId, unitId, studentId: form.studentId, date: form.date, notes: form.content, status: "PENDING", type: "VIRTUAL", teacherId: user.id
+        });
+        if (res.success) { showToast("Encuentro creado", "success"); resetForm(); loadData(); }
+        else { showToast("Error al crear", "error"); }
+        setIsSaving(false);
+        return;
+      }
       let fileUrl: string | undefined;
 
       const needsFileUpload =
@@ -307,6 +329,20 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
     }
   };
 
+  
+  const handleDeleteEncounter = async (id: string) => {
+    if (!confirm("¿Eliminar este encuentro?")) return;
+    const res = await deleteEncounter(id);
+    if (res.success) { showToast("Encuentro eliminado", "success"); loadData(); }
+    else showToast("Error al eliminar", "error");
+  };
+
+  const handleUpdateEncounterStatus = async (id: string, status: string) => {
+    const res = await updateEncounterStatus(id, status);
+    if (res.success) { showToast("Estado actualizado", "success"); loadData(); }
+    else showToast("Error al actualizar", "error");
+  };
+
   const tabMaterials = materials.filter((m) => m.type === activeTab);
   const activeTabDef = TABS.find((t) => t.key === activeTab)!;
 
@@ -362,7 +398,7 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
       {/* Tabs */}
       <div className="flex gap-2 mb-8 flex-wrap">
         {TABS.map((tab) => {
-          const count = tab.key === "CHALLENGES" ? challenges.length : materials.filter((m) => m.type === tab.key).length;
+          const count = tab.key === "CHALLENGES" ? challenges.length : tab.key === "ENCOUNTER" ? encounters.length : materials.filter((m) => m.type === tab.key).length;
           const Icon = tab.icon;
           return (
             <button
@@ -403,7 +439,7 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
             </div>
           )}
 
-          {(activeTab === "CHALLENGES" ? challenges.length === 0 : tabMaterials.length === 0) && !showForm && (
+          {(activeTab === "CHALLENGES" ? challenges.length === 0 : activeTab === "ENCOUNTER" ? encounters.length === 0 : tabMaterials.length === 0) && !showForm && (
             <div className="p-16 text-center border-2 border-dashed border-border rounded-[2.5rem] bg-secondary/5">
               <activeTabDef.icon className={`mx-auto mb-4 opacity-20 ${activeTabDef.color}`} size={48} />
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-6">
@@ -419,7 +455,32 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
           )}
 
           <AnimatePresence>
-            {activeTab === "CHALLENGES" ? (
+            {
+            activeTab === "ENCOUNTER" ? (
+              encounters.map((enc: any) => (
+                <motion.div key={enc.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border rounded-[2rem] p-6 shadow-sm">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h4 className="font-black text-lg">{enc.student.name}</h4>
+                      <div className="flex gap-3 text-xs text-muted-foreground mt-1">
+                        <span className="flex items-center gap-1"><Calendar size={12}/> {new Date(enc.date).toLocaleDateString()}</span>
+                        <span>{enc.type}</span>
+                        {enc.notes && <span>· {enc.notes}</span>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-3 py-1 text-[10px] rounded-lg border font-black uppercase ${
+                        enc.status === "COMPLETED" ? "bg-green-500/10 text-green-500 border-green-500/20" :
+                        enc.status === "ABSENT" ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                        "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                      }`}>{enc.status}</span>
+                      <button onClick={() => handleUpdateEncounterStatus(enc.id, "COMPLETED")} className="p-2 hover:bg-green-500/20 rounded-xl text-green-500 border border-border"><CheckCircle2 size={16}/></button>
+                      <button onClick={() => handleDeleteEncounter(enc.id)} className="p-2 hover:bg-red-500/20 rounded-xl text-red-500 border border-border"><Trash2 size={16}/></button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            ) : activeTab === "CHALLENGES" ? (
               challenges.map((chall) => (
                 <motion.div
                   key={chall.id}
@@ -569,7 +630,24 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
                 </h4>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
-                  <div>
+                  
+                  {activeTab === "ENCOUNTER" && (
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Alumno</label>
+                        <select required value={form.studentId} onChange={e => setForm({...form, studentId: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50">
+                          <option value="">Seleccionar...</option>
+                          {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Fecha</label>
+                        <input type="date" required value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50" style={{colorScheme: 'dark'}} />
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab !== "ENCOUNTER" && (<div>
                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Título</label>
                     <input
                       required
@@ -577,6 +655,7 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
                       onChange={(e) => setForm({ ...form, title: e.target.value })}
                       className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50"
                       placeholder={
+                        activeTab === "ENCOUNTER" ? "Notas del encuentro (opcional)" :
                         activeTab === "THEORY" ? "Ej: Fracciones y operaciones básicas" :
                         activeTab === "VIDEO" ? "Ej: Video explicativo — Racionales" :
                         activeTab === "EXERCISE" ? "Ej: Suma y resta de fracciones" :
@@ -585,7 +664,7 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
                         "Rúbrica de evaluación"
                       }
                     />
-                  </div>
+                  </div>)}
 
                   {activeTab === "EXERCISE" && (
                     <div>

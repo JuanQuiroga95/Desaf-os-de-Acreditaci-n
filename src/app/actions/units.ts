@@ -115,3 +115,20 @@ export async function getChallengesByUnit(unitId: string) {
     return { success: false, error: "Error al cargar desafíos" };
   }
 }
+
+export async function getEncountersByUnit(unitId: string) {
+  try {
+    const encounters = await db.encounter.findMany({
+      where: { unitId },
+      include: {
+        student: { select: { id: true, name: true, email: true } },
+        teacher: { select: { id: true, name: true } },
+      },
+      orderBy: { date: "desc" }
+    });
+    return { success: true, encounters };
+  } catch {
+    return { success: false, encounters: [] };
+  }
+}
+
