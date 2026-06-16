@@ -24,6 +24,7 @@ import {
   Menu,
   X,
   Compass,
+  Layers,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useTheme } from "@/context/ThemeContext";
@@ -134,7 +135,7 @@ export function Sidebar() {
         return [
           { name: "Mis Clases", href: "/docente", icon: LayoutDashboard },
           { name: "Alumnos", href: "/docente/students", icon: Users },
-          { name: "Encuentros RAA", href: "/docente/encuentros", icon: Users2 },
+          { name: "Unidades", href: "/docente/unidades", icon: Layers },
           { name: "Crear Encuentro", href: "/docente/new-challenge", icon: PlusCircle },
           { name: "Correcciones", href: "/docente/reviews", icon: Trophy },
           { name: "Mensajes", href: "/mensajes", icon: MessageSquare },

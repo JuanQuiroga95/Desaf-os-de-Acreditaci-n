@@ -11,6 +11,8 @@ export async function createEncounter(data: {
   subjectId: string;
   studentId: string;
   teacherId: string;
+  unitId?: string;
+  images?: string[];
 }) {
   await requireAuth(["teacher", "admin"]);
   try {
@@ -23,6 +25,8 @@ export async function createEncounter(data: {
         subjectId: data.subjectId,
         studentId: data.studentId,
         teacherId: data.teacherId,
+        unitId: data.unitId,
+        images: data.images || [],
       }
     });
     revalidatePath("/docente/encuentros");

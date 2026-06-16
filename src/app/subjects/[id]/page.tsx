@@ -138,11 +138,63 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
     <div className="p-8 max-w-7xl mx-auto pb-24">
       <SubjectHeader subject={subject} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-6">
-          <ChallengeGrid subject={subject} onOpenChallenge={handleOpenChallenge} />
-        </div>
-        <MaterialsSidebar subject={subject} onSelectMaterial={setSelectedMaterial} />
+      <div className="space-y-12 mt-8">
+        {subject?.units?.length > 0 ? (
+          subject.units.map((unit: any) => (
+            <div key={unit.id} className="bg-card border border-border rounded-[2.5rem] p-8 shadow-sm">
+              <h2 className="text-3xl font-black mb-2">{unit.name}</h2>
+              {unit.description && <p className="text-muted-foreground mb-6">{unit.description}</p>}
+              
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
+                <div className="lg:col-span-8 space-y-6">
+                  {unit.challenges.length > 0 ? (
+                    <ChallengeGrid subject={{ ...subject, challenges: unit.challenges }} onOpenChallenge={handleOpenChallenge} />
+                  ) : (
+                    <div className="p-8 text-center bg-secondary/5 border-2 border-dashed border-border rounded-[2rem]">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No hay ejercicios en esta unidad</p>
+                    </div>
+                  )}
+                  {unit.encounters?.length > 0 && (
+                    <div className="mt-8">
+                      <h3 className="text-sm font-black uppercase tracking-widest mb-4">Encuentros</h3>
+                      <div className="space-y-4">
+                        {unit.encounters.map((enc: any) => (
+                          <div key={enc.id} className="p-6 bg-secondary/10 border border-border rounded-2xl flex justify-between items-center">
+                            <div>
+                              <p className="font-bold text-lg">{enc.type === "PRESENCIAL" ? "Presencial" : "Virtual"}</p>
+                              <p className="text-xs text-muted-foreground">{new Date(enc.date).toLocaleDateString()}</p>
+                            </div>
+                            <span className={`px-3 py-1 text-[10px] rounded-lg border font-bold uppercase ${
+                                    enc.status === "COMPLETED" ? "bg-green-500/10 text-green-500 border-green-500/20" :
+                                    enc.status === "ABSENT" ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                                    "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                                  }`}>{enc.status}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="lg:col-span-4">
+                  {unit.materials.length > 0 ? (
+                    <MaterialsSidebar subject={{ ...subject, materials: unit.materials }} onSelectMaterial={setSelectedMaterial} />
+                  ) : (
+                    <div className="p-8 text-center bg-secondary/5 border-2 border-dashed border-border rounded-[2rem]">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No hay materiales</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-8 space-y-6">
+              <ChallengeGrid subject={subject} onOpenChallenge={handleOpenChallenge} />
+            </div>
+            <MaterialsSidebar subject={subject} onSelectMaterial={setSelectedMaterial} />
+          </div>
+        )}
       </div>
 
       <AnimatePresence>

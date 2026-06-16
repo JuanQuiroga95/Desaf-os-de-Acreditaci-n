@@ -61,6 +61,23 @@ model Subject {
   encounters  Encounter[]
   examDates   ExamDate[]
   messages    Message[]
+  units       Unit[]
+}
+
+model Unit {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subjectId   String
+  subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  materials   Material[]
+  challenges  Challenge[]
+  encounters  Encounter[]
 }
 
 enum ChallengeType {
@@ -84,6 +101,10 @@ model Challenge {
   subject     Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   progress    Progress[]
   materials   Material[]
+  
+  unitId      String?
+  unit        Unit?        @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  images      String[]     @default([])
 }
 
 model Progress {
@@ -123,6 +144,9 @@ model Material {
   subject     Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   challengeId String?
   challenge   Challenge?   @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  
+  unitId      String?
+  unit        Unit?        @relation(fields: [unitId], references: [id], onDelete: SetNull)
 }
 
 model Enrollment {
@@ -151,6 +175,10 @@ model Encounter {
   student   User     @relation("StudentEncounters", fields: [studentId], references: [id], onDelete: Cascade)
   teacherId String
   teacher   User     @relation("TeacherEncounters", fields: [teacherId], references: [id], onDelete: Cascade)
+
+  unitId    String?
+  unit      Unit?    @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  images    String[] @default([])
 }
 
 model ExamDate {

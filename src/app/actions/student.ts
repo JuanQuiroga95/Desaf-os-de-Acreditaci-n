@@ -69,12 +69,22 @@ export async function getSubjectChallenges(subjectId: string, userId: string) {
         },
         challenges: {
           orderBy: [
-            { type: "asc" }, // This might not work as intended for custom enums in order by
+            { type: "asc" },
             { createdAt: "asc" }
           ],
           include: {
             progress: { where: { userId } },
             materials: { orderBy: [{ order: "asc" }, { createdAt: "asc" }] },
+          }
+        },
+        units: {
+          orderBy: { order: "asc" },
+          include: {
+            materials: { where: { visible: true } },
+            challenges: {
+              include: { progress: { where: { userId } } }
+            },
+            encounters: { where: { studentId: userId } }
           }
         }
       }

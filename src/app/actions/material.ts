@@ -24,6 +24,7 @@ export async function createMaterial(data: {
   level?: string;
   fileUrl?: string;
   challengeId?: string;
+  unitId?: string;
 }) {
   await requireAuth(["teacher", "admin"]);
   try {
@@ -39,7 +40,7 @@ export async function createMaterial(data: {
 export async function updateMaterial(
   id: string,
   subjectId: string,
-  data: { title?: string; content?: string; level?: string; fileUrl?: string; visible?: boolean }
+  data: { title?: string; content?: string; level?: string; fileUrl?: string; visible?: boolean; unitId?: string }
 ) {
   await requireAuth(["teacher", "admin"]);
   try {

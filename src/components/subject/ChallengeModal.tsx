@@ -144,6 +144,16 @@ export function ChallengeModal({ challenge, subject, onClose, onSubmit, answers,
                     <p className="text-xs text-foreground font-bold italic leading-relaxed relative z-10">"{challenge.objective}"</p>
                   </div>
 
+                  {challenge.images && challenge.images.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {challenge.images.map((img: string, i: number) => (
+                        <div key={i} className="rounded-2xl overflow-hidden border border-border">
+                          <img src={img} alt={`Ejercicio adjunto ${i + 1}`} className="w-full h-auto object-contain" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <div className="space-y-6">
                     {challenge.content?.questions?.map((q: any, index: number) => (
                       <div key={q.id} className="p-6 bg-card border border-border rounded-2xl shadow-sm hover:border-primary/20 transition-all group">

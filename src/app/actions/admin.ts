@@ -137,11 +137,11 @@ export async function deleteSubject(id: string) {
   }
 }
 
-export async function createChallenge(subjectId: string, title: string, objective: string, content: any, type: any = "REGULAR", fileUrl?: string) {
+export async function createChallenge(subjectId: string, title: string, objective: string, content: any, type: any = "REGULAR", fileUrl?: string, unitId?: string, images?: string[]) {
   await requireAuth(["admin", "teacher"]);
   try {
     const challenge = await db.challenge.create({
-      data: { subjectId, title, objective, content, type, fileUrl }
+      data: { subjectId, title, objective, content, type, fileUrl, unitId, images: images || [] }
     });
     revalidatePath("/docente");
     revalidatePath(`/subjects/${subjectId}`);
@@ -151,7 +151,7 @@ export async function createChallenge(subjectId: string, title: string, objectiv
   }
 }
 
-export async function updateChallenge(id: string, subjectId: string, data: { title?: string, objective?: string, content?: any, type?: any, fileUrl?: string }) {
+export async function updateChallenge(id: string, subjectId: string, data: { title?: string, objective?: string, content?: any, type?: any, fileUrl?: string, unitId?: string, images?: string[] }) {
   await requireAuth(["admin", "teacher"]);
   try {
     const challenge = await db.challenge.update({

@@ -487,7 +487,7 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
 
                       {mat.type === "VIDEO" ? (
                         mat.fileUrl ? (
-                          <video src={mat.fileUrl} controls className="w-full max-w-lg rounded-xl mt-2 border border-border" />
+                          <video src={mat.fileUrl} controls preload="metadata" playsInline className="w-full max-w-lg rounded-xl mt-2 border border-border" />
                         ) : mat.content ? (
                           <a href={mat.content} target="_blank" rel="noopener noreferrer"
                             className="flex items-center gap-2 text-primary text-sm font-bold hover:underline mt-2">
