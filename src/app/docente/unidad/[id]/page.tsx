@@ -22,8 +22,7 @@ import { Sparkles, Zap, Eye, EyeOff, Users2, Calendar, CheckCircle2 } from "luci
 type Tab = "THEORY" | "VIDEO" | "EXERCISE" | "PROMPT" | "RUBRIC" | "TP_TEMPLATE" | "CHALLENGES" | "ENCOUNTER";
 
 const TABS: { key: Tab; label: string; icon: React.ElementType; color: string }[] = [
-  { key: "ENCOUNTER", label: "Encuentros", icon: Users2, color: "text-indigo-400" },
-  { key: "CHALLENGES", label: "Desafíos", icon: Zap, color: "text-amber-400" },
+  { key: "CHALLENGES", label: "Encuentros", icon: Zap, color: "text-amber-400" },
   { key: "THEORY", label: "Teoría", icon: FileText, color: "text-blue-400" },
   { key: "VIDEO", label: "Videos", icon: Video, color: "text-red-400" },
   { key: "EXERCISE", label: "Ejercicios", icon: Dumbbell, color: "text-green-400" },
