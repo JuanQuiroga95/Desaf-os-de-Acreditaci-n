@@ -68,7 +68,9 @@ export function MaterialModal({ material, user, onClose }: MaterialModalProps) {
             </div>
           ) : material.fileUrl ? (
             <div className="space-y-4">
-              {/\.pdf(\?|$)/i.test(material.fileUrl) ? (
+              {/\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(material.fileUrl) ? (
+                <img src={material.fileUrl} alt={material.title} className="w-full h-auto rounded-2xl border border-border object-contain max-h-[70vh]" />
+              ) : /\.pdf(\?|$)/i.test(material.fileUrl) ? (
                 <iframe
                   src={material.fileUrl}
                   className="w-full h-[70vh] rounded-2xl border border-border bg-white"

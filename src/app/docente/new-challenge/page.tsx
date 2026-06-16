@@ -10,6 +10,7 @@ import { createChallenge } from "@/app/actions/admin";
 import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { upload } from "@vercel/blob/client";
 
 function TeacherNewChallengeContent() {
   const { user, isLoading: authLoading } = useAuth();
@@ -23,6 +24,7 @@ function TeacherNewChallengeContent() {
     title: string; objective: string; theory: string;
     questions: { id: string; question: string; answer: string; type: string; options: string[] }[];
   } | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -206,7 +208,21 @@ function TeacherNewChallengeContent() {
       return;
     }
     
-    const res = await createChallenge(form.subjectId, form.title, form.objective, form.content, form.type, undefined, unitId || undefined);
+    let imageUrls: string[] = [];
+    if (imageFile) {
+      try {
+        const blob = await upload(imageFile.name, imageFile, {
+          access: "public",
+          handleUploadUrl: "/api/upload",
+        });
+        imageUrls.push(blob.url);
+      } catch (error: any) {
+        showToast("Error al subir la imagen", "error");
+        return;
+      }
+    }
+    
+    const res = await createChallenge(form.subjectId, form.title, form.objective, form.content, form.type, undefined, unitId || undefined, imageUrls);
     if (res.success) {
       showToast("¡Encuentro publicado con éxito!", "success");
       if (unitId) {
@@ -263,6 +279,16 @@ function TeacherNewChallengeContent() {
                 onChange={e => setForm({...form, title: e.target.value})}
                 className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="Ej: Análisis de Balance Patrimonial"
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Imagen Adjunta (Opcional)</label>
+              <input 
+                type="file" 
+                accept="image/*"
+                onChange={e => setImageFile(e.target.files?.[0] || null)}
+                className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-primary/20 file:text-primary hover:file:bg-primary/30"
               />
             </div>
 

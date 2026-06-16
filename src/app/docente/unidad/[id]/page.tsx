@@ -141,7 +141,8 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
 
       const needsFileUpload =
         (activeTab === "VIDEO" && form.videoMode === "file" && form.file) ||
-        (activeTab === "THEORY" && form.theoryMode === "file" && form.file);
+        (activeTab === "THEORY" && form.theoryMode === "file" && form.file) ||
+        (activeTab === "EXERCISE" && form.file);
 
       if (needsFileUpload && form.file) {
         try {
@@ -645,6 +646,15 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
                             {lvl}
                           </button>
                         ))}
+                      </div>
+                      <div className="mt-4">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Imagen o Archivo Adjunto (Opcional)</label>
+                        <input
+                          type="file"
+                          onChange={(e) => setForm({ ...form, file: e.target.files?.[0] || null })}
+                          className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-primary/20 file:text-primary hover:file:bg-primary/30"
+                          style={{ colorScheme: 'dark' }}
+                        />
                       </div>
                     </div>
                   )}
