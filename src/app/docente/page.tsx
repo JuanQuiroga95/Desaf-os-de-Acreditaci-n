@@ -84,7 +84,7 @@ export default function TeacherPage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {data?.subjects.map((sub, i) => (
-                <Link key={i} href={`/docente/materiales/${sub.id}`} className="p-10 rounded-[2.5rem] bg-secondary/10 border border-border hover:border-primary/50 transition-all group shadow-sm relative overflow-hidden flex flex-col">
+                <Link key={i} href={`/docente/unidades?subjectId=${sub.id}`} className="p-10 rounded-[2.5rem] bg-secondary/10 border border-border hover:border-primary/50 transition-all group shadow-sm relative overflow-hidden flex flex-col">
                   <div className="flex justify-between items-start mb-6">
                     {editingSubjectId === sub.id ? (
                       <div className="flex items-center gap-2 w-full pr-8" onClick={(e) => e.preventDefault()}>
@@ -133,7 +133,7 @@ export default function TeacherPage() {
                     </div>
                   </div>
                   <span className="text-[9px] font-black uppercase tracking-widest text-primary flex items-center gap-1 mt-auto">
-                    <FolderOpen size={12} /> Gestionar materiales
+                    <FolderOpen size={12} /> Gestionar unidades
                   </span>
                 </Link>
               ))}

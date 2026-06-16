@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, Suspense } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Plus,
@@ -34,12 +34,22 @@ import { useToast } from "@/context/ToastContext";
 import { upload } from "@vercel/blob/client";
 
 export default function UnidadesPage() {
+  return (
+    <Suspense fallback={<div className="p-20 text-center animate-pulse text-primary font-black">Cargando...</div>}>
+      <UnidadesContent />
+    </Suspense>
+  );
+}
+
+function UnidadesContent() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const { showToast } = useToast();
+  const searchParams = useSearchParams();
+  const initialSubjectId = searchParams.get("subjectId");
 
   const [subjects, setSubjects] = useState<any[]>([]);
-  const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>(initialSubjectId || "");
   const [units, setUnits] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -80,7 +90,9 @@ export default function UnidadesPage() {
       const res = await getTeacherSubjects(user!.id);
       if (res.success) {
         setSubjects(res.subjects);
-        if (res.subjects.length > 0) setSelectedSubjectId(res.subjects[0].id);
+        if (res.subjects.length > 0 && !selectedSubjectId) {
+          setSelectedSubjectId(res.subjects[0].id);
+        }
       }
     } finally { setIsLoading(false); }
   };
