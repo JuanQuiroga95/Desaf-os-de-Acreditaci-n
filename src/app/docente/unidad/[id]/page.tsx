@@ -101,12 +101,13 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
   };
 
   const handleSaveName = async () => {
-    if (!newName.trim() || newName === subject?.name) { setEditingName(false); return; }
+    if (!newName.trim() || newName === unit?.name) { setEditingName(false); return; }
     setIsSavingName(true);
-    const res = await updateSubjectName(subjectId, newName.trim());
+    const { updateUnit } = await import("@/app/actions/units");
+    const res = await updateUnit(unitId, subjectId, { name: newName.trim() });
     if (res.success) {
-      setSubject((s: any) => ({ ...s, name: newName.trim() }));
-      showToast("Nombre actualizado", "success");
+      setUnit((u: any) => ({ ...u, name: newName.trim() }));
+      showToast("Nombre de la unidad actualizado", "success");
     } else {
       showToast("Error al guardar el nombre", "error");
     }
@@ -142,7 +143,8 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
       const needsFileUpload =
         (activeTab === "VIDEO" && form.videoMode === "file" && form.file) ||
         (activeTab === "THEORY" && form.theoryMode === "file" && form.file) ||
-        (activeTab === "EXERCISE" && form.file);
+        (activeTab === "EXERCISE" && form.file) ||
+        (activeTab === "TP_TEMPLATE" && form.file);
 
       if (needsFileUpload && form.file) {
         try {
@@ -381,10 +383,10 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
                 </div>
               ) : (
                 <button
-                  onClick={() => { setNewName(subject?.name || ""); setEditingName(true); }}
+                  onClick={() => { setNewName(unit?.name || ""); setEditingName(true); }}
                   className="flex items-center gap-2 group"
                 >
-                  <span className="text-5xl font-black tracking-tighter uppercase italic text-primary">{subject?.name || "..."}</span>
+                  <span className="text-5xl font-black tracking-tighter uppercase italic text-primary">{unit?.name || "..."}</span>
                   <Pencil size={16} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-1" />
                 </button>
               )}
@@ -539,25 +541,32 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
                             <Link2 size={14} /> {mat.content}
                           </a>
                         ) : null
-                      ) : mat.type === "THEORY" && mat.fileUrl ? (
-                        <div className="flex items-center gap-4 mt-2">
-                          <a href={mat.fileUrl} target="_blank" rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 text-primary text-sm font-bold hover:underline">
-                            <FileText size={14} /> Abrir / Descargar archivo
-                          </a>
-                          <button
-                            onClick={() => handleConvertToChallenge(mat)}
-                            disabled={isConverting === mat.id}
-                            className="flex items-center gap-2 bg-amber-500/10 text-amber-500 border border-amber-500/20 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all disabled:opacity-50"
-                          >
-                            {isConverting === mat.id ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                            {isConverting === mat.id ? "Generando..." : "Convertir en Encuentro"}
-                          </button>
-                        </div>
                       ) : (
-                        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap mt-1 max-h-32 overflow-y-auto">
-                          {mat.content}
-                        </p>
+                        <div className="mt-1">
+                          {mat.content && (
+                            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto">
+                              {mat.content}
+                            </p>
+                          )}
+                          {mat.fileUrl && (
+                            <div className="flex items-center gap-4 mt-3">
+                              <a href={mat.fileUrl} target="_blank" rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 text-primary text-sm font-bold hover:underline">
+                                <FileText size={14} /> Abrir / Descargar archivo
+                              </a>
+                              {mat.type === "THEORY" && (
+                                <button
+                                  onClick={() => handleConvertToChallenge(mat)}
+                                  disabled={isConverting === mat.id}
+                                  className="flex items-center gap-2 bg-amber-500/10 text-amber-500 border border-amber-500/20 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all disabled:opacity-50"
+                                >
+                                  {isConverting === mat.id ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                  {isConverting === mat.id ? "Generando..." : "Convertir en Encuentro"}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
 
@@ -770,6 +779,17 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
                           "Dimensiones de evaluación y criterios de acreditación..."
                         }
                       />
+                      {activeTab === "TP_TEMPLATE" && (
+                        <div className="mt-4">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Archivo Adjunto (Opcional - PDF, Word, Excel, etc.)</label>
+                          <input
+                            type="file"
+                            onChange={(e) => setForm({ ...form, file: e.target.files?.[0] || null })}
+                            className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-primary/20 file:text-primary hover:file:bg-primary/30"
+                            style={{ colorScheme: 'dark' }}
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
 

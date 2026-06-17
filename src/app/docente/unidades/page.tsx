@@ -62,6 +62,10 @@ function UnidadesContent() {
   
   // Forms
   const [unitForm, setUnitForm] = useState({ name: "", description: "" });
+  const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
+  const [editUnitName, setEditUnitName] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
+
   const [itemForm, setItemForm] = useState({
     title: "", content: "", level: "BASICO", type: "VIRTUAL", date: new Date().toISOString().split("T")[0],
     studentId: "", status: "PENDING", videoMode: "url" as "url" | "file", file: null as File | null,
@@ -129,6 +133,26 @@ function UnidadesContent() {
     if (!confirm("¿Eliminar esta unidad y TODO su contenido?")) return;
     await deleteUnit(id, selectedSubjectId);
     loadUnits();
+  };
+
+  const handleUpdateUnitName = async (e: React.FormEvent, id: string) => {
+    e.preventDefault();
+    if (!editUnitName.trim() || !selectedSubjectId) return;
+    e.stopPropagation();
+    setIsSavingName(true);
+    try {
+      const { updateUnit } = await import("@/app/actions/units");
+      const res = await updateUnit(id, selectedSubjectId, { name: editUnitName.trim() });
+      if (res.success) {
+        showToast("Nombre de unidad actualizado", "success");
+        setEditingUnitId(null);
+        loadUnits();
+      } else {
+        showToast("Error al actualizar el nombre", "error");
+      }
+    } finally {
+      setIsSavingName(false);
+    }
   };
 
   const handleDeleteMaterial = async (id: string) => {
@@ -258,8 +282,58 @@ function UnidadesContent() {
                     <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary border border-primary/30 group-hover:scale-110 transition-transform">
                       <FileText size={20} />
                     </div>
-                    <div>
-                      <h2 className="font-black text-2xl tracking-tight">{unit.name}</h2>
+                    <div className="flex-1" onClick={(e) => {
+                      if (editingUnitId === unit.id) e.stopPropagation();
+                    }}>
+                      {editingUnitId === unit.id ? (
+                        <form onSubmit={(e) => handleUpdateUnitName(e, unit.id)} className="flex items-center gap-2">
+                          <input
+                            autoFocus
+                            value={editUnitName}
+                            onChange={(e) => setEditUnitName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Escape") {
+                                setEditingUnitId(null);
+                                e.stopPropagation();
+                              }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="font-black text-2xl tracking-tight bg-background border border-primary/50 rounded-lg px-2 py-1 outline-none text-foreground"
+                          />
+                          <button
+                            type="submit"
+                            disabled={isSavingName}
+                            onClick={(e) => e.stopPropagation()}
+                            className="p-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+                          >
+                            {isSavingName ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingUnitId(null);
+                            }}
+                            className="p-2 bg-secondary text-muted-foreground rounded-lg hover:bg-secondary/80"
+                          >
+                            <X size={16} />
+                          </button>
+                        </form>
+                      ) : (
+                        <div className="flex items-center gap-2 group/title">
+                          <h2 className="font-black text-2xl tracking-tight">{unit.name}</h2>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditUnitName(unit.name);
+                              setEditingUnitId(unit.id);
+                            }}
+                            className="text-muted-foreground opacity-0 group-hover/title:opacity-100 hover:text-primary transition-all p-1"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                          </button>
+                        </div>
+                      )}
                       {unit.description && <p className="text-sm text-muted-foreground mt-1">{unit.description}</p>}
                     </div>
                   </div>
@@ -345,8 +419,8 @@ function UnidadesContent() {
                       <input required value={itemForm.content} onChange={e => setItemForm({...itemForm, content: e.target.value})} placeholder="URL del video (Ej: YouTube)" className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none" />
                     ) : (
                       <div className="w-full border-2 border-dashed border-border rounded-xl p-4 text-center">
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground mb-2">Archivo (Opcional para Teoría, Obligatorio para Video si eligió archivo)</p>
-                        <input type="file" accept={showItemModal.type === "VIDEO" ? "video/*" : ".pdf,.doc,.docx"} onChange={e => setItemForm({...itemForm, file: e.target.files?.[0] || null})} className="w-full text-[10px]" />
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground mb-2">Archivo {showItemModal.type === "TP_TEMPLATE" ? "(Opcional)" : "(Opcional para Teoría, Obligatorio para Video si eligió archivo)"}</p>
+                        <input type="file" accept={showItemModal.type === "VIDEO" ? "video/*" : showItemModal.type === "TP_TEMPLATE" ? undefined : ".pdf,.doc,.docx"} onChange={e => setItemForm({...itemForm, file: e.target.files?.[0] || null})} className="w-full text-[10px]" />
                       </div>
                     )}
                   </div>
