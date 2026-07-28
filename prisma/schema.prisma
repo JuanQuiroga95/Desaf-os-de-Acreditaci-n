@@ -54,6 +54,7 @@ model Subject {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
+  teacherId   String?      // Legado: para migración de datos
   teachers    User[]       @relation("TeacherSubjects")
   challenges  Challenge[]
   materials   Material[]
