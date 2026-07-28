@@ -72,15 +72,15 @@ export async function getChatContacts() {
       // Un alumno puede hablar con los profesores de las materias en las que está inscrito
       const enrollments = await db.enrollment.findMany({
         where: { studentId: userId },
-        include: { subject: { include: { teacher: true } } }
+        include: { subject: { include: { teachers: true } } }
       });
-      const teachers = enrollments.map(e => e.subject.teacher);
+      const teachers = enrollments.flatMap(e => e.subject.teachers || []);
       // Eliminar duplicados
       contacts = Array.from(new Map(teachers.map(item => [item.id, item])).values());
     } else if (session.role === "teacher") {
       // Un profesor puede hablar con los alumnos inscritos en sus materias
       const subjects = await db.subject.findMany({
-        where: { teacherId: userId },
+        where: { teachers: { some: { id: userId } } },
         include: { enrollments: { include: { student: true } } }
       });
       const students = subjects.flatMap(s => s.enrollments.map(e => e.student));

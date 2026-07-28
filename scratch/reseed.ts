@@ -33,27 +33,27 @@ async function main() {
   // 2. Materias (Usamos upsert si es posible, pero el modelo no tiene campos únicos para esto)
   // Así que simplemente creamos si no existen o algo similar
   
-  const existingMath = await db.subject.findFirst({ where: { name: "Matemática 1", teacherId: teacher.id } });
+  const existingMath = await db.subject.findFirst({ where: { name: "Matemática 1", teachers: { some: { id: teacher.id } } } });
   let mathId = existingMath?.id;
   if (!existingMath) {
     const math = await db.subject.create({
       data: {
         name: "Matemática 1",
         description: "Fundamentos de álgebra, geometría y estadística básica.",
-        teacherId: teacher.id,
+        teachers: { connect: { id: teacher.id } },
       },
     });
     mathId = math.id;
   }
 
-  const existingLang = await db.subject.findFirst({ where: { name: "Lengua 1", teacherId: teacher.id } });
+  const existingLang = await db.subject.findFirst({ where: { name: "Lengua 1", teachers: { some: { id: teacher.id } } } });
   let langId = existingLang?.id;
   if (!existingLang) {
     const lang = await db.subject.create({
       data: {
         name: "Lengua 1",
         description: "Comprensión lectora, gramática y producción de textos.",
-        teacherId: teacher.id,
+        teachers: { connect: { id: teacher.id } },
       },
     });
     langId = lang.id;

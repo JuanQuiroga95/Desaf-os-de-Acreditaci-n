@@ -51,7 +51,7 @@ async function main() {
     data: {
       name: "Matemática 1",
       description: "Fundamentos de álgebra, geometría y estadística básica.",
-      teacherId: teacher.id,
+      teachers: { connect: { id: teacher.id } },
     },
   });
 
@@ -59,7 +59,7 @@ async function main() {
     data: {
       name: "Lengua 1",
       description: "Comprensión lectora, gramática y producción de textos.",
-      teacherId: teacher.id,
+      teachers: { connect: { id: teacher.id } },
     },
   });
 

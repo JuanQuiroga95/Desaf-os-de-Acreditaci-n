@@ -2,6 +2,8 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/session";
+import { logSubjectHistory } from "./history";
 
 export async function createUnit(data: {
   name: string;
@@ -13,6 +15,15 @@ export async function createUnit(data: {
     const unit = await db.unit.create({
       data,
     });
+    
+    const session = await requireAuth(["teacher", "admin"]);
+    await logSubjectHistory(
+      data.subjectId,
+      session.id,
+      "CREATE_UNIT",
+      `Creó unidad: ${data.name}`
+    );
+
     revalidatePath(`/docente/materiales/${data.subjectId}`);
     return { success: true, unit };
   } catch (error: any) {
@@ -59,6 +70,15 @@ export async function updateUnit(
       where: { id },
       data,
     });
+    
+    const session = await requireAuth(["teacher", "admin"]);
+    await logSubjectHistory(
+      subjectId,
+      session.id,
+      "UPDATE_UNIT",
+      `Actualizó unidad: ${unit.name}`
+    );
+
     revalidatePath(`/docente/materiales/${subjectId}`);
     return { success: true, unit };
   } catch (error: any) {
@@ -69,9 +89,18 @@ export async function updateUnit(
 
 export async function deleteUnit(id: string, subjectId: string) {
   try {
-    await db.unit.delete({
+    const unit = await db.unit.delete({
       where: { id },
     });
+    
+    const session = await requireAuth(["teacher", "admin"]);
+    await logSubjectHistory(
+      subjectId,
+      session.id,
+      "DELETE_UNIT",
+      `Eliminó unidad: ${unit.name}`
+    );
+
     revalidatePath(`/docente/materiales/${subjectId}`);
     return { success: true };
   } catch (error: any) {

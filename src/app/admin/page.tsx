@@ -24,7 +24,7 @@ export default function AdminPage() {
 
   // Forms
   const [newUser, setNewUser] = useState({ name: "", email: "", pass: "", role: "STUDENT" });
-  const [newSubject, setNewSubject] = useState({ name: "", description: "", teacherId: "" });
+  const [newSubject, setNewSubject] = useState({ name: "", description: "", teacherIds: [] as string[] });
 
   useEffect(() => {
     if (user?.role === "admin") {
@@ -40,7 +40,7 @@ export default function AdminPage() {
       setSubjects(s);
       if (st.success) setStats({ subjectStats: st.subjectStats, retentionIndex: st.retentionIndex });
       if (u.filter(usr => usr.role === "TEACHER").length > 0) {
-        setNewSubject(prev => ({ ...prev, teacherId: u.find(usr => usr.role === "TEACHER")?.id || "" }));
+        setNewSubject(prev => ({ ...prev, teacherIds: [u.find(usr => usr.role === "TEACHER")?.id || ""] }));
       }
     } catch (error) {
       console.error("Error al cargar datos del admin:", error);
@@ -64,15 +64,15 @@ export default function AdminPage() {
 
   const handleCreateSubject = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSubject.teacherId) {
-      showToast("Debes seleccionar un docente", "error");
+    if (newSubject.teacherIds.length === 0) {
+      showToast("Debes seleccionar al menos un docente", "error");
       return;
     }
-    const res = await createSubject(newSubject.name, newSubject.description, newSubject.teacherId);
+    const res = await createSubject(newSubject.name, newSubject.description, newSubject.teacherIds);
     if (res.success) {
       showToast("Materia creada con éxito", "success");
       setIsSubjectModalOpen(false);
-      setNewSubject({ name: "", description: "", teacherId: "" });
+      setNewSubject({ name: "", description: "", teacherIds: [] });
       loadData();
     } else {
       showToast("Error al crear materia", "error");
@@ -150,7 +150,7 @@ export default function AdminPage() {
               <div key={sub.id} className="p-6 flex items-center justify-between hover:bg-secondary/20 transition-colors">
                 <div>
                   <p className="font-bold text-lg">{sub.name}</p>
-                  <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Titular: {sub.teacher.name} • {sub._count.challenges} Desafíos</p>
+                  <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Docentes: {sub.teachers.map((t: any) => t.name).join(', ')} • {sub._count.challenges} Desafíos</p>
                 </div>
                 <Link href="/admin/subjects" className="p-2 hover:bg-secondary rounded-lg transition-colors">
                   <ArrowRight size={18} className="text-muted-foreground" />
@@ -271,19 +271,26 @@ export default function AdminPage() {
                 <input required value={newSubject.name} onChange={e => setNewSubject({...newSubject, name: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 transition-all" placeholder="Nombre de la Materia" />
                 <textarea required value={newSubject.description} onChange={e => setNewSubject({...newSubject, description: e.target.value})} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none h-24 focus:ring-2 focus:ring-primary/50 transition-all resize-none" placeholder="Descripción..." />
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Docente Titular</label>
-                  <select 
-                    required 
-                    value={newSubject.teacherId} 
-                    onChange={e => setNewSubject({...newSubject, teacherId: e.target.value})} 
-                    className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
-                    style={{ colorScheme: 'dark' }}
-                  >
-                    <option value="" className="bg-background">Seleccionar Docente</option>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Docentes Asignados</label>
+                  <div className="flex flex-col gap-2 max-h-40 overflow-y-auto bg-secondary/30 border border-border rounded-xl p-4">
                     {users.filter(u => u.role === "TEACHER").map(t => (
-                      <option key={t.id} value={t.id} className="bg-background">{t.name}</option>
+                      <label key={t.id} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-secondary/50 rounded-lg transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={newSubject.teacherIds.includes(t.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setNewSubject({ ...newSubject, teacherIds: [...newSubject.teacherIds, t.id] });
+                            } else {
+                              setNewSubject({ ...newSubject, teacherIds: newSubject.teacherIds.filter(id => id !== t.id) });
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-border text-primary focus:ring-primary/50 cursor-pointer"
+                        />
+                        <span className="font-bold text-sm text-foreground">{t.name}</span>
+                      </label>
                     ))}
-                  </select>
+                  </div>
                 </div>
                 <button type="submit" className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] shadow-xl hover:scale-[1.02] active:scale-95 transition-all">Crear Materia</button>
               </form>

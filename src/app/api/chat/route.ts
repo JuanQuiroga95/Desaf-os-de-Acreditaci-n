@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     let subjectIds: string[] = [];
     if (user?.role === "TEACHER") {
       const teacherSubjects = await db.subject.findMany({
-        where: { teacherId: userId },
+        where: { teachers: { some: { id: userId } } },
         select: { id: true }
       });
       subjectIds = teacherSubjects.map(s => s.id);

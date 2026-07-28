@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/session";
+import { logSubjectHistory } from "./history";
 
 export async function getMaterialsBySubject(subjectId: string) {
   try {
@@ -26,7 +27,7 @@ export async function createMaterial(data: {
   challengeId?: string;
   unitId?: string;
 }) {
-  await requireAuth(["teacher", "admin"]);
+  const session = await requireAuth(["teacher", "admin"]);
   try {
     let challengeId = data.challengeId;
 
@@ -51,6 +52,13 @@ export async function createMaterial(data: {
         challengeId
       }
     });
+    await logSubjectHistory(
+      data.subjectId,
+      session.id,
+      "CREATE_MATERIAL",
+      `Creó material: ${data.title}`
+    );
+
     revalidatePath(`/docente/materiales/${data.subjectId}`);
     revalidatePath(`/subjects/${data.subjectId}`);
     return { success: true, material };
@@ -65,7 +73,7 @@ export async function updateMaterial(
   subjectId: string,
   data: { title?: string; content?: string; level?: string; fileUrl?: string; visible?: boolean; unitId?: string }
 ) {
-  await requireAuth(["teacher", "admin"]);
+  const session = await requireAuth(["teacher", "admin"]);
   try {
     const material = await db.material.update({ where: { id }, data });
     
@@ -80,6 +88,13 @@ export async function updateMaterial(
       });
     }
 
+    await logSubjectHistory(
+      subjectId,
+      session.id,
+      "UPDATE_MATERIAL",
+      `Actualizó material: ${material.title}`
+    );
+
     revalidatePath(`/docente/materiales/${subjectId}`);
     revalidatePath(`/subjects/${subjectId}`);
     return { success: true, material };
@@ -90,13 +105,20 @@ export async function updateMaterial(
 }
 
 export async function deleteMaterial(id: string, subjectId: string) {
-  await requireAuth(["teacher", "admin"]);
+  const session = await requireAuth(["teacher", "admin"]);
   try {
     const material = await db.material.findUnique({ where: { id } });
     if (material?.challengeId) {
       await db.challenge.delete({ where: { id: material.challengeId } }).catch(() => {});
     }
     await db.material.delete({ where: { id } });
+    await logSubjectHistory(
+      subjectId,
+      session.id,
+      "DELETE_MATERIAL",
+      `Eliminó material: ${material?.title}`
+    );
+
     revalidatePath(`/docente/materiales/${subjectId}`);
     revalidatePath(`/subjects/${subjectId}`);
     return { success: true };

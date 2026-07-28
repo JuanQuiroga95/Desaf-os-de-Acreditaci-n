@@ -27,7 +27,7 @@ async function main() {
     data: {
       name: "Matemática Aplicada",
       description: "Desafíos de lógica matemática, finanzas y cálculo aplicado al mundo real.",
-      teacherId: teacher.id
+      teachers: { connect: { id: teacher.id } }
     }
   });
 

@@ -44,6 +44,7 @@ model User {
   notifications     Notification[]
   sentMessages      Message[]    @relation("SentMessages")
   receivedMessages  Message[]    @relation("ReceivedMessages")
+  subjectHistory    SubjectHistory[]
 }
 
 model Subject {
@@ -53,8 +54,7 @@ model Subject {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  teacherId   String
-  teacher     User         @relation("TeacherSubjects", fields: [teacherId], references: [id])
+  teachers    User[]       @relation("TeacherSubjects")
   challenges  Challenge[]
   materials   Material[]
   enrollments Enrollment[]
@@ -62,6 +62,7 @@ model Subject {
   examDates   ExamDate[]
   messages    Message[]
   units       Unit[]
+  history     SubjectHistory[]
 }
 
 model Unit {
@@ -219,4 +220,16 @@ model Message {
   receiver  User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
   subjectId String?
   subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+}
+
+model SubjectHistory {
+  id          String   @id @default(cuid())
+  action      String   
+  details     String?  
+  createdAt   DateTime @default(now())
+
+  subjectId   String
+  subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacherId   String
+  teacher     User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 }

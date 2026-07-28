@@ -6,7 +6,7 @@ import { requireAuth } from "@/lib/session";
 export async function getTeacherDashboard(teacherId: string) {
   try {
     const subjects = await db.subject.findMany({
-      where: { teacherId },
+      where: { teachers: { some: { id: teacherId } } },
       include: {
         _count: {
           select: { challenges: { where: { materials: { none: {} } } } }
@@ -169,7 +169,7 @@ export async function getTeacherStudents(teacherId: string) {
   try {
     // Single query that gets both enrollments and progress-based students
     const subjects = await db.subject.findMany({
-      where: { teacherId },
+      where: { teachers: { some: { id: teacherId } } },
       include: {
         enrollments: {
           include: { student: { select: { id: true, name: true, email: true } } }
@@ -249,7 +249,7 @@ export async function resetChallengeSubmissions(challengeId: string) {
 export async function getAtRiskStudents(teacherId: string) {
   try {
     const subjects = await db.subject.findMany({
-      where: { teacherId },
+      where: { teachers: { some: { id: teacherId } } },
       include: {
         enrollments: {
           include: {
@@ -334,7 +334,7 @@ export async function getSubjectGradesPreview(subjectId: string, teacherId: stri
     const subject = await db.subject.findUnique({
       where: { id: subjectId },
       include: {
-        teacher: true,
+        teachers: true,
         enrollments: {
           include: {
             student: {
@@ -351,7 +351,7 @@ export async function getSubjectGradesPreview(subjectId: string, teacherId: stri
       }
     });
 
-    if (!subject || subject.teacherId !== teacherId) {
+    if (!subject || !subject.teachers.some(t => t.id === teacherId)) {
       return { success: false, rows: [] };
     }
 
@@ -404,7 +404,7 @@ export async function getSubjectStudents(subjectId: string) {
 export async function getTeacherSubjects(teacherId: string) {
   try {
     const subjects = await db.subject.findMany({
-      where: { teacherId },
+      where: { teachers: { some: { id: teacherId } } },
       select: { id: true, name: true }
     });
     return { success: true, subjects };

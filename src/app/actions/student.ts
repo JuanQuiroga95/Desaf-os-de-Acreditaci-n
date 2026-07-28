@@ -62,7 +62,7 @@ export async function getSubjectChallenges(subjectId: string, userId: string) {
     const subject = await db.subject.findFirst({
       where: { id: subjectId },
       include: {
-        teacher: true,
+        teachers: true,
         materials: { 
           where: { visible: true },
           orderBy: [{ type: "asc" }, { order: "asc" }, { createdAt: "asc" }] 
@@ -191,7 +191,7 @@ export async function submitChallengeResponse(challengeId: string, userId: strin
       include: {
         user: true,
         challenge: {
-          include: { subject: true }
+          include: { subject: { include: { teachers: true } } }
         }
       }
     });
@@ -204,26 +204,27 @@ export async function submitChallengeResponse(challengeId: string, userId: strin
       });
     }
 
-    // Notify teacher
-    if (progress.challenge.subject.teacherId) {
+    // Notify teachers
+    if (progress.challenge.subject.teachers && progress.challenge.subject.teachers.length > 0) {
       const { createNotification } = await import("./notifications");
-      await createNotification(
-        progress.challenge.subject.teacherId,
-        "Nueva Entrega",
-        `El alumno ${progress.user.name} entregó el desafío "${progress.challenge.title}" de ${progress.challenge.subject.name}.`,
-        "SUBMISSION",
-        "/docente/reviews"
-      );
-
-      // Send Email to teacher
       const { sendNotificationEmail } = await import("./emails");
-      const teacher = await db.user.findUnique({ where: { id: progress.challenge.subject.teacherId } });
-      if (teacher?.email) {
-        await sendNotificationEmail(
-          teacher.email,
-          "Nueva Entrega de Alumno - Videla Acredita",
-          `<h3>¡Hola ${teacher.name}!</h3><p>El alumno <b>${progress.user.name}</b> acaba de entregar el desafío <b>${progress.challenge.title}</b> de la materia ${progress.challenge.subject.name}.</p><p>Ingresa a la plataforma para corregirlo.</p>`
+
+      for (const teacher of progress.challenge.subject.teachers) {
+        await createNotification(
+          teacher.id,
+          "Nueva Entrega",
+          `El alumno ${progress.user.name} entregó el desafío "${progress.challenge.title}" de ${progress.challenge.subject.name}.`,
+          "SUBMISSION",
+          "/docente/reviews"
         );
+
+        if (teacher.email) {
+          await sendNotificationEmail(
+            teacher.email,
+            "Nueva Entrega de Alumno - Videla Acredita",
+            `<h3>¡Hola ${teacher.name}!</h3><p>El alumno <b>${progress.user.name}</b> acaba de entregar el desafío <b>${progress.challenge.title}</b> de la materia ${progress.challenge.subject.name}.</p><p>Ingresa a la plataforma para corregirlo.</p>`
+          );
+        }
       }
     }
 

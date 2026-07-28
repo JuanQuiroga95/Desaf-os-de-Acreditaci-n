@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { requireAuth } from "@/lib/session";
+import { logSubjectHistory } from "./history";
 
 // --- GESTIÓN DE USUARIOS (ADMIN) ---
 
@@ -99,11 +100,11 @@ export async function getDashboardStats() {
 
 // --- GESTIÓN DE MATERIAS & DESAFÍOS ---
 
-export async function createSubject(name: string, description: string, teacherId: string) {
+export async function createSubject(name: string, description: string, teacherIds: string[]) {
   await requireAuth(["admin"]);
   try {
     const subject = await db.subject.create({
-      data: { name, description, teacherId }
+      data: { name, description, teachers: { connect: teacherIds.map(id => ({ id })) } }
     });
     revalidatePath("/admin");
     return { success: true, subject };
@@ -112,12 +113,16 @@ export async function createSubject(name: string, description: string, teacherId
   }
 }
 
-export async function updateSubject(id: string, data: { name?: string, description?: string, teacherId?: string }) {
+export async function updateSubject(id: string, data: { name?: string, description?: string, teacherIds?: string[] }) {
   await requireAuth(["admin"]);
   try {
+    const updateData: any = { name: data.name, description: data.description };
+    if (data.teacherIds) {
+      updateData.teachers = { set: data.teacherIds.map(id => ({ id })) };
+    }
     const subject = await db.subject.update({
       where: { id },
-      data
+      data: updateData
     });
     revalidatePath("/admin");
     return { success: true, subject };
@@ -143,6 +148,20 @@ export async function createChallenge(subjectId: string, title: string, objectiv
     const challenge = await db.challenge.create({
       data: { subjectId, title, objective, content, type, fileUrl, unitId, images: images || [] }
     });
+    
+    // Log history if teacher
+    if (challenge) {
+      const session = await requireAuth();
+      if (session.role === "teacher" || session.role === "admin") {
+        await logSubjectHistory(
+          subjectId,
+          session.id,
+          "CREATE_CHALLENGE",
+          `Creó desafío: ${title}`
+        );
+      }
+    }
+
     revalidatePath("/docente");
     revalidatePath(`/subjects/${subjectId}`);
     return { success: true, challenge };
@@ -158,6 +177,19 @@ export async function updateChallenge(id: string, subjectId: string, data: { tit
       where: { id },
       data
     });
+    
+    if (challenge) {
+      const session = await requireAuth();
+      if (session.role === "teacher" || session.role === "admin") {
+        await logSubjectHistory(
+          subjectId,
+          session.id,
+          "UPDATE_CHALLENGE",
+          `Actualizó desafío: ${challenge.title}`
+        );
+      }
+    }
+
     revalidatePath("/docente");
     revalidatePath(`/subjects/${subjectId}`);
     revalidatePath(`/docente/materiales/${subjectId}`);
@@ -170,7 +202,21 @@ export async function updateChallenge(id: string, subjectId: string, data: { tit
 export async function deleteChallenge(id: string, subjectId: string) {
   await requireAuth(["admin", "teacher"]);
   try {
+    const challenge = await db.challenge.findUnique({ where: { id } });
     await db.challenge.delete({ where: { id } });
+    
+    if (challenge) {
+      const session = await requireAuth();
+      if (session.role === "teacher" || session.role === "admin") {
+        await logSubjectHistory(
+          subjectId,
+          session.id,
+          "DELETE_CHALLENGE",
+          `Eliminó desafío: ${challenge.title}`
+        );
+      }
+    }
+
     revalidatePath("/docente");
     revalidatePath(`/subjects/${subjectId}`);
     revalidatePath(`/docente/materiales/${subjectId}`);
@@ -204,7 +250,7 @@ export async function getAllUsers() {
 export async function getAllSubjects() {
   return await db.subject.findMany({
     include: {
-      teacher: true,
+      teachers: true,
       challenges: true,
       enrollments: true,
       _count: { select: { challenges: true } }

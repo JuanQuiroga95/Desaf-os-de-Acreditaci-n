@@ -24,7 +24,7 @@ export default function AdminSubjectsPage() {
   const [studentSearch, setStudentSearch] = useState("");
 
   const [editModal, setEditModal] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ name: "", description: "", teacherId: "" });
+  const [editForm, setEditForm] = useState({ name: "", description: "", teacherIds: [] as string[] });
 
   const [examDatesModal, setExamDatesModal] = useState<any>(null);
   const [examDates, setExamDates] = useState<any[]>([]);
@@ -55,7 +55,7 @@ export default function AdminSubjectsPage() {
 
   const openEditModal = (subject: any) => {
     setEditModal(subject);
-    setEditForm({ name: subject.name, description: subject.description || "", teacherId: subject.teacherId });
+    setEditForm({ name: subject.name, description: subject.description || "", teacherIds: subject.teachers?.map((t: any) => t.id) || [] });
   };
 
   const handleEdit = async (e: React.FormEvent) => {
@@ -170,7 +170,7 @@ export default function AdminSubjectsPage() {
               <div>
                 <h3 className="font-black text-xl mb-1">{sub.name}</h3>
                 <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">
-                  Docente: {sub.teacher.name} · {sub._count.challenges} Encuentros · {sub.enrollments?.length ?? 0} Alumnos
+                  Docentes: {sub.teachers?.map((t: any) => t.name).join(', ')} · {sub._count.challenges} Encuentros · {sub.enrollments?.length ?? 0} Alumnos
                 </p>
                 {sub.description && <p className="text-xs text-muted-foreground mt-1 max-w-md">{sub.description}</p>}
               </div>
@@ -216,10 +216,26 @@ export default function AdminSubjectsPage() {
                   <textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none h-20 focus:ring-2 focus:ring-primary/50 resize-none" />
                 </div>
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Docente Titular</label>
-                  <select value={editForm.teacherId} onChange={(e) => setEditForm({ ...editForm, teacherId: e.target.value })} className="w-full bg-secondary/30 border border-border rounded-xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary/50 text-foreground" style={{ colorScheme: "dark" }}>
-                    {teachers.map((t) => (<option key={t.id} value={t.id} className="bg-background">{t.name}</option>))}
-                  </select>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">Docentes Asignados</label>
+                  <div className="flex flex-col gap-2 max-h-40 overflow-y-auto bg-secondary/30 border border-border rounded-xl p-4">
+                    {teachers.map((t) => (
+                      <label key={t.id} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-secondary/50 rounded-lg transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={editForm.teacherIds.includes(t.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setEditForm({ ...editForm, teacherIds: [...editForm.teacherIds, t.id] });
+                            } else {
+                              setEditForm({ ...editForm, teacherIds: editForm.teacherIds.filter(id => id !== t.id) });
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-border text-primary focus:ring-primary/50 cursor-pointer"
+                        />
+                        <span className="font-bold text-sm text-foreground">{t.name}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
                 <button type="submit" className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] shadow-xl hover:scale-[1.02] transition-all">Guardar Cambios</button>
               </form>

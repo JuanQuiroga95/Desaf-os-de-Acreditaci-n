@@ -345,9 +345,14 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
                 </button>
               )}
             </div>
-            <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-[0.4em] mt-2">
-              Guía digital del módulo · {materials.length + challenges.length} recursos cargados
-            </p>
+            <div className="flex items-center gap-4 mt-2">
+              <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-[0.4em]">
+                Guía digital del módulo · {materials.length + challenges.length} recursos cargados
+              </p>
+              <Link href={`/docente/materia/${subjectId}/historial`} className="text-[10px] uppercase font-bold tracking-[0.2em] text-primary hover:underline bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+                Ver Historial de Cambios
+              </Link>
+            </div>
           </div>
         </div>
       </header>
