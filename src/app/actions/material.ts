@@ -127,3 +127,32 @@ export async function deleteMaterial(id: string, subjectId: string) {
     return { success: false, error: "Error al eliminar material" };
   }
 }
+
+export async function reorderMaterials(subjectId: string, orderedIds: string[]) {
+  const session = await requireAuth(["teacher", "admin"]);
+  try {
+    // We update each material with its new index in the orderedIds array
+    const updates = orderedIds.map((id, index) =>
+      db.material.update({
+        where: { id },
+        data: { order: index },
+      })
+    );
+
+    await db.$transaction(updates);
+
+    await logSubjectHistory(
+      subjectId,
+      session.id,
+      "REORDER_MATERIAL",
+      `Reordenó materiales`
+    );
+
+    revalidatePath(`/docente/materiales/${subjectId}`);
+    revalidatePath(`/subjects/${subjectId}`);
+    return { success: true };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: "Error al reordenar materiales" };
+  }
+}

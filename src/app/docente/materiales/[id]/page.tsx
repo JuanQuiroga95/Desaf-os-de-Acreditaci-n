@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft, Plus, Trash2, FileText, Video, Dumbbell,
   MessageSquare, ClipboardList, BookMarked, Upload, Link2, Save, Loader2,
-  Pencil, Check, X as XIcon, RotateCcw
+  Pencil, Check, X as XIcon, RotateCcw, ChevronUp, ChevronDown
 } from "lucide-react";
-import { getMaterialsBySubject, createMaterial, deleteMaterial, updateMaterial } from "@/app/actions/material";
+import { getMaterialsBySubject, createMaterial, deleteMaterial, updateMaterial, reorderMaterials } from "@/app/actions/material";
 import { getAllSubjects, getChallengesBySubject, deleteChallenge, createChallenge, updateChallenge } from "@/app/actions/admin";
 import { updateSubjectName, resetChallengeSubmissions } from "@/app/actions/teacher";
 import { motion, AnimatePresence } from "framer-motion";
@@ -53,6 +53,7 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
   const [editingMaterial, setEditingMaterial] = useState<any>(null);
   const [isSavingChallenge, setIsSavingChallenge] = useState(false);
   const [isSavingMaterial, setIsSavingMaterial] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
 
   const [form, setForm] = useState({
     title: "",
@@ -300,6 +301,45 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
     }
   };
 
+  const handleMoveMaterial = async (index: number, direction: 'up' | 'down') => {
+    const tabMats = materials.filter((m) => m.type === activeTab);
+    if ((direction === 'up' && index === 0) || (direction === 'down' && index === tabMats.length - 1)) return;
+
+    setIsReordering(true);
+    
+    // Crear una copia de los materiales de la tab actual
+    const newTabMats = [...tabMats];
+    
+    // Intercambiar
+    const swapIndex = direction === 'up' ? index - 1 : index + 1;
+    const temp = newTabMats[index];
+    newTabMats[index] = newTabMats[swapIndex];
+    newTabMats[swapIndex] = temp;
+
+    // Actualizar el estado local instantáneamente
+    const updatedMaterials = materials.map(m => {
+      if (m.type !== activeTab) return m;
+      return newTabMats.find(nm => nm.id === m.id) || m;
+    });
+    
+    // Sort local state by new order within tab
+    updatedMaterials.sort((a, b) => {
+        if (a.type !== activeTab || b.type !== activeTab) return 0;
+        return newTabMats.indexOf(a) - newTabMats.indexOf(b);
+    });
+
+    setMaterials(updatedMaterials);
+
+    // Guardar en BD
+    const orderedIds = newTabMats.map(m => m.id);
+    const res = await reorderMaterials(subjectId, orderedIds);
+    if (!res.success) {
+      showToast("Error al guardar el orden", "error");
+      loadData(); // Revert on error
+    }
+    setIsReordering(false);
+  };
+
   const tabMaterials = materials.filter((m) => m.type === activeTab);
   const activeTabDef = TABS.find((t) => t.key === activeTab)!;
 
@@ -462,7 +502,7 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
                 </motion.div>
               ))
             ) : (
-              tabMaterials.map((mat) => (
+              tabMaterials.map((mat, index) => (
                 <motion.div
                   key={mat.id}
                   initial={{ opacity: 0, y: 8 }}
@@ -471,6 +511,26 @@ export default function DocenteMaterialesPage({ params }: { params: Promise<{ id
                   className={`bg-card border border-border rounded-[2rem] p-6 hover:border-primary/30 transition-all shadow-sm ${mat.visible === false ? "opacity-60 grayscale-[0.5]" : ""}`}
                 >
                   <div className="flex items-start justify-between gap-4">
+                    {/* Botones de Reordenamiento */}
+                    <div className="flex flex-col gap-1 items-center justify-center shrink-0">
+                      <button
+                        onClick={() => handleMoveMaterial(index, 'up')}
+                        disabled={index === 0 || isReordering}
+                        className="p-1 rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-20 transition-all"
+                        title="Subir"
+                      >
+                        <ChevronUp size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleMoveMaterial(index, 'down')}
+                        disabled={index === tabMaterials.length - 1 || isReordering}
+                        className="p-1 rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-20 transition-all"
+                        title="Bajar"
+                      >
+                        <ChevronDown size={16} />
+                      </button>
+                    </div>
+
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         {mat.visible === false && (
