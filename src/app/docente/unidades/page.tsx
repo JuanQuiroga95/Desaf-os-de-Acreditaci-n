@@ -31,7 +31,7 @@ import { createChallenge, deleteChallenge } from "@/app/actions/admin";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
-import { upload } from "@vercel/blob/client";
+import { createClient } from "@supabase/supabase-js";
 
 export default function UnidadesPage() {
   return (
@@ -183,16 +183,26 @@ function UnidadesContent() {
       let fileUrl: string | undefined;
       const imageUrls: string[] = [];
 
+      const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+
       // Upload main file if needed (Video/Theory)
       if (itemForm.file) {
-        const blob = await upload(itemForm.file.name, itemForm.file, { access: "public", handleUploadUrl: "/api/upload" });
-        fileUrl = blob.url;
+        const fileExt = itemForm.file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const { error } = await supabase.storage.from('materiales').upload(fileName, itemForm.file);
+        if (error) throw error;
+        const { data: publicUrlData } = supabase.storage.from('materiales').getPublicUrl(fileName);
+        fileUrl = publicUrlData.publicUrl;
       }
       
       // Upload multiple images if needed (Exercise/Encounter)
       for (const img of itemForm.images) {
-        const blob = await upload(img.name, img, { access: "public", handleUploadUrl: "/api/upload" });
-        imageUrls.push(blob.url);
+        const fileExt = img.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const { error } = await supabase.storage.from('materiales').upload(fileName, img);
+        if (error) throw error;
+        const { data: publicUrlData } = supabase.storage.from('materiales').getPublicUrl(fileName);
+        imageUrls.push(publicUrlData.publicUrl);
       }
 
       if (type === "THEORY" || type === "VIDEO" || type === "TP_TEMPLATE") {

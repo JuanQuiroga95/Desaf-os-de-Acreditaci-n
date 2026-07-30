@@ -10,7 +10,7 @@ import { createChallenge } from "@/app/actions/admin";
 import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { upload } from "@vercel/blob/client";
+import { createClient } from "@supabase/supabase-js";
 
 function TeacherNewChallengeContent() {
   const { user, isLoading: authLoading } = useAuth();
@@ -211,11 +211,13 @@ function TeacherNewChallengeContent() {
     let imageUrls: string[] = [];
     if (imageFile) {
       try {
-        const blob = await upload(imageFile.name, imageFile, {
-          access: "public",
-          handleUploadUrl: "/api/upload",
-        });
-        imageUrls.push(blob.url);
+        const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const { error } = await supabase.storage.from('materiales').upload(fileName, imageFile);
+        if (error) throw error;
+        const { data: publicUrlData } = supabase.storage.from('materiales').getPublicUrl(fileName);
+        imageUrls.push(publicUrlData.publicUrl);
       } catch (error: any) {
         showToast("Error al subir la imagen", "error");
         return;

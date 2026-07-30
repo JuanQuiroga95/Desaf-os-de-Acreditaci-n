@@ -16,7 +16,7 @@ import { updateSubjectName, resetChallengeSubmissions } from "@/app/actions/teac
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
-import { upload } from "@vercel/blob/client";
+import { createClient } from "@supabase/supabase-js";
 import { Sparkles, Zap, Eye, EyeOff, Users2, Calendar, CheckCircle2 } from "lucide-react";
 
 type Tab = "THEORY" | "VIDEO" | "EXERCISE" | "PROMPT" | "RUBRIC" | "TP_TEMPLATE" | "CHALLENGES" | "ENCOUNTER";
@@ -148,14 +148,30 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
 
       if (needsFileUpload && form.file) {
         try {
-          const blob = await upload(form.file.name, form.file, {
-            access: "public",
-            handleUploadUrl: "/api/upload",
-          });
-          fileUrl = blob.url;
+          const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+          const file = form.file;
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          
+          const { data, error } = await supabase.storage
+            .from('materiales')
+            .upload(fileName, file, {
+              cacheControl: '3600',
+              upsert: false
+            });
+
+          if (error) {
+            throw error;
+          }
+
+          const { data: publicUrlData } = supabase.storage
+            .from('materiales')
+            .getPublicUrl(fileName);
+
+          fileUrl = publicUrlData.publicUrl;
         } catch (error: any) {
-          console.error("Error detallado de subida:", error);
-          showToast(error.message || "Error al subir archivo a Vercel Blob", "error");
+          console.error("Error detallado de subida a Supabase:", error);
+          showToast(error.message || "Error al subir archivo a Supabase", "error");
           setIsSaving(false);
           return;
         }
