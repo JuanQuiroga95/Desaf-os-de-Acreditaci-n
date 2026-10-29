@@ -14,6 +14,7 @@ import { ChallengeGrid } from "@/components/subject/ChallengeGrid";
 import { MaterialsSidebar } from "@/components/subject/MaterialsSidebar";
 import { ChallengeModal } from "@/components/subject/ChallengeModal";
 import { MaterialModal } from "@/components/subject/MaterialModal";
+import { UnitActivities } from "@/components/subject/UnitActivities";
 
 export default function SubjectPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -201,6 +202,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
               
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
                 <div className="lg:col-span-8 space-y-6">
+                  <UnitActivities activities={unit.activities || []} />
                   {standaloneChallenges.length > 0 ? (
                     <ChallengeGrid subject={{ ...subject, challenges: standaloneChallenges }} onOpenChallenge={handleOpenChallenge} />
                   ) : (

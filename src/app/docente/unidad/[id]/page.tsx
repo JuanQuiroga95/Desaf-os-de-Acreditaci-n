@@ -16,6 +16,7 @@ import { updateSubjectName, resetChallengeSubmissions } from "@/app/actions/teac
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
+import { UnitActivitiesPanel } from "@/components/teacher/UnitActivitiesPanel";
 import { createClient } from "@supabase/supabase-js";
 import { Sparkles, Zap, Eye, EyeOff, Users2, Calendar, CheckCircle2 } from "lucide-react";
 
@@ -413,6 +414,8 @@ export default function DocenteUnidadPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
       </header>
+
+      <UnitActivitiesPanel unitId={unitId} />
 
       {/* Tabs */}
       <div className="flex gap-2 mb-8 flex-wrap">

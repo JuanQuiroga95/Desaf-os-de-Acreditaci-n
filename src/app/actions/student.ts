@@ -4,7 +4,7 @@
 import { db } from "@/lib/db";
 import Groq from "groq-sdk";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "" });
 
 export async function getStudentDashboard(userId: string) {
   try {
@@ -62,8 +62,8 @@ export async function getSubjectChallenges(subjectId: string, userId: string) {
     const subject = await db.subject.findFirst({
       where: { id: subjectId },
       include: {
-        teachers: true,
-        materials: { 
+        teachers: { select: { id: true, name: true } },
+        materials: {
           where: { visible: true },
           orderBy: [{ type: "asc" }, { order: "asc" }, { createdAt: "asc" }] 
         },
@@ -84,7 +84,14 @@ export async function getSubjectChallenges(subjectId: string, userId: string) {
             challenges: {
               include: { progress: { where: { userId } } }
             },
-            encounters: { where: { studentId: userId } }
+            encounters: { where: { studentId: userId } },
+            activities: {
+              where: { visible: true },
+              orderBy: { order: "asc" },
+              include: {
+                attempts: { where: { userId, correct: true }, select: { itemId: true } }
+              }
+            }
           }
         }
       }

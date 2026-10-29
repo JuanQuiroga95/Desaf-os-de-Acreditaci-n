@@ -45,6 +45,7 @@ model User {
   sentMessages      Message[]    @relation("SentMessages")
   receivedMessages  Message[]    @relation("ReceivedMessages")
   subjectHistory    SubjectHistory[]
+  activityAttempts  ActivityAttempt[]
 }
 
 model Subject {
@@ -80,6 +81,7 @@ model Unit {
   materials   Material[]
   challenges  Challenge[]
   encounters  Encounter[]
+  activities  UnitActivity[]
 }
 
 enum ChallengeType {
@@ -233,4 +235,35 @@ model SubjectHistory {
   subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   teacherId   String
   teacher     User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+}
+
+// Actividad interactiva del catálogo (src/lib/activities.ts) asignada por el docente a una unidad.
+model UnitActivity {
+  id          String   @id @default(cuid())
+  activityKey String
+  order       Int      @default(0)
+  visible     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  unitId      String
+  unit        Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  attempts    ActivityAttempt[]
+
+  @@unique([unitId, activityKey])
+}
+
+// Cada respuesta de un alumno a un ítem de una actividad. La corrección la calcula el servidor.
+model ActivityAttempt {
+  id             String       @id @default(cuid())
+  itemId         String
+  answer         String
+  correct        Boolean
+  createdAt      DateTime     @default(now())
+
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitActivityId String
+  unitActivity   UnitActivity @relation(fields: [unitActivityId], references: [id], onDelete: Cascade)
+
+  @@index([unitActivityId, userId])
 }

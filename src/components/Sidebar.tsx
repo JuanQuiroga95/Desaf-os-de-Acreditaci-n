@@ -43,7 +43,7 @@ export function Sidebar() {
   const { theme, toggleTheme } = useTheme();
   const { showToast } = useToast();
   const { hasTour, resetTour } = useTour();
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState<number | null>(null);
   const [clickCount, setClickCount] = useState(0);
   const clickTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -110,14 +110,21 @@ export function Sidebar() {
     }, 1000);
   };
 
-  // Elimino llamada duplicada a getStudentDashboard para mejorar performance.
-  // El progreso debería venir por Context o props si es necesario en toda la app.
+  // Se consulta una vez por alumno (no en cada navegación). Hasta tener el
+  // dato real no se muestra el bloque, para no informar un 0% ficticio.
+  const studentId = user?.role === "student" ? user.id : null;
   useEffect(() => {
-    if (user?.role === "student") {
-      // Por ahora hardcodeamos a 0 o podríamos leerlo de un nuevo ProgressContext
-      // setProgress(0);
-    }
-  }, [user]);
+    if (!studentId) return;
+    let cancelled = false;
+    getStudentDashboard(studentId)
+      .then((res) => {
+        if (!cancelled && res.success) setProgress(res.globalProgress ?? 0);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [studentId]);
 
   if (isLoading || !user) return null;
 
@@ -214,7 +221,7 @@ export function Sidebar() {
       </nav>
 
       <div className="p-3 shrink-0 space-y-3">
-        {user.role === "student" && (
+        {user.role === "student" && progress !== null && (
           <div className="bg-secondary/50 rounded-2xl p-3 border border-border">
             <div className="flex justify-between items-center mb-2">
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Tu Progreso</span>
