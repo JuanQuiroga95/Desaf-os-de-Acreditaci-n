@@ -1,156 +1,81 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { useState } from "react";
+import { ArrowRight, Lightbulb, RotateCcw, ShoppingBag, Trophy } from "lucide-react";
+import { getActivity, money, type PercentageItem } from "@/lib/activities";
 import {
-  ArrowLeft,
-  ArrowRight,
-  Lightbulb,
-  RotateCcw,
-  ShoppingBag,
-  Trophy,
-} from "lucide-react";
-import { evaluateAnswer, getActivity, money, type AnswerResult } from "@/lib/activities";
-import { submitActivityAnswer } from "@/app/actions/activities";
+  ActivityFrame,
+  AnswerFeedback,
+  StageNav,
+  primaryButton,
+  secondaryButton,
+  stageTitle,
+  stageTitleClass,
+  useAnswerChecker,
+  useFocusAfterRender,
+  type UnitContext,
+} from "./shared";
 
-type UnitContext = {
-  unitActivityId: string;
-  subjectId: string;
-  subjectName: string;
-  unitName: string;
-  solvedCount: number;
-};
-
-const missions = getActivity("porcentajes-descuentos")!.items;
-const title = "lab-stage-title";
-const titleClass = "scroll-mt-24 outline-none";
-const button =
-  "inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-white hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary";
+const missions = getActivity("porcentajes-descuentos")!.items as PercentageItem[];
 
 /** Sin `unit` es práctica libre local; con `unit`, cada respuesta se corrige y registra en el servidor. */
 export default function PercentageLab({ unit }: { unit?: UnitContext }) {
   const [stage, setStage] = useState(0);
   const [discount, setDiscount] = useState(25);
   const [mission, setMission] = useState(0);
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
   const [hint, setHint] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [finished, setFinished] = useState(false);
-  const [result, setResult] = useState<AnswerResult | null>(null);
-  const [checking, setChecking] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const { result, checking, saveError, check, clear } = useAnswerChecker(unit);
+  const focusNext = useFocusAfterRender();
   const current = missions[mission];
   const correct = result?.correct === true;
   const savings = (20000 * discount) / 100;
-  // Cuando el control que tenía el foco desaparece o se deshabilita,
-  // el foco pasa al siguiente punto de la actividad en lugar de perderse.
-  const pendingFocus = useRef<string | null>(null);
-  useEffect(() => {
-    if (!pendingFocus.current) return;
-    document.getElementById(pendingFocus.current)?.focus();
-    pendingFocus.current = null;
-  });
 
   function goTo(nextStage: number) {
-    pendingFocus.current = title;
+    focusNext(stageTitle);
     setStage(nextStage);
   }
 
   function reset() {
-    pendingFocus.current = title;
+    focusNext(stageTitle);
     setStage(0);
     setDiscount(25);
     setMission(0);
     setSelected(null);
-    setResult(null);
-    setSaveError(null);
+    clear();
     setHint(false);
     setAttempts(0);
     setFinished(false);
   }
 
-  async function choose(option: number) {
-    if (checking) return;
-    setSaveError(null);
-    let answer: AnswerResult;
-    if (unit) {
-      setChecking(true);
-      setSelected(option);
-      const res = await submitActivityAnswer(
-        unit.unitActivityId,
-        current.id,
-        option,
-      ).catch(() => null);
-      setChecking(false);
-      if (!res?.success) {
-        setSelected(null);
-        setResult(null);
-        setSaveError(
-          `${res?.message ?? "No pudimos guardar tu respuesta"}. Probá de nuevo.`,
-        );
-        return;
-      }
-      answer = res.result;
-    } else answer = evaluateAnswer(current, option);
-    if (answer.correct) pendingFocus.current = "lab-next";
+  async function choose(option: string) {
     setSelected(option);
-    setResult(answer);
+    const answer = await check(current, option);
+    if (!answer) {
+      setSelected(null);
+      return;
+    }
+    if (answer.correct) focusNext("lab-next");
     setAttempts((value) => value + 1);
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-7 p-5 pb-28 sm:p-8 sm:pb-28">
-      <Link
-        href={unit ? `/subjects/${unit.subjectId}` : "/"}
-        className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-primary"
-      >
-        <ArrowLeft size={16} />{" "}
-        {unit ? `Volver a ${unit.subjectName}` : "Volver al inicio"}
-      </Link>
-      <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-950 via-indigo-900 to-blue-800 p-7 text-white sm:p-10">
-        <span
-          aria-hidden="true"
-          className="absolute -right-3 top-0 text-[180px] font-black leading-none text-white/10"
-        >
-          %
-        </span>
-        <p className="relative text-xs font-bold uppercase tracking-widest text-cyan-200">
-          {unit
-            ? `${unit.subjectName} · ${unit.unitName}`
-            : "Laboratorio de matemática · Práctica libre"}
-        </p>
-        <h1 className="relative mt-4 text-4xl font-black tracking-tight sm:text-5xl">
-          Misión descuentos
-        </h1>
-        <p className="relative mt-4 max-w-xl leading-relaxed text-blue-100">
-          Una oferta, una decisión y un poco de matemática. Descubrí cuánto
-          ahorrás y cuánto pagás realmente.
-        </p>
-        {unit && unit.solvedCount > 0 && (
-          <p className="relative mt-4 text-sm font-semibold text-cyan-100">
-            Ya resolviste {unit.solvedCount} de {missions.length} retos en
-            visitas anteriores. Podés volver a practicarlos.
-          </p>
-        )}
-      </header>
-      <nav
-        aria-label="Etapas de la actividad"
-        className="grid grid-cols-3 gap-2"
-      >
-        {["Descubrí", "Experimentá", "Resolvé"].map((label, index) => (
-          <button
-            key={label}
-            aria-current={stage === index ? "step" : undefined}
-            onClick={() => setStage(index)}
-            className={`rounded-xl border px-2 py-3 text-xs font-bold sm:text-sm ${stage === index ? "border-primary bg-primary text-white" : "border-border bg-card hover:bg-secondary"}`}
-          >
-            <span className="block font-semibold opacity-75">
-              Paso {index + 1}
-            </span>
-            {label}
-          </button>
-        ))}
-      </nav>
+    <ActivityFrame
+      unit={unit}
+      freeEyebrow="Laboratorio de matemática · Práctica libre"
+      title="Misión descuentos"
+      description="Una oferta, una decisión y un poco de matemática. Descubrí cuánto ahorrás y cuánto pagás realmente."
+      total={missions.length}
+      gradient="from-violet-950 via-indigo-900 to-blue-800"
+      glyph="%"
+    >
+      <StageNav
+        labels={["Descubrí", "Experimentá", "Resolvé"]}
+        stage={stage}
+        onSelect={setStage}
+      />
 
       {stage === 0 && (
         <section className="grid gap-6 rounded-3xl border border-border bg-card p-6 sm:p-8 md:grid-cols-2">
@@ -159,9 +84,9 @@ export default function PercentageLab({ unit }: { unit?: UnitContext }) {
               Una idea para llevarte
             </p>
             <h2
-              id={title}
+              id={stageTitle}
               tabIndex={-1}
-              className={`mt-2 text-2xl font-black ${titleClass}`}
+              className={`mt-2 text-2xl font-black ${stageTitleClass}`}
             >
               Por ciento significa “de cada 100”.
             </h2>
@@ -177,7 +102,7 @@ export default function PercentageLab({ unit }: { unit?: UnitContext }) {
                 <strong>Precio final</strong> = precio − ahorro
               </p>
             </div>
-            <button className={button} onClick={() => goTo(1)}>
+            <button className={primaryButton} onClick={() => goTo(1)}>
               Probar con una mochila <ArrowRight size={18} />
             </button>
           </div>
@@ -211,9 +136,9 @@ export default function PercentageLab({ unit }: { unit?: UnitContext }) {
       {stage === 1 && (
         <section className="rounded-3xl border border-border bg-card p-6 sm:p-8">
           <h2
-            id={title}
+            id={stageTitle}
             tabIndex={-1}
-            className={`text-2xl font-black ${titleClass}`}
+            className={`text-2xl font-black ${stageTitleClass}`}
           >
             Mové el descuento. Mirá qué cambia.
           </h2>
@@ -280,7 +205,7 @@ export default function PercentageLab({ unit }: { unit?: UnitContext }) {
               </p>
             </div>
           </div>
-          <button className={`${button} mt-7`} onClick={() => goTo(2)}>
+          <button className={`${primaryButton} mt-7`} onClick={() => goTo(2)}>
             Estoy listo para los retos <ArrowRight size={18} />
           </button>
         </section>
@@ -292,9 +217,9 @@ export default function PercentageLab({ unit }: { unit?: UnitContext }) {
             <div className="py-6 text-center" role="status">
               <Trophy size={56} className="mx-auto text-amber-500" />
               <h2
-                id={title}
+                id={stageTitle}
                 tabIndex={-1}
-                className={`mt-5 text-3xl font-black ${titleClass}`}
+                className={`mt-5 text-3xl font-black ${stageTitleClass}`}
               >
                 ¡Misión cumplida!
               </h2>
@@ -306,7 +231,7 @@ export default function PercentageLab({ unit }: { unit?: UnitContext }) {
                 Tu próxima misión: encontrá una oferta y comprobá cuánto
                 pagarías.
               </p>
-              <button className={`${button} mt-6`} onClick={reset}>
+              <button className={`${primaryButton} mt-6`} onClick={reset}>
                 <RotateCcw size={18} /> Volver a practicar
               </button>
             </div>
@@ -316,9 +241,9 @@ export default function PercentageLab({ unit }: { unit?: UnitContext }) {
                 Reto {mission + 1} de {missions.length}
               </p>
               <h2
-                id={title}
+                id={stageTitle}
                 tabIndex={-1}
-                className={`mt-2 text-2xl font-black ${titleClass}`}
+                className={`mt-2 text-2xl font-black ${stageTitleClass}`}
               >
                 {current.title}
               </h2>
@@ -341,40 +266,16 @@ export default function PercentageLab({ unit }: { unit?: UnitContext }) {
                       onClick={() => choose(option)}
                       className={`rounded-2xl border-2 p-5 text-xl font-bold disabled:cursor-default ${selected === option ? "border-primary bg-primary/10" : "border-border hover:border-primary disabled:hover:border-border"}`}
                     >
-                      {money(option)}
+                      {money(Number(option))}
                     </button>
                   ))}
                 </div>
               </fieldset>
-              <div aria-live="polite" aria-atomic="true" className="mt-5">
-                {checking ? (
-                  <p className="text-sm text-muted-foreground">
-                    Revisando tu respuesta…
-                  </p>
-                ) : saveError ? (
-                  <p
-                    role="alert"
-                    className="rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-sm font-semibold"
-                  >
-                    {saveError}
-                  </p>
-                ) : (
-                  result && (
-                    <div
-                      className={`rounded-xl border p-4 ${correct ? "border-emerald-500/40 bg-emerald-500/10" : "border-amber-500/40 bg-amber-500/10"}`}
-                    >
-                      <p className="font-bold">{result.title}</p>
-                      <p className="mt-2 text-sm leading-relaxed">
-                        {result.detail}
-                      </p>
-                    </div>
-                  )
-                )}
-              </div>
+              <AnswerFeedback result={result} checking={checking} saveError={saveError} />
               <div className="mt-5 flex flex-wrap gap-3">
                 {!correct && (
                   <button
-                    className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-3 font-semibold hover:bg-secondary"
+                    className={secondaryButton}
                     aria-expanded={hint}
                     aria-controls="lab-hint"
                     onClick={() => setHint((value) => !value)}
@@ -386,14 +287,14 @@ export default function PercentageLab({ unit }: { unit?: UnitContext }) {
                 {correct && (
                   <button
                     id="lab-next"
-                    className={button}
+                    className={primaryButton}
                     onClick={() => {
-                      pendingFocus.current = title;
+                      focusNext(stageTitle);
                       if (mission === missions.length - 1) setFinished(true);
                       else {
                         setMission((value) => value + 1);
                         setSelected(null);
-                        setResult(null);
+                        clear();
                         setHint(false);
                       }
                     }}
@@ -417,11 +318,6 @@ export default function PercentageLab({ unit }: { unit?: UnitContext }) {
           )}
         </section>
       )}
-      <p className="text-center text-xs leading-relaxed text-muted-foreground">
-        {unit
-          ? "Sin nota de acreditación. Tus respuestas se guardan para que tu docente vea en qué necesitás ayuda."
-          : "Práctica libre, sin nota de acreditación. El recorrido se reinicia al salir o recargar la página."}
-      </p>
-    </div>
+    </ActivityFrame>
   );
 }

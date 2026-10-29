@@ -78,13 +78,19 @@ export async function getUnitActivitiesForTeacher(unitId: string) {
         const items = activity.items.map((item) => {
           const own = attempts.filter((a) => a.itemId === item.id);
           const wrong = own.filter((a) => !a.correct);
+          const mistakes = new Map<string, number>();
+          for (const attempt of wrong) {
+            const code = evaluateAnswer(item, attempt.answer).misconception;
+            if (code) mistakes.set(code, (mistakes.get(code) ?? 0) + 1);
+          }
           return {
             id: item.id,
             title: item.title,
             wrong: wrong.length,
-            savingsMistakes: wrong.filter(
-              (a) => evaluateAnswer(item, Number(a.answer)).misconception === "savings",
-            ).length,
+            mistakes: [...mistakes].map(([code, count]) => ({
+              label: activity.misconceptions[code] ?? code,
+              count,
+            })),
             solvedBy: new Set(own.filter((a) => a.correct).map((a) => a.userId)).size,
           };
         });
@@ -185,13 +191,13 @@ export async function getActivityForStudent(unitActivityId: string) {
 export async function submitActivityAnswer(
   unitActivityId: string,
   itemId: string,
-  value: number,
+  value: string,
 ) {
   try {
     const found = await getStudentUnitActivity(unitActivityId);
     if (!found) return { success: false as const, message: "Actividad no disponible" };
     const item = found.activity.items.find((i) => i.id === itemId);
-    if (!item || typeof value !== "number" || !item.options.includes(value))
+    if (!item || typeof value !== "string" || !item.options.includes(value))
       return { success: false as const, message: "Respuesta inválida" };
 
     const result = evaluateAnswer(item, value);
@@ -200,7 +206,7 @@ export async function submitActivityAnswer(
         unitActivityId,
         userId: found.session.id,
         itemId,
-        answer: String(value),
+        answer: value,
         correct: result.correct,
       },
     });

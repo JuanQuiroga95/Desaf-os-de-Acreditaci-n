@@ -25,6 +25,7 @@ import {
   X,
   Compass,
   Layers,
+  Gamepad2,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useTheme } from "@/context/ThemeContext";
@@ -154,6 +155,7 @@ export function Sidebar() {
         return [
           { name: "Mis Materias", href: "/", icon: LayoutDashboard },
           { name: "Desafíos", href: "/desafios", icon: BookOpen },
+          { name: "Juegos", href: "/juegos", icon: Gamepad2 },
           { name: "Logros", href: "/logros", icon: Trophy },
           { name: "Mensajes", href: "/mensajes", icon: MessageSquare },
           { name: "Tutor IA", href: "/tutor", icon: Brain },

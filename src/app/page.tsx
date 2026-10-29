@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, BookOpen, Gamepad2, Sparkles, Trophy } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getStudentDashboard } from "@/app/actions/student";
+import { activities } from "@/lib/activities";
+import { GameCard } from "@/components/learning/GameCard";
 
 type Dashboard = {
   subjects: {
@@ -137,26 +139,28 @@ export default function StudentDashboard() {
           </div>
         </div>
       </section>
-      <Link
-        href="/explorar/porcentajes"
-        className="grid gap-5 rounded-3xl border border-primary/25 bg-primary/5 p-6 hover:bg-primary/10 sm:grid-cols-[auto_1fr_auto] sm:items-center"
-      >
-        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 text-white">
-          <Gamepad2 size={38} />
+      <section aria-labelledby="juegos-title">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <h2
+            id="juegos-title"
+            className="flex items-center gap-3 text-2xl font-black"
+          >
+            <Gamepad2 className="text-primary" />
+            Juegos para practicar
+          </h2>
+          <Link
+            href="/juegos"
+            className="flex items-center gap-2 text-sm font-bold text-primary"
+          >
+            Ver todos <ArrowRight size={16} />
+          </Link>
         </div>
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-primary">
-            Laboratorio · Matemática · Práctica libre
-          </p>
-          <h2 className="mt-2 text-2xl font-black">Misión descuentos</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Explorá los porcentajes con un simulador y tres retos.
-          </p>
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {activities.map((activity) => (
+            <GameCard key={activity.key} activity={activity} />
+          ))}
         </div>
-        <span className="flex items-center gap-2 font-bold text-primary">
-          Empezar <ArrowRight size={20} />
-        </span>
-      </Link>
+      </section>
       <section id="materias" className="scroll-mt-20">
         <h2 className="mb-5 flex items-center gap-3 text-2xl font-black">
           <BookOpen className="text-primary" />
@@ -179,8 +183,8 @@ export default function StudentDashboard() {
           <p role="status">Cargando tus materias…</p>
         ) : !data.subjects.length ? (
           <p className="rounded-2xl border border-dashed border-border p-8 text-muted-foreground">
-            Todavía no hay materias disponibles. Mientras tanto, podés explorar
-            Misión descuentos.
+            Todavía no hay materias disponibles. Mientras tanto, podés probar los
+            juegos para practicar.
           </p>
         ) : (
           <div

@@ -18,6 +18,13 @@ Renovar la plataforma de acreditación con una presentación más atractiva y ac
 - `npx next build` (sin db push) completo. ESLint sin errores en archivos nuevos. `tsc` sigue con los errores previos listados abajo; ninguno en archivos nuevos.
 - **Base de datos:** el esquema agrega dos tablas y relaciones (cambio aditivo). Solo se aplicó a una base PGlite local en el scratchpad; `.env` apunta a Neon y no se usó. Ojo: en Vercel, vercel.json reemplaza el script `build` por `prisma generate && next build` (sin db push), así que el despliegue NO crea estas tablas. Antes de desplegar este código a producción hay que crear UnitActivity y ActivityAttempt en esa base (por ejemplo `npx prisma db push` revisando el plan); si no, /subjects/[id] falla porque getSubjectChallenges consulta `units.activities`.
 
+## Tercera entrega: apartado Juegos (2026-10-29)
+- Basado en lo que cargaron los docentes de Matemática 1 en producción (Encuentro A: variables, media, mediana, moda; lectura de solo consulta). Nota: en los materiales EXERCISE de producción se perdieron las letras "s" al extraer el texto del PDF; las versiones como desafío están bien.
+- Nuevo juego "Detectives de datos" (src/components/learning/DataDetectives.tsx): clasificar 6 variables (cualitativa, discreta, continua) y encontrar moda, mediana y media con datos que se pueden ordenar en pantalla y un gráfico de puntos. Detecta errores típicos (frecuencia en lugar de valor, mediana sin ordenar, suma sin dividir, contar o medir).
+- Catálogo generalizado (src/lib/activities.ts): cada actividad tiene `kind`, opciones como texto y errores frecuentes con código; el panel docente los muestra. Sin cambios de esquema: ActivityAttempt.answer ya era texto y los intentos anteriores siguen evaluándose igual.
+- Piezas comunes extraídas en src/components/learning/shared.tsx (marco, etapas, corrección local o en servidor, devolución y foco). PercentageLab las usa.
+- Apartado /juegos (barra lateral del alumno y sección "Juegos para practicar" en el inicio) y práctica libre en /explorar/estadistica. /actividades/[id] elige el juego según `kind`.
+
 ## Instrucciones para continuar
 1. Leer AGENTS.md y las guías pertinentes de node_modules/next/dist/docs/ antes de programar. Revisar git diff para conservar el trabajo existente.
 2. Probar el inicio con una sesión de alumno, materias vacías, error de carga, progreso cero y progreso completo. Revisar móvil y los temas claro/oscuro.

@@ -133,9 +133,13 @@ export function UnitActivitiesPanel({ unitId }: { unitId: string }) {
                                 Resuelto por {item.solvedBy} de {activity.students.length}{" "}
                                 {activity.students.length === 1 ? "alumno que participó" : "alumnos que participaron"} ·{" "}
                                 {item.wrong} {item.wrong === 1 ? "respuesta incorrecta" : "respuestas incorrectas"}
-                                {item.savingsMistakes > 0 &&
-                                  ` (${item.savingsMistakes} ${item.savingsMistakes === 1 ? "eligió" : "eligieron"} el ahorro en vez del precio final)`}
                               </p>
+                              {item.mistakes.length > 0 && (
+                                <p className="mt-1 text-xs font-semibold text-amber-500">
+                                  Errores frecuentes:{" "}
+                                  {item.mistakes.map((m) => `${m.label} (${m.count})`).join(", ")}
+                                </p>
+                              )}
                             </li>
                           ))}
                         </ul>
