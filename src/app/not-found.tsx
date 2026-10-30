@@ -3,7 +3,7 @@ import { Search, Home, ArrowLeft } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="app-canvas min-h-screen flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center">
         <div className="w-32 h-32 bg-secondary/30 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border-2 border-dashed border-border rotate-12">
           <Search size={64} className="text-muted-foreground opacity-50 -rotate-12" />

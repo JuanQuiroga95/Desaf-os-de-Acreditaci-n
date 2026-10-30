@@ -320,7 +320,7 @@ export function Sidebar() {
 
       {/* Sidebar - desktop: fixed, mobile: slide-in */}
       <aside className={cn(
-        "w-64 h-[100dvh] border-r border-border bg-card flex flex-col fixed left-0 top-0 z-[70] transition-transform duration-300",
+        "app-sidebar w-64 h-[100dvh] border-r border-border bg-card flex flex-col fixed left-0 top-0 z-[70] transition-transform duration-300",
         // Mobile: hidden by default, slide in when open
         mobileOpen ? "translate-x-0" : "-translate-x-full",
         // Desktop: always visible

@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@theme {
+@theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -18,48 +18,114 @@
 
 :root,
 [data-theme="dark"] {
-  --background: #09090b;
-  --foreground: #fafafa;
-  --card: #18181b;
-  --card-foreground: #fafafa;
+  color-scheme: dark;
+  --background: #061528;
+  --foreground: #edf6ff;
+  --card: #102b45;
+  --card-foreground: #edf6ff;
   --primary: #3b82f6;
   --primary-foreground: #ffffff;
-  --secondary: #27272a;
-  --secondary-foreground: #fafafa;
-  --muted: #27272a;
-  --muted-foreground: #a1a1aa;
+  --secondary: #193c58;
+  --secondary-foreground: #edf6ff;
+  --muted: #193c58;
+  --muted-foreground: #adc7dc;
   --accent: #3b82f6;
   --accent-foreground: #ffffff;
-  --border: #27272a;
+  --border: #335570;
+  --page-gradient: radial-gradient(ellipse at 95% 100%, #3998c880, transparent 65%), linear-gradient(145deg, #061528 0%, #0b2b49 45%, #165775 100%);
+  --surface-sheen: linear-gradient(135deg, #9ddfff0d, transparent 65%);
+  --header-gradient: radial-gradient(ellipse at 100% 0%, #38bdf826, transparent 65%), linear-gradient(120deg, #102b45e8, #163c55cc);
+  --surface-shadow: 0 12px 36px -22px #0009;
+  --heading-accent: #8bdcff;
 }
 
 [data-theme="light"] {
-  --background: #f8f9fa;
-  --foreground: #18181b;
+  color-scheme: light;
+  --background: #eef8ff;
+  --foreground: #102f49;
   --card: #ffffff;
-  --card-foreground: #18181b;
-  --primary: #3b82f6;
+  --card-foreground: #102f49;
+  --primary: #1766bc;
   --primary-foreground: #ffffff;
-  --secondary: #f1f3f5;
-  --secondary-foreground: #18181b;
-  --muted: #f1f3f5;
-  --muted-foreground: #71717a;
-  --accent: #3b82f6;
+  --secondary: #e1f0fb;
+  --secondary-foreground: #102f49;
+  --muted: #e1f0fb;
+  --muted-foreground: #506c83;
+  --accent: #1766bc;
   --accent-foreground: #ffffff;
-  --border: #e4e4e7;
+  --border: #bed7e9;
+  --page-gradient: radial-gradient(ellipse at 0% 0%, #b6e4ffb3, transparent 65%), linear-gradient(145deg, #d9f0ff 0%, #eef8ff 50%, #ffffff 100%);
+  --surface-sheen: linear-gradient(135deg, #c9eaff40, transparent 65%);
+  --header-gradient: radial-gradient(ellipse at 100% 0%, #7dd3fc40, transparent 65%), linear-gradient(120deg, #fffffff2, #e3f3ffdb);
+  --surface-shadow: 0 12px 36px -22px #12639540;
+  --heading-accent: #1263a6;
 }
 
 body {
   background-color: var(--background);
+  background-image: var(--page-gradient);
+  background-attachment: fixed;
   color: var(--foreground);
 }
 
 /* Discovery visual language: deep blue, electric cyan and warm gold. */
-.student-canvas {
-  background-image: radial-gradient(ellipse at 85% 0%, #0783d51a, transparent 48%), radial-gradient(ellipse at 0% 65%, #6d4aff0a, transparent 45%);
-}
+.app-canvas,
 .discovery-login {
-  background: radial-gradient(ellipse at 18% 35%, #074b7f66, transparent 45%), radial-gradient(ellipse at 90% 85%, #363a8b40, transparent 40%), #040f20;
+  background-color: var(--background);
+  background-image: var(--page-gradient);
+  background-attachment: fixed;
+}
+.app-shell :where(.bg-card, .glass) {
+  background-image: var(--surface-sheen);
+  box-shadow: var(--surface-shadow);
+}
+.app-sidebar {
+  background-image: var(--header-gradient);
+}
+.app-canvas > :where(div, section) > header:has(h1) {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--border);
+  border-radius: 1.75rem;
+  background-image: var(--header-gradient);
+  box-shadow: var(--surface-shadow);
+}
+.app-canvas h1 {
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: -.04em;
+  line-height: 1.12;
+  font-size: clamp(2rem, 4vw, 3rem);
+  overflow-wrap: anywhere;
+}
+.app-canvas h1 .text-primary { color: var(--heading-accent); }
+.app-shell :where(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid var(--heading-accent);
+  outline-offset: 3px;
+}
+/* Older forms set a dark native control theme inline; follow the chosen theme. */
+.app-shell :is(select, input[type="date"]) { color-scheme: inherit !important; }
+[data-theme="light"] .discovery-login > header,
+[data-theme="light"] .discovery-login > header a,
+[data-theme="light"] .discovery-login h1 { color: var(--foreground); }
+[data-theme="light"] .discovery-login > header span,
+[data-theme="light"] .discovery-login .discovery-school,
+[data-theme="light"] .discovery-login h1 + p { color: #385c78; }
+[data-theme="light"] .discovery-login .discovery-gradient-text {
+  background-image: linear-gradient(110deg, #143f65, #087eac 65%, #386db4);
+}
+[data-theme="light"] .discovery-login .discovery-eyebrow {
+  color: #785214;
+  background: #fff8df;
+  border-color: #dbb963;
+}
+[data-theme="light"] .discovery-login .discovery-grid {
+  background-image: linear-gradient(#1677ad0a 1px, transparent 1px), linear-gradient(90deg, #1677ad0a 1px, transparent 1px);
+}
+[data-theme="light"] .discovery-login .universe-orbit { border-color: #1483b845; }
+[data-theme="light"] .discovery-login .universe-symbol { color: #276a9c80; }
+[data-theme="light"] .discovery-login .universe-star { color: #977019; }
+@media (max-width: 639px) {
+  .app-canvas > :where(div, section) > header:has(h1) { border-radius: 1.25rem; }
 }
 .discovery-hero {
   background: radial-gradient(ellipse at 85% 40%, #086c9766, transparent 55%), linear-gradient(125deg, #041326, #072d50);

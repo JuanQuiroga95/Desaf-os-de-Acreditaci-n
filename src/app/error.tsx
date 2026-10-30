@@ -17,7 +17,7 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="app-canvas min-h-screen flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-card border border-border rounded-[2.5rem] p-10 text-center shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-2 bg-red-500" />
         

@@ -15,18 +15,18 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const isLoginPage = pathname === "/login";
 
   if (isLoading) return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="app-canvas min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
   return (
     <TourProvider>
-      <div className="flex">
+      <div className="app-shell flex">
         {!isLoginPage && user && <Sidebar />}
         <main className={cn(
-          "flex-1 min-w-0 min-h-screen bg-background transition-all duration-300",
-          user?.role === "student" ? "student-canvas" : "",
+          "flex-1 min-w-0 min-h-screen transition-all duration-300",
+          !isLoginPage ? "app-canvas" : "",
           !isLoginPage && user ? "lg:ml-64 pt-16 lg:pt-0" : ""
         )}>
           {children}
