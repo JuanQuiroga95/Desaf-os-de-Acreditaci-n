@@ -52,7 +52,152 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: 'Inter', sans-serif;
+}
+
+/* Discovery visual language: deep blue, electric cyan and warm gold. */
+.student-canvas {
+  background-image: radial-gradient(ellipse at 85% 0%, #0783d51a, transparent 48%), radial-gradient(ellipse at 0% 65%, #6d4aff0a, transparent 45%);
+}
+.discovery-login {
+  background: radial-gradient(ellipse at 18% 35%, #074b7f66, transparent 45%), radial-gradient(ellipse at 90% 85%, #363a8b40, transparent 40%), #040f20;
+}
+.discovery-hero {
+  background: radial-gradient(ellipse at 85% 40%, #086c9766, transparent 55%), linear-gradient(125deg, #041326, #072d50);
+  border: 1px solid #55b7f32e;
+  box-shadow: 0 20px 70px -35px #009bff66;
+}
+.discovery-grid {
+  position: absolute;
+  pointer-events: none;
+  inset: 0;
+  background-image: linear-gradient(#65baff0a 1px, transparent 1px), linear-gradient(90deg, #65baff0a 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(#000, transparent 95%);
+}
+.discovery-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffe29a;
+  border: 1px solid #f3c45b38;
+  background: #f3c45b08;
+  padding: 8px 12px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+}
+.discovery-gradient-text {
+  color: #8ddcff;
+  background: linear-gradient(110deg, #f0f9ff, #78cfff 55%, #ffe29a);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.discovery-cta {
+  color: #00213a;
+  background: linear-gradient(110deg, #6adaff, #32b5ff);
+  box-shadow: 0 6px 30px #009bff26;
+  transition: transform .2s, box-shadow .2s;
+}
+.discovery-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 32px #009bff50; }
+.discovery-login-form {
+  --secondary: #102941;
+  --border: #2c4865;
+  --foreground: #f0f7ff;
+  --muted-foreground: #b1c7df;
+  --primary: #67ceff;
+  color: var(--foreground);
+  border-color: #8ac9ff30;
+  background: linear-gradient(145deg, #112b44ed, #0a1a30f5);
+  backdrop-filter: blur(18px);
+}
+.discovery-login-form input { background: #102941; color: #f0f7ff; border-color: #2c4865; }
+.discovery-login-form input::placeholder { color: #9eb4cd; }
+.discovery-login-form label { color: #b1c7df; }
+.discovery-login-form button.text-primary { color: #67ceff; }
+.discovery-school { color: #a9bfd7; font-size: 9px; margin-top: 22px; }
+.discovery-login :is(input, button, a):focus-visible,
+.student-discovery :is(a, button):focus-visible,
+.universe-toggle:focus-visible { outline: 3px solid #f3c45b; outline-offset: 5px; }
+.learning-universe { position: relative; min-width: 0; width: 100%; height: 350px; }
+.universe-art { position: absolute; width: 100%; height: 100%; overflow: hidden; }
+.universe-halo {
+  position: absolute; width: 300px; height: 300px; left: 50%; top: 47%;
+  transform: translate(-50%, -50%); border-radius: 50%;
+  background: radial-gradient(circle, #25a9ff25, #168dff0a 50%, transparent 70%);
+}
+.universe-orbit {
+  position: absolute; left: 50%; top: 47%; width: 280px; height: 280px;
+  margin: -140px 0 0 -140px; border: 1px solid #67c6ff30; border-radius: 50%;
+  animation: universe-spin 36s linear infinite;
+}
+.universe-orbit span {
+  position: absolute; left: 14%; top: 14%; width: 9px; height: 9px;
+  border-radius: 50%; background: #f3c45b; box-shadow: 0 0 18px #f3c45b80;
+}
+.orbit-two { width: 210px; height: 210px; margin: -105px 0 0 -105px; animation-duration: 24s; animation-direction: reverse; border-style: dashed; border-color: #67c6ff25; }
+.orbit-two span { background: #6adaff; width: 6px; height: 6px; }
+.orbit-three { width: 340px; height: 340px; margin: -170px 0 0 -170px; border-color: #67c6ff12; animation: none; }
+.universe-planet {
+  position: absolute; left: 50%; top: 47%; margin: -76px 0 0 -76px; width: 152px; height: 152px;
+  display: grid; place-items: center; overflow: hidden; border-radius: 50%;
+  color: #d4f5ff; border: 1px solid #89dcff99;
+  background: radial-gradient(circle at 30% 20%, #53ceff, #086eac 40%, #04274c 75%);
+  box-shadow: inset -12px -15px 35px #020c3380, 0 0 55px #009bff38;
+  animation: universe-float 7s ease-in-out infinite;
+}
+.universe-planet svg { position: relative; filter: drop-shadow(0 4px 10px #00395b); }
+.planet-grid { position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent 0 25px, #c0eaff18 25px 26px), repeating-linear-gradient(90deg, transparent 0 25px, #c0eaff18 25px 26px); transform: rotate(-25deg) scale(1.4); }
+.universe-tag {
+  position: absolute; display: flex; gap: 9px; align-items: center;
+  color: #d8eeff; border: 1px solid #84caff38; border-radius: 13px;
+  background: #102b46ed; box-shadow: 0 8px 25px #0003;
+  padding: 12px 14px; font-size: 11px; font-weight: 600;
+  animation: universe-float 8s ease-in-out infinite;
+}
+.tag-play { top: 15%; right: 1%; transform: rotate(6deg); }
+.tag-play svg { color: #86d5ff; }
+.tag-learn { top: 61%; left: 0; animation-delay: -3s; }
+.tag-learn svg { color: #f3c45b; }
+.tag-spark { bottom: 13%; right: 4%; animation-delay: -5s; font-size: 10px; }
+.tag-spark svg { color: #bca6ff; }
+.universe-star { position: absolute; color: #f3c45b; font-size: 25px; animation: universe-float 6s ease-in-out infinite; }
+.star-one { top: 15%; left: 20%; }
+.star-two { bottom: 20%; left: 35%; font-size: 19px; animation-delay: -2s; }
+.star-three { right: 12%; top: 48%; color: #67ceff; }
+.universe-symbol { position: absolute; left: 7%; top: 35%; color: #8db9e15c; font-size: 38px; font-weight: 800; transform: rotate(-15deg); }
+.universe-toggle {
+  position: absolute; bottom: 0; right: 0; display: flex; align-items: center; gap: 6px;
+  color: #b1c7df; background: #0b2238; border: 1px solid #8ac9ff30; border-radius: 99px;
+  font-size: 10px; padding: 8px 12px; cursor: pointer;
+}
+.universe-toggle:hover { color: white; border-color: #8ac9ff70; }
+.learning-universe[data-paused="true"] * { animation-play-state: paused !important; }
+.universe-compact { height: 285px; max-width: 460px; }
+.universe-compact .universe-art { transform: scale(.86); transform-origin: center; }
+.discovery-game, .discovery-subject { transition: transform .25s, box-shadow .25s, border-color .25s; }
+.discovery-game:hover, .discovery-subject:hover { transform: translateY(-5px); box-shadow: 0 16px 40px #008cff12; }
+.game-art { background-image: radial-gradient(ellipse at 30% 0%, #ffffff1f, transparent 60%), linear-gradient(125deg, var(--tw-gradient-from), var(--tw-gradient-to)); }
+.game-art-orbit { position: absolute; width: 290px; height: 290px; border: 1px solid #ffffff26; border-radius: 50%; transform: rotate(-25deg) scaleY(.6); box-shadow: 0 0 0 28px #ffffff08, 0 0 0 58px #ffffff06; }
+.game-art-icon { transition: transform .3s; }
+.discovery-game:hover .game-art-icon { transform: rotate(0deg) scale(1.08); }
+@keyframes universe-spin { to { transform: rotate(360deg); } }
+@keyframes universe-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -12px; } }
+@media (max-width: 639px) {
+  .learning-universe { height: 290px; }
+  .universe-compact { height: 225px; }
+  .universe-compact .universe-art { transform: scale(.75); }
+  .universe-tag { font-size: 9px; padding: 9px; gap: 6px; }
+  .tag-play { right: 0; top: 10%; }
+  .tag-learn { left: 0; top: 65%; }
+  .tag-spark { right: 0; bottom: 16%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .learning-universe * { animation: none !important; }
+  .universe-toggle { display: none; }
+  .discovery-cta, .discovery-game, .discovery-subject, .game-art-icon { transition: none; }
+  .discovery-cta:hover, .discovery-game:hover, .discovery-subject:hover, .discovery-game:hover .game-art-icon { transform: none; }
 }
 
 .glass {

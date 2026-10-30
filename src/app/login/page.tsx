@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { GraduationCap, ShieldCheck, BookOpen, Users, ArrowRight, X, CheckCircle2 } from "lucide-react";
+import { Sparkles, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react";
+import { LearningUniverse } from "@/components/learning/LearningUniverse";
 import { motion, AnimatePresence } from "framer-motion";
 import { requestCredentialRecoveryAction } from "@/app/actions/auth";
 
@@ -58,26 +59,34 @@ export default function LoginPage() {
 
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-6">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.05),transparent_50%)]" />
+    <div className="discovery-login relative isolate min-h-screen overflow-hidden px-5 py-8 sm:px-10">
+      <div className="discovery-grid" aria-hidden="true" />
+      <header className="relative mx-auto mb-10 flex max-w-6xl items-center justify-between gap-4">
+        <a href="/login" className="flex items-center gap-3 font-black tracking-tight text-white">
+          <img src="/logo.png" alt="Escuela Ricardo Videla" className="h-11 w-11 rounded-full bg-white object-contain p-1" />
+          <span>VIDELA<span className="text-sky-400">.</span><span className="ml-1 font-medium text-blue-200">ACREDITA</span></span>
+        </a>
+        <span className="hidden text-xs text-blue-200/80 sm:block">Tu espacio. Tu ritmo. Tu futuro.</span>
+      </header>
       
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10"
+        className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-8 lg:grid-cols-[1.3fr_1fr] lg:gap-16 relative z-10"
       >
-        <div className="flex flex-col justify-center space-y-8">
+        <div className="flex min-w-0 flex-col justify-center">
           <div>
-            <div className="w-24 h-24 bg-white border border-border rounded-full flex items-center justify-center p-1.5 mb-8 shadow-2xl relative z-10 overflow-hidden">
-              <img src="/logo.png" alt="Logo Escuela" className="w-full h-full object-contain scale-110" />
-            </div>
-            <h1 className="text-6xl font-black tracking-tight leading-none uppercase italic">Videla<br /><span className="text-primary">Acredita</span></h1>
-            <p className="text-muted-foreground mt-4 uppercase text-xs font-bold tracking-widest leading-relaxed">
+            <span className="discovery-eyebrow"><Sparkles size={14} /> ACTIVÁ TU CURIOSIDAD</span>
+            <h1 className="mt-6 text-5xl font-black tracking-tight leading-[1.05] text-white sm:text-7xl">Aprender es<br /><span className="discovery-gradient-text">ir más allá.</span></h1>
+            <p className="mt-5 max-w-md text-base leading-relaxed text-blue-100/85">Transformá tus dudas en descubrimientos. Juegos, desafíos y nuevas ideas para avanzar a tu manera.</p>
+            <p className="discovery-school mt-4 uppercase font-bold tracking-widest leading-relaxed">
               SISTEMA DE GESTIÓN ACADÉMICA<br />
               ESCUELA N° 4-012 "ING. RICARDO VIDELA"<br />
               ORIENTACIÓN ECONOMÍA Y ADMINISTRACIÓN
             </p>
           </div>
+
+          <LearningUniverse compact />
 
           {process.env.NODE_ENV !== "production" && (
           <div className="bg-secondary/30 border border-border p-6 rounded-3xl space-y-4">
@@ -100,11 +109,19 @@ export default function LoginPage() {
           )}
         </div>
 
-        <form onSubmit={handleLogin} className="bg-card border border-border p-8 md:p-10 rounded-[2.5rem] shadow-2xl space-y-6">
+        <form onSubmit={handleLogin} className="discovery-login-form border p-6 sm:p-9 rounded-[2rem] shadow-2xl space-y-6">
+          <div>
+            <span className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-sky-400/25 bg-sky-400/10 text-sky-300"><ShieldCheck size={23} /></span>
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-amber-200">TU AVENTURA CONTINÚA</p>
+            <h2 className="text-3xl font-black tracking-tight text-white">¡Qué bueno verte!</h2>
+            <p className="mt-2 text-sm text-blue-200/80">Ingresá y seguí construyendo tu próximo logro.</p>
+          </div>
           <div className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider ml-1">Correo Institucional</label>
+              <label htmlFor="login-email" className="text-sm font-bold text-muted-foreground ml-1">Correo institucional</label>
               <input 
+                id="login-email"
+                autoComplete="username"
                 type="email" 
                 required
                 value={email}
@@ -114,9 +131,12 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider ml-1">Contraseña</label>
-              <input 
-                type="password" 
+              <label htmlFor="login-password" className="text-sm font-bold text-muted-foreground ml-1">Contraseña</label>
+              <input
+                id="login-password"
+                aria-label="Contraseña"
+                autoComplete="current-password"
+                type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -152,11 +172,12 @@ export default function LoginPage() {
           <button 
             type="submit"
             disabled={isLoading}
-            className="w-full bg-primary text-primary-foreground py-5 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 group"
+            className="discovery-cta w-full py-4 rounded-full font-bold flex items-center justify-center gap-3 transition-all group disabled:opacity-60"
           >
-            {isLoading ? "Validando..." : "Acceder al Tablero"}
+            {isLoading ? "Ingresando..." : "Empezar mi aventura"}
             <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
           </button>
+          <p className="text-center text-xs leading-relaxed text-blue-200/70">Cada intento cuenta. Cada paso te acerca.</p>
         </form>
       </motion.div>
 

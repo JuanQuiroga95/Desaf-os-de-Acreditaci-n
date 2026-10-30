@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getStudentDashboard } from "@/app/actions/student";
 import { activities } from "@/lib/activities";
 import { GameCard } from "@/components/learning/GameCard";
+import { LearningUniverse } from "@/components/learning/LearningUniverse";
 
 type Dashboard = {
   subjects: {
@@ -66,7 +67,7 @@ export default function StudentDashboard() {
     data?.subjects.find((s) => s.progress > 0 && s.progress < 100) ||
     data?.subjects.find((s) => s.progress < 100);
   return (
-    <div className="mx-auto max-w-7xl space-y-8 p-5 pb-24 sm:p-8 sm:pb-24">
+    <div className="student-discovery mx-auto max-w-7xl space-y-10 p-5 pb-24 sm:p-8 sm:pb-24">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="mb-2 text-sm text-muted-foreground">
@@ -88,39 +89,42 @@ export default function StudentDashboard() {
           <Trophy size={18} /> Mis logros
         </Link>
       </header>
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-950 via-blue-900 to-teal-800 p-7 text-white sm:p-10">
-        <div
-          aria-hidden="true"
-          className="absolute -right-12 -top-16 h-64 w-64 rounded-full border-[35px] border-white/10"
-        />
-        <div className="relative grid items-center gap-8 md:grid-cols-[1.4fr_1fr]">
+      <section className="discovery-hero relative overflow-hidden rounded-[2rem] p-6 text-white sm:p-10">
+        <div className="discovery-grid" aria-hidden="true" />
+        <div className="relative grid items-center gap-3 xl:grid-cols-[1.2fr_1fr]">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-xs font-bold text-cyan-100">
-              <Sparkles size={16} /> Aprendé haciendo
+            <span className="discovery-eyebrow">
+              <Sparkles size={14} /> TU PRÓXIMA GRAN IDEA EMPIEZA ACÁ
             </span>
-            <h2 className="mt-5 max-w-lg text-4xl font-black leading-tight tracking-tight sm:text-5xl">
-              Las grandes ideas empiezan con un pequeño desafío.
+            <h2 className="mt-6 max-w-xl text-4xl font-black leading-[1.06] tracking-tight sm:text-6xl">
+              Tu curiosidad.<br />
+              <span className="discovery-gradient-text">Sin límites.</span>
             </h2>
             <p className="mt-4 max-w-lg leading-relaxed text-blue-100">
-              Explorá, probá y volvé a intentar. Cada paso te acerca a tu
-              próxima meta.
+              Un desafío, una idea, un nuevo logro. Aprendé a tu ritmo,
+              poné a prueba lo que sabés y descubrí hasta dónde podés llegar.
             </p>
-            <a
+            <div className="mt-7 flex flex-wrap gap-3"><a
               href="#materias"
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-blue-950"
+              className="discovery-cta inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-bold"
             >
               Explorar mis materias <ArrowRight size={18} />
             </a>
+            <Link href="/juegos" className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/5 px-5 py-3 text-sm font-bold hover:bg-white/10"><Gamepad2 size={18} /> Ir a jugar</Link></div>
           </div>
-          <div className="rounded-2xl border border-white/20 bg-white/10 p-6">
+          <LearningUniverse />
+        </div>
+          <div className="relative mt-6 grid items-center gap-4 rounded-2xl border border-white/15 bg-white/5 p-5 sm:grid-cols-[1fr_1fr]">
+            <div>
             <p className="text-sm text-blue-100">
               Tu recorrido de acreditación
             </p>
-            <p className="my-3 text-5xl font-black">
+            <p className="mt-2 text-3xl font-black text-amber-200">
               {data ? `${data.globalProgress}%` : "—"}
+              <span className="ml-3 text-xs font-medium text-blue-100">de los desafíos completados</span>
             </p>
-            <p className="text-sm text-blue-100">de los desafíos completados</p>
-            <div className="my-5 h-2 overflow-hidden rounded-full bg-white/15">
+            </div><div>
+            <div className="my-3 h-2 overflow-hidden rounded-full bg-white/15">
               <div
                 className="h-full rounded-full bg-cyan-300"
                 style={{ width: `${data?.globalProgress || 0}%` }}
@@ -136,8 +140,8 @@ export default function StudentDashboard() {
                 <ArrowRight size={18} className="shrink-0" />
               </Link>
             )}
+            </div>
           </div>
-        </div>
       </section>
       <section aria-labelledby="juegos-title">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
@@ -155,7 +159,8 @@ export default function StudentDashboard() {
             Ver todos <ArrowRight size={16} />
           </Link>
         </div>
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <p className="-mt-2 mb-5 text-sm text-muted-foreground">Elegí una misión. Acá, equivocarse también es aprender.</p>
+        <div className="grid gap-5 md:grid-cols-2">
           {activities.map((activity) => (
             <GameCard key={activity.key} activity={activity} />
           ))}
@@ -194,7 +199,7 @@ export default function StudentDashboard() {
             {data.subjects.map((s, i) => (
               <article
                 key={s.id}
-                className="flex flex-col overflow-hidden rounded-3xl border border-border bg-card"
+                className="discovery-subject flex flex-col overflow-hidden rounded-3xl border border-border bg-card"
               >
                 <div
                   className={`relative overflow-hidden bg-gradient-to-br ${colors[i % colors.length]} p-6 text-white`}

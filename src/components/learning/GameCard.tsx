@@ -13,15 +13,17 @@ export function GameCard({ activity }: { activity: Activity }) {
   return (
     <Link
       href={activity.practiceHref}
-      className="group flex flex-col overflow-hidden rounded-3xl border border-border bg-card hover:border-primary/60"
+      className="discovery-game group flex flex-col overflow-hidden rounded-3xl border border-border bg-card hover:border-primary/60"
     >
-      <div className={`relative flex h-32 items-center justify-center overflow-hidden bg-gradient-to-br ${gradient} text-white`}>
+      <div className={`game-art relative flex h-44 items-center justify-center overflow-hidden bg-gradient-to-br ${gradient} text-white`}>
+        <span className="absolute left-5 top-4 rounded-full border border-white/25 bg-black/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest">Misión interactiva</span>
+        <div className="game-art-orbit" aria-hidden="true" />
         <Icon
           aria-hidden="true"
           size={140}
           className="absolute -right-6 -top-4 opacity-15"
         />
-        <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15">
+        <span className="game-art-icon flex h-20 w-20 rotate-[-10deg] items-center justify-center rounded-3xl border border-white/35 bg-white/15 shadow-xl backdrop-blur-sm">
           <Icon size={34} />
         </span>
       </div>
@@ -34,7 +36,7 @@ export function GameCard({ activity }: { activity: Activity }) {
           {activity.summary}
         </p>
         <span className="mt-5 flex items-center gap-2 font-bold text-primary">
-          Jugar
+          Empezar misión
           <ArrowRight size={18} className="transition-transform group-hover:translate-x-1 motion-reduce:transition-none" />
         </span>
       </div>

@@ -25,7 +25,8 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
       <div className="flex">
         {!isLoginPage && user && <Sidebar />}
         <main className={cn(
-          "flex-1 min-h-screen bg-background transition-all duration-300",
+          "flex-1 min-w-0 min-h-screen bg-background transition-all duration-300",
+          user?.role === "student" ? "student-canvas" : "",
           !isLoginPage && user ? "lg:ml-64 pt-16 lg:pt-0" : ""
         )}>
           {children}
