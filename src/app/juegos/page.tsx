@@ -1,4 +1,5 @@
-import { Gamepad2 } from "lucide-react";
+import Link from "next/link";
+import { Building2, Gamepad2 } from "lucide-react";
 import { activities } from "@/lib/activities";
 import { GameCard } from "@/components/learning/GameCard";
 
@@ -18,6 +19,12 @@ export default function GamesPage() {
           hagas acá no se registra. Si tu docente publica un juego en una
           unidad, lo vas a encontrar en esa materia.
         </p>
+        <Link
+          href="/mundo"
+          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-white hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+        >
+          <Building2 size={18} aria-hidden="true" /> Entrar al Mundo: devolvele la energía a la ciudad
+        </Link>
       </header>
       {areas.map((area) => (
         <section key={area} aria-labelledby={`area-${area}`}>

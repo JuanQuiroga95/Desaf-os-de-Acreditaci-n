@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/session";
 import { activities, evaluateAnswer, getActivity } from "@/lib/activities";
+import { ACTIVITY_ITEM_COINS } from "@/lib/progress";
 import { logSubjectHistory } from "./history";
 
 // Mismo criterio que getStudentDashboard: sin inscripciones, el alumno ve todas las materias.
@@ -187,7 +188,11 @@ export async function getActivityForStudent(unitActivityId: string) {
   }
 }
 
-/** Registra una respuesta. El servidor decide si es correcta; no hay nota ni monedas. */
+/**
+ * Registra una respuesta. El servidor decide si es correcta. No hay nota; sí
+ * monedas la primera vez que el alumno acierta ese reto de ese juego, en
+ * cualquier unidad (publicar el mismo juego en dos unidades no paga dos veces).
+ */
 export async function submitActivityAnswer(
   unitActivityId: string,
   itemId: string,
@@ -201,16 +206,35 @@ export async function submitActivityAnswer(
       return { success: false as const, message: "Respuesta inválida" };
 
     const result = evaluateAnswer(item, value);
-    await db.activityAttempt.create({
-      data: {
-        unitActivityId,
-        userId: found.session.id,
-        itemId,
-        answer: value,
-        correct: result.correct,
-      },
+    const userId = found.session.id;
+    const attempt = await db.activityAttempt.create({
+      data: { unitActivityId, userId, itemId, answer: value, correct: result.correct },
+      select: { id: true },
     });
-    return { success: true as const, result };
+
+    let coinsEarned = 0;
+    if (result.correct) {
+      // Paga solo el primer acierto registrado. Se decide después de guardar para
+      // que dos envíos simultáneos no cobren dos veces: gana el más antiguo.
+      const first = await db.activityAttempt.findFirst({
+        where: {
+          userId,
+          itemId,
+          correct: true,
+          unitActivity: { activityKey: found.activity.key },
+        },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        select: { id: true },
+      });
+      if (first?.id === attempt.id) {
+        await db.user.update({
+          where: { id: userId },
+          data: { coins: { increment: ACTIVITY_ITEM_COINS } },
+        });
+        coinsEarned = ACTIVITY_ITEM_COINS;
+      }
+    }
+    return { success: true as const, result, coinsEarned };
   } catch (error) {
     console.error("Error saving activity answer:", error);
     return { success: false as const, message: "No pudimos guardar tu respuesta" };

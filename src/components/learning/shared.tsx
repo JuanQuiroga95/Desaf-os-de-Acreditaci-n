@@ -5,6 +5,10 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { evaluateAnswer, type AnswerResult, type Activity } from "@/lib/activities";
 import { submitActivityAnswer } from "@/app/actions/activities";
+import { ACTIVITY_ITEM_COINS, XP_PER_ACTIVITY_ITEM } from "@/lib/progress";
+
+/** Resultado con la recompensa que otorgó el servidor (solo la primera vez que se acierta). */
+export type CheckedAnswer = AnswerResult & { coinsEarned?: number };
 
 /** Presente cuando la actividad se hace desde una unidad: las respuestas se registran. */
 export type UnitContext = {
@@ -40,7 +44,7 @@ export function useFocusAfterRender() {
 
 /** Corrige localmente en práctica libre y en el servidor (con registro) dentro de una unidad. */
 export function useAnswerChecker(unit?: UnitContext) {
-  const [result, setResult] = useState<AnswerResult | null>(null);
+  const [result, setResult] = useState<CheckedAnswer | null>(null);
   const [checking, setChecking] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -60,7 +64,7 @@ export function useAnswerChecker(unit?: UnitContext) {
       setSaveError(`${res?.message ?? "No pudimos guardar tu respuesta"}. Probá de nuevo.`);
       return null;
     }
-    setResult(res.result);
+    setResult({ ...res.result, coinsEarned: res.coinsEarned });
     return res.result;
   }
 
@@ -77,7 +81,7 @@ export function AnswerFeedback({
   checking,
   saveError,
 }: {
-  result: AnswerResult | null;
+  result: CheckedAnswer | null;
   checking: boolean;
   saveError: string | null;
 }) {
@@ -101,6 +105,11 @@ export function AnswerFeedback({
             {result.detail && (
               <p className="mt-2 text-sm leading-relaxed">{result.detail}</p>
             )}
+            {result.coinsEarned ? (
+              <p className="mt-2 text-sm font-black text-amber-700 dark:text-amber-300">
+                +{result.coinsEarned} monedas Videla y +{XP_PER_ACTIVITY_ITEM} de experiencia
+              </p>
+            ) : null}
           </div>
         )
       )}
@@ -165,8 +174,8 @@ export function ActivityFrame({
       {children}
       <p className="text-center text-xs leading-relaxed text-muted-foreground">
         {unit
-          ? "Sin nota de acreditación. Tus respuestas se guardan para que tu docente vea en qué necesitás ayuda."
-          : "Práctica libre, sin nota de acreditación. El recorrido se reinicia al salir o recargar la página."}
+          ? `Sin nota de acreditación. Tus respuestas se guardan para que tu docente vea en qué necesitás ayuda. Cada reto que acertás por primera vez da ${ACTIVITY_ITEM_COINS} monedas y ${XP_PER_ACTIVITY_ITEM} de experiencia.`
+          : "Práctica libre, sin nota de acreditación: no suma monedas ni experiencia. El recorrido se reinicia al salir o recargar la página."}
       </p>
     </div>
   );
