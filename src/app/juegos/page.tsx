@@ -16,8 +16,8 @@ export default function GamesPage() {
         <h1 className="text-3xl font-black tracking-tight sm:text-4xl">Juegos</h1>
         <p className="mt-3 max-w-2xl leading-relaxed text-muted-foreground">
           Practicá a tu ritmo: probá, equivocate y volvé a intentar. Lo que
-          hagas acá no se registra. Si tu docente publica un juego en una
-          unidad, lo vas a encontrar en esa materia.
+          hagas en Practicar no cambia tus avances. Elegí Jugar dentro de cada
+          juego para guardar tus aciertos y devolverle energía al Mundo.
         </p>
         <Link
           href="/mundo"

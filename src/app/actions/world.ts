@@ -14,6 +14,7 @@ export type WorldMachine = {
   solved: number;
   /** Juego publicado en una unidad: las respuestas se registran y suman. */
   href: string;
+  practiceHref: string;
   published: boolean;
   unitLabel: string | null;
 };
@@ -85,6 +86,11 @@ export async function getWorldData(): Promise<
         if (!solvedByKey.has(key)) solvedByKey.set(key, new Set());
         solvedByKey.get(key)!.add(c.itemId);
       }
+      const completions = await db.gameCompletion.findMany({ where: { userId } });
+      for (const c of completions) {
+        if (!solvedByKey.has(c.activityKey)) solvedByKey.set(c.activityKey, new Set());
+        solvedByKey.get(c.activityKey)!.add(c.itemId);
+      }
     } catch (error) {
       console.error("World: activity tables unavailable:", error);
       activitiesReady = false;
@@ -103,7 +109,8 @@ export async function getWorldData(): Promise<
         area: activity.area,
         total: activity.items.length,
         solved,
-        href: pub ? `/actividades/${pub.id}` : activity.practiceHref,
+        href: `/mundo/jugar/${activity.key}`,
+        practiceHref: `/mundo/jugar/${activity.key}?modo=practicar`,
         published: Boolean(pub),
         unitLabel: pub?.label ?? null,
       };

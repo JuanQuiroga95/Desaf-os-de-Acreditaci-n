@@ -77,9 +77,7 @@ function guideMessage(data: WorldData, placed: PlacedMachine[], near: PlacedMach
   if (near) {
     if (isRepaired(near))
       return `¡${near.title} ya funciona! Podés volver a practicar cuando quieras.`;
-    return near.published
-      ? `Esta máquina es de ${near.unitLabel}. Cada reto nuevo que acertás da ${XP_PER_ACTIVITY_ITEM} de experiencia y ${ACTIVITY_ITEM_COINS} monedas.`
-      : "Tu docente todavía no publicó este juego en una unidad. Podés practicar, pero todavía no suma experiencia ni monedas.";
+    return `Practicar no cambia tus avances. Jugar guarda cada acierto nuevo y da ${XP_PER_ACTIVITY_ITEM} de experiencia y ${ACTIVITY_ITEM_COINS} monedas.`;
   }
   const pending = placed.filter((m) => !isRepaired(m));
   if (!pending.length) return "¡Volvió la luz al Barrio Matemática! El Barrio Lengua abre pronto.";
@@ -119,8 +117,8 @@ export default function WorldExperience({ data }: { data: WorldData }) {
   };
 
   // Teclado: WASD o flechas para moverse y E para entrar a la máquina cercana.
-  const enter = useCallback(() => {
-    if (near) router.push(near.href);
+  const enter = useCallback((practice = true) => {
+    if (near) router.push(practice ? near.practiceHref : near.href);
   }, [near, router]);
 
   useEffect(() => {
@@ -147,7 +145,9 @@ export default function WorldExperience({ data }: { data: WorldData }) {
       (e.target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName));
     const down = (e: KeyboardEvent) => {
       if (typing(e) || e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.code === "KeyE") return enter();
+      if (e.repeat) return;
+      if (e.code === "KeyE") return enter(true);
+      if (e.code === "KeyJ" && data.activitiesReady) return enter(false);
       const d = dir(e);
       if (!d) return;
       e.preventDefault();
@@ -173,7 +173,7 @@ export default function WorldExperience({ data }: { data: WorldData }) {
       window.removeEventListener("blur", reset);
       inputRef.current = { x: 0, z: 0 };
     };
-  }, [view, enter]);
+  }, [view, enter, data.activitiesReady]);
 
   const missions = [
     ...placed
@@ -212,7 +212,7 @@ export default function WorldExperience({ data }: { data: WorldData }) {
           />
         </div>
       )}
-      {view === "mapa" && <CityMap placed={placed} energy={energy} />}
+      {view === "mapa" && <CityMap placed={placed} energy={energy} ready={data.activitiesReady} />}
 
       {/* Barra superior: nivel, experiencia y monedas. */}
       <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-wrap items-start justify-between gap-3 p-3 sm:p-4">
@@ -297,7 +297,7 @@ export default function WorldExperience({ data }: { data: WorldData }) {
           ))}
         </ul>
         <p className="mt-3 border-t border-white/10 pt-3 text-[11px] leading-relaxed text-slate-400">
-          Desafío entregado: +{XP_PER_CHALLENGE} de experiencia. Reto de juego publicado: +
+          Desafío entregado: +{XP_PER_CHALLENGE} de experiencia. Reto nuevo en Jugar: +
           {XP_PER_ACTIVITY_ITEM} y {ACTIVITY_ITEM_COINS} monedas la primera vez.
         </p>
       </section>
@@ -316,15 +316,17 @@ export default function WorldExperience({ data }: { data: WorldData }) {
             <p className="mt-1 text-lg font-black">{near.title}</p>
             <p className="text-sm text-slate-300">
               {near.solved}/{near.total} retos resueltos
-              {near.published ? "" : " · práctica libre, no suma"}
             </p>
             <Link
-              href={near.href}
+              href={near.practiceHref}
               className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 py-3 font-black text-slate-950 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
-              {isRepaired(near) ? "Volver a practicar" : near.published ? "Reparar máquina" : "Practicar"}
+              Practicar · sin cambiar avances
               {!touch && <kbd className="rounded bg-slate-950/20 px-1.5 text-xs">E</kbd>}
             </Link>
+            {data.activitiesReady && <Link href={near.href} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-300 px-4 py-3 font-black text-slate-950">
+              Jugar · guardar avances {!touch && <kbd className="rounded bg-slate-950/20 px-1.5 text-xs">J</kbd>}
+            </Link>}
           </div>
         )}
         <div
@@ -344,7 +346,7 @@ export default function WorldExperience({ data }: { data: WorldData }) {
         </div>
         {view === "3d" && !touch && (
           <p className="text-[11px] text-slate-400">
-            WASD o flechas para moverte · E para entrar a una máquina
+            WASD o flechas para moverte · E practicar · J jugar
           </p>
         )}
       </div>
@@ -402,7 +404,7 @@ function MiniMap({ placed, posRef }: { placed: PlacedMachine[]; posRef: RefObjec
 }
 
 /** Vista sin 3D: liviana, para teléfonos lentos, teclado o menos movimiento. */
-function CityMap({ placed, energy }: { placed: PlacedMachine[]; energy: Record<string, number> }) {
+function CityMap({ placed, energy, ready }: { placed: PlacedMachine[]; energy: Record<string, number>; ready: boolean }) {
   return (
     <div className="absolute inset-0 overflow-y-auto px-4 pb-48 pt-28 md:pl-80 md:pr-6">
       <div className="mx-auto grid max-w-3xl gap-4 sm:grid-cols-2">
@@ -432,8 +434,7 @@ function CityMap({ placed, energy }: { placed: PlacedMachine[]; energy: Record<s
                   <ul className="mt-4 space-y-3">
                     {machines.map((m) => (
                       <li key={m.key}>
-                        <Link
-                          href={m.href}
+                        <div
                           className="block rounded-2xl border border-white/10 bg-slate-950/60 p-4 hover:border-cyan-300/60 focus-visible:outline-2 focus-visible:outline-cyan-300"
                         >
                           <span className="flex items-center justify-between gap-2">
@@ -446,9 +447,13 @@ function CityMap({ placed, energy }: { placed: PlacedMachine[]; energy: Record<s
                           </span>
                           <span className="mt-1 block text-xs text-slate-400">
                             {m.topic} · {m.solved}/{m.total} retos
-                            {m.published ? ` · ${m.unitLabel}` : " · práctica libre, no suma"}
+                            {m.published ? ` · ${m.unitLabel}` : ""}
                           </span>
-                        </Link>
+                          <div className="mt-3 flex flex-col gap-2">
+                            <Link href={m.practiceHref} className="rounded-lg border border-white/20 px-3 py-2 text-center text-sm font-bold">Practicar</Link>
+                            {ready && <Link href={m.href} className="rounded-lg bg-amber-300 px-3 py-2 text-center text-sm font-black text-slate-950">Jugar · guardar avances</Link>}
+                          </div>
+                        </div>
                       </li>
                     ))}
                   </ul>

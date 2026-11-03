@@ -40,7 +40,8 @@ type ActivityBase = {
 
 export type Activity =
   | (ActivityBase & { kind: "percentages"; items: PercentageItem[] })
-  | (ActivityBase & { kind: "statistics"; items: StatisticsItem[] });
+  | (ActivityBase & { kind: "statistics"; items: StatisticsItem[] })
+  | (ActivityBase & { kind: "quiz"; items: BaseItem[] });
 
 export type AnswerResult = {
   correct: boolean;
@@ -142,6 +143,26 @@ function variableItem(
 export const booksData = [2, 5, 1, 2, 8, 3, 2, 6, 7];
 
 export const activities: Activity[] = [
+  {
+    key: "fracciones-energia", kind: "quiz", title: "Baterías de fracciones",
+    area: "Matemática", topic: "Fracciones", summary: "Cargá baterías comparando y sumando fracciones.",
+    practiceHref: "/explorar/fracciones-energia", misconceptions: {},
+    items: [
+      { id: "mitad", title: "Una batería tiene 2 de sus 4 celdas cargadas. ¿Qué fracción equivale a esa carga?", options: ["1/2", "1/4", "2/2"], answer: "1/2", hint: "Dividí numerador y denominador por el mismo número.", praise: "¡Media batería lista!", explanation: "2/4 = 1/2: dividimos ambos números por 2.", wrong: {}, fallback: "Contá las celdas cargadas y comparalas con el total." },
+      { id: "suma", title: "Cargás 1/4 y luego otro 2/4. ¿Cuánto hay en total?", options: ["3/8", "3/4", "2/4"], answer: "3/4", hint: "Las partes tienen el mismo tamaño: sumá los numeradores.", praise: "¡La carga sube!", explanation: "1/4 + 2/4 = 3/4. El denominador se conserva.", wrong: {}, fallback: "No sumes los denominadores: cada parte sigue siendo un cuarto." },
+      { id: "comparar", title: "¿Qué batería tiene más carga?", options: ["2/3", "1/2", "Son iguales"], answer: "2/3", hint: "Compará en sextos: 2/3 = 4/6 y 1/2 = 3/6.", praise: "¡Elegiste la batería más cargada!", explanation: "4/6 es mayor que 3/6; por eso 2/3 es mayor que 1/2.", wrong: {}, fallback: "Buscá un denominador común para comparar." },
+    ],
+  },
+  {
+    key: "ecuaciones-panel", kind: "quiz", title: "Panel de ecuaciones",
+    area: "Matemática", topic: "Ecuaciones", summary: "Encontrá el valor desconocido para reparar el panel.",
+    practiceHref: "/explorar/ecuaciones-panel", misconceptions: {},
+    items: [
+      { id: "suma", title: "x + 7 = 12. ¿Cuánto vale x?", options: ["19", "5", "7"], answer: "5", hint: "Restá 7 en ambos lados.", praise: "¡Primer circuito reparado!", explanation: "x = 12 − 7 = 5. Comprobación: 5 + 7 = 12.", wrong: {}, fallback: "Buscá el número que, al sumarle 7, da 12." },
+      { id: "producto", title: "3x = 18. ¿Cuánto vale x?", options: ["15", "54", "6"], answer: "6", hint: "3x significa 3 multiplicado por x.", praise: "¡Segundo circuito listo!", explanation: "Dividimos ambos lados por 3: x = 18 ÷ 3 = 6.", wrong: {}, fallback: "Usá la operación inversa de multiplicar." },
+      { id: "doble", title: "2x + 4 = 14. ¿Cuánto vale x?", options: ["5", "9", "10"], answer: "5", hint: "Primero restá 4; después dividí por 2.", praise: "¡Panel encendido!", explanation: "2x = 10, entonces x = 5. Comprobación: 2 × 5 + 4 = 14.", wrong: {}, fallback: "Deshacé las operaciones en orden inverso." },
+    ],
+  },
   {
     key: "porcentajes-descuentos",
     kind: "percentages",

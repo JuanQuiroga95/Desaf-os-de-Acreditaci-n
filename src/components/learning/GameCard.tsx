@@ -5,6 +5,7 @@ import type { Activity } from "@/lib/activities";
 const look: Record<Activity["kind"], { icon: typeof Percent; gradient: string }> = {
   percentages: { icon: Percent, gradient: "from-violet-600 to-blue-600" },
   statistics: { icon: Search, gradient: "from-emerald-600 to-sky-600" },
+  quiz: { icon: Percent, gradient: "from-teal-600 to-indigo-600" },
 };
 
 /** Tarjeta de un juego del catálogo que abre su práctica libre. */

@@ -46,6 +46,7 @@ model User {
   receivedMessages  Message[]    @relation("ReceivedMessages")
   subjectHistory    SubjectHistory[]
   activityAttempts  ActivityAttempt[]
+  gameCompletions   GameCompletion[]
 }
 
 model Subject {
@@ -266,4 +267,15 @@ model ActivityAttempt {
   unitActivity   UnitActivity @relation(fields: [unitActivityId], references: [id], onDelete: Cascade)
 
   @@index([unitActivityId, userId])
+}
+
+// Un acierto por alumno, juego y reto, compartido entre Mundo y unidades.
+model GameCompletion {
+  userId      String
+  activityKey String
+  itemId      String
+  createdAt   DateTime @default(now())
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, activityKey, itemId])
 }

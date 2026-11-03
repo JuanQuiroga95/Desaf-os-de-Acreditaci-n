@@ -1,7 +1,7 @@
-import PercentageLab from "@/components/learning/PercentageLab";
+import GameSession from "@/components/learning/GameSession";
 
 export const metadata = { title: "Misión descuentos | Aula virtual" };
 
 export default function PercentagePage() {
-  return <PercentageLab />;
+  return <GameSession activityKey="porcentajes-descuentos" />;
 }

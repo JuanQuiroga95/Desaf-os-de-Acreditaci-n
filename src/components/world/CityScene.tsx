@@ -150,7 +150,13 @@ function Machine({ m }: { m: PlacedMachine }) {
           <meshStandardMaterial ref={alarm} color="#7f1d1d" emissive="#ef4444" />
         </mesh>
       )}
-      {done && <pointLight position={[0, 2.6, 0]} color={m.color} intensity={8} distance={7} />}
+      {ratio > 0 && <pointLight position={[0, 2.6, 0]} color={m.color} intensity={2 + ratio * 6} distance={7} />}
+      {m.total > 0 && Array.from({ length: m.total }, (_, i) => (
+        <mesh key={i} position={[-0.6 + (i / Math.max(1, m.total - 1)) * 1.2, 2.05, 0.62]}>
+          <sphereGeometry args={[0.055, 8, 8]} />
+          <meshStandardMaterial color={i < m.solved ? "#fef08a" : "#475569"} emissive="#facc15" emissiveIntensity={i < m.solved ? 2 : 0} />
+        </mesh>
+      ))}
       <Html position={[0, 3.6, 0]} center distanceFactor={12} zIndexRange={[20, 0]}>
         <div className="pointer-events-none whitespace-nowrap rounded-lg bg-slate-950/80 px-2.5 py-1 text-center text-xs font-bold text-white shadow-lg">
           {m.title}
@@ -302,9 +308,10 @@ function DistrictFloor({ x, z, color, energy, comingSoon, name }: {
               <meshStandardMaterial
                 color="#334155"
                 emissive={color}
-                emissiveIntensity={energy >= (i + 1) / 4 ? 2.2 : 0}
+                emissiveIntensity={energy > i / 4 ? 2.2 : 0.15}
               />
             </mesh>
+            {!comingSoon && energy > i / 4 && <pointLight position={[0, 2.8, 0]} color="#fde68a" intensity={5} distance={8} />}
           </group>
         );
       })}
@@ -337,10 +344,10 @@ export default function CityScene(props: SceneProps) {
       gl={{ antialias: true, powerPreference: "low-power" }}
       aria-hidden="true"
     >
-      <color attach="background" args={[hubEnergy > 0.99 ? "#0b1d3a" : "#070b1a"]} />
-      <fog attach="fog" args={["#070b1a", 22, 48]} />
-      <hemisphereLight args={["#93c5fd", "#0f172a", 0.55 + hubEnergy * 0.4]} />
-      <directionalLight position={[8, 14, 6]} intensity={0.6 + hubEnergy * 0.6} />
+      <color attach="background" args={[hubEnergy > 0.99 ? "#36577e" : "#263b60"]} />
+      <fog attach="fog" args={["#263b60", 32, 65]} />
+      <hemisphereLight args={["#bfdbfe", "#64748b", 1.4 + hubEnergy * 0.4]} />
+      <directionalLight position={[8, 14, 6]} intensity={1.6 + hubEnergy * 0.6} />
 
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[60, 60]} />

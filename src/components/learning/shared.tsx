@@ -1,14 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { evaluateAnswer, type AnswerResult, type Activity } from "@/lib/activities";
 import { submitActivityAnswer } from "@/app/actions/activities";
+import { submitWorldAnswer } from "@/app/actions/world-play";
 import { ACTIVITY_ITEM_COINS, XP_PER_ACTIVITY_ITEM } from "@/lib/progress";
 
 /** Resultado con la recompensa que otorgó el servidor (solo la primera vez que se acierta). */
 export type CheckedAnswer = AnswerResult & { coinsEarned?: number };
+
+export const GameModeContext = createContext<{
+  activityKey: string;
+  practice: boolean;
+  controls: ReactNode;
+} | null>(null);
 
 /** Presente cuando la actividad se hace desde una unidad: las respuestas se registran. */
 export type UnitContext = {
@@ -44,20 +51,26 @@ export function useFocusAfterRender() {
 
 /** Corrige localmente en práctica libre y en el servidor (con registro) dentro de una unidad. */
 export function useAnswerChecker(unit?: UnitContext) {
+  const mode = useContext(GameModeContext);
+  const busy = useRef(false);
   const [result, setResult] = useState<CheckedAnswer | null>(null);
   const [checking, setChecking] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   async function check(item: Activity["items"][number], value: string) {
-    if (checking) return null;
+    if (busy.current) return null;
     setSaveError(null);
-    if (!unit) {
+    if (mode?.practice || (!unit && !mode)) {
       const local = evaluateAnswer(item, value);
       setResult(local);
       return local;
     }
     setChecking(true);
-    const res = await submitActivityAnswer(unit.unitActivityId, item.id, value).catch(() => null);
+    busy.current = true;
+    const res = await (unit
+      ? submitActivityAnswer(unit.unitActivityId, item.id, value)
+      : submitWorldAnswer(mode!.activityKey, item.id, value)).catch(() => null);
+    busy.current = false;
     setChecking(false);
     if (!res?.success) {
       setResult(null);
@@ -137,6 +150,7 @@ export function ActivityFrame({
   glyph: ReactNode;
   children: ReactNode;
 }) {
+  const mode = useContext(GameModeContext);
   return (
     <div className="mx-auto max-w-5xl space-y-7 p-5 pb-28 sm:p-8 sm:pb-28">
       <Link
@@ -171,9 +185,14 @@ export function ActivityFrame({
           </p>
         )}
       </header>
+      {mode?.controls}
       {children}
       <p className="text-center text-xs leading-relaxed text-muted-foreground">
-        {unit
+        {mode?.practice
+          ? "Práctica: no cambia tus avances, monedas ni experiencia."
+          : mode && !unit
+          ? "Jugar: cada reto nuevo enciende la ciudad y suma experiencia y monedas. Tus avances se guardan en tu cuenta."
+          : unit
           ? `Sin nota de acreditación. Tus respuestas se guardan para que tu docente vea en qué necesitás ayuda. Cada reto que acertás por primera vez da ${ACTIVITY_ITEM_COINS} monedas y ${XP_PER_ACTIVITY_ITEM} de experiencia.`
           : "Práctica libre, sin nota de acreditación: no suma monedas ni experiencia. El recorrido se reinicia al salir o recargar la página."}
       </p>

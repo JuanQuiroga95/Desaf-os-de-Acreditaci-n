@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/session";
 import { activities, evaluateAnswer, getActivity } from "@/lib/activities";
 import { ACTIVITY_ITEM_COINS } from "@/lib/progress";
 import { logSubjectHistory } from "./history";
+import { revalidatePath } from "next/cache";
 
 // Mismo criterio que getStudentDashboard: sin inscripciones, el alumno ve todas las materias.
 async function canStudentAccessSubject(studentId: string, subjectId: string) {
@@ -207,33 +208,33 @@ export async function submitActivityAnswer(
 
     const result = evaluateAnswer(item, value);
     const userId = found.session.id;
-    const attempt = await db.activityAttempt.create({
-      data: { unitActivityId, userId, itemId, answer: value, correct: result.correct },
-      select: { id: true },
-    });
-
-    let coinsEarned = 0;
-    if (result.correct) {
-      // Paga solo el primer acierto registrado. Se decide después de guardar para
-      // que dos envíos simultáneos no cobren dos veces: gana el más antiguo.
-      const first = await db.activityAttempt.findFirst({
+    // Intento, acierto único y recompensa se guardan juntos o se revierten juntos.
+    const coinsEarned = await db.$transaction(async (tx) => {
+      const previous = result.correct ? await tx.activityAttempt.findFirst({
         where: {
           userId,
           itemId,
           correct: true,
           unitActivity: { activityKey: found.activity.key },
         },
-        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         select: { id: true },
+      }) : null;
+      await tx.activityAttempt.create({
+        data: { unitActivityId, userId, itemId, answer: value, correct: result.correct },
       });
-      if (first?.id === attempt.id) {
-        await db.user.update({
-          where: { id: userId },
-          data: { coins: { increment: ACTIVITY_ITEM_COINS } },
-        });
-        coinsEarned = ACTIVITY_ITEM_COINS;
-      }
-    }
+      if (!result.correct) return 0;
+      const claimed = await tx.gameCompletion.createMany({
+        data: [{ userId, activityKey: found.activity.key, itemId }],
+        skipDuplicates: true,
+      });
+      if (!claimed.count || previous) return 0;
+      await tx.user.update({
+        where: { id: userId },
+        data: { coins: { increment: ACTIVITY_ITEM_COINS } },
+      });
+      return ACTIVITY_ITEM_COINS;
+    });
+    revalidatePath("/mundo");
     return { success: true as const, result, coinsEarned };
   } catch (error) {
     console.error("Error saving activity answer:", error);
