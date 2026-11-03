@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import Groq from "groq-sdk";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "" });
+import { groqCompletion } from "@/lib/groq";
 
 export async function POST(req: Request) {
   try {
@@ -29,9 +28,8 @@ export async function POST(req: Request) {
       }))
     ];
 
-    const completion = await groq.chat.completions.create({
+    const completion = await groqCompletion({
       messages: formattedMessages,
-      model: "llama-3.3-70b-versatile",
       temperature: 0.7,
       max_tokens: 500,
     });

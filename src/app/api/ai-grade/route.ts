@@ -1,7 +1,6 @@
-import Groq from "groq-sdk";
 import { NextResponse } from "next/server";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "" });
+import { groqCompletion } from "@/lib/groq";
 
 export async function POST(req: Request) {
   const userId = req.headers.get("x-user-id");
@@ -23,9 +22,8 @@ Responde con:
 3. FEEDBACK_ALUMNO: [devolución motivadora y pedagógica para el alumno, máximo 3 oraciones]`;
 
   try {
-    const completion = await groq.chat.completions.create({
+    const completion = await groqCompletion({
       messages: [{ role: "user", content: prompt }],
-      model: "llama-3.3-70b-versatile",
     });
 
     const text = completion.choices[0]?.message?.content || "";

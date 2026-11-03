@@ -1,7 +1,6 @@
-import Groq from "groq-sdk";
 import { NextResponse } from "next/server";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "" });
+import { groqCompletion } from "@/lib/groq";
 
 export async function POST(req: Request) {
   const userId = req.headers.get("x-user-id");
@@ -40,9 +39,8 @@ Generá un resumen en EXACTAMENTE este formato:
 Sé concreto, usa lenguaje accesible para estudiantes de 14-16 años, máximo 300 palabras en total.`;
 
   try {
-    const completion = await groq.chat.completions.create({
+    const completion = await groqCompletion({
       messages: [{ role: "user", content: prompt }],
-      model: "llama-3.3-70b-versatile",
     });
     return NextResponse.json({ summary: completion.choices[0]?.message?.content || "" });
   } catch (error) {

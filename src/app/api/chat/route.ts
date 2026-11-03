@@ -1,9 +1,8 @@
-import Groq from "groq-sdk";
 import { NextResponse } from "next/server";
 import { buildSystemPrompt } from "@/lib/tour-config";
 import { db } from "@/lib/db";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "" });
+import { groqCompletion } from "@/lib/groq";
 
 export async function POST(req: Request) {
   try {
@@ -81,7 +80,7 @@ export async function POST(req: Request) {
       }
     );
 
-    const completion = await groq.chat.completions.create({
+    const completion = await groqCompletion({
       messages: [
         {
           role: "system",
@@ -89,7 +88,6 @@ export async function POST(req: Request) {
         },
         ...contextualizedMessages,
       ],
-      model: "llama-3.3-70b-versatile",
     });
 
     const text = completion.choices[0]?.message?.content || "";

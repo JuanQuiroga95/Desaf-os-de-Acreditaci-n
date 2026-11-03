@@ -2,9 +2,8 @@
 "use server";
 
 import { db } from "@/lib/db";
-import Groq from "groq-sdk";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "" });
+import { groqCompletion } from "@/lib/groq";
 
 export async function getStudentDashboard(userId: string) {
   try {
@@ -156,9 +155,8 @@ export async function submitChallengeResponse(challengeId: string, userId: strin
       }`;
 
       try {
-        const completion = await groq.chat.completions.create({
+        const completion = await groqCompletion({
           messages: [{ role: "system", content: evaluationPrompt }],
-          model: "llama-3.3-70b-versatile",
           temperature: 0.1,
           response_format: { type: "json_object" }
         });

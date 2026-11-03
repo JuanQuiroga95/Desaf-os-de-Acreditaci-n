@@ -2,13 +2,10 @@ import Groq from "groq-sdk";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { groqCompletion } from "@/lib/groq";
 
 const TOTAL_QUESTIONS = 5;
 
-/** El modelo se puede cambiar desde Vercel con GROQ_MODEL sin tocar el código. */
-const MODELS = [process.env.GROQ_MODEL, "llama-3.3-70b-versatile", "llama-3.1-8b-instant"].filter(
-  (m, i, all): m is string => Boolean(m) && all.indexOf(m) === i,
-);
 const MAX_THEORY_CHARS = 6000;
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -113,31 +110,22 @@ Usá español rioplatense. Para fórmulas usá $...$.${theoryBlock}`;
   if (wantsFeedback)
     history.push({ role: "user", content: "Terminé las preguntas. Dame la devolución final." });
 
-  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-  let lastError: unknown = null;
-  for (const model of MODELS) {
-    try {
-      const completion = await groq.chat.completions.create({
-        model,
-        messages: [{ role: "system", content: system }, ...history],
-        temperature: 0.6,
-        max_tokens: wantsFeedback ? 1200 : 600,
+  let lastError: unknown = new Error("Respuesta vacía");
+  try {
+    const completion = await groqCompletion({
+      messages: [{ role: "system", content: system }, ...history],
+      temperature: 0.6,
+      max_tokens: wantsFeedback ? 1200 : 600,
+    });
+    const content = completion.choices[0]?.message?.content?.trim();
+    if (content)
+      return NextResponse.json({
+        content,
+        question: wantsFeedback ? TOTAL_QUESTIONS : answered + 1,
+        done: wantsFeedback,
       });
-      const content = completion.choices[0]?.message?.content?.trim();
-      if (content)
-        return NextResponse.json({
-          content,
-          question: wantsFeedback ? TOTAL_QUESTIONS : answered + 1,
-          done: wantsFeedback,
-        });
-      lastError = new Error("Respuesta vacía");
-    } catch (error) {
-      lastError = error;
-      console.error(`Simulate exam error (${model}):`, error);
-      // Solo vale la pena probar otro modelo si este no existe o no está habilitado.
-      const status = error instanceof Groq.APIError ? error.status : undefined;
-      if (status !== 404 && status !== 400) break;
-    }
+  } catch (error) {
+    lastError = error;
   }
   return NextResponse.json({ error: aiErrorMessage(lastError) }, { status: 502 });
 }

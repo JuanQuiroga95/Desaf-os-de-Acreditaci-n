@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import Groq from "groq-sdk";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "" });
+import { groqCompletion } from "@/lib/groq";
 
 export const dynamic = "force-dynamic";
 
@@ -86,7 +85,7 @@ export async function POST(request: NextRequest) {
     const antiResumenPrompt = `Eres un experto en ludificación y comprensión lectora inmersiva.
           OBJETIVO: Generar un "Escape Room Literario" basado en el texto proporcionado. Debes extraer preguntas extremadamente específicas (detalles minúsculos, colores, palabras exactas, lugares de fondo) que prueben que el alumno leyó el texto real y no un resumen de internet.`;
 
-    const completion = await groq.chat.completions.create({
+    const completion = await groqCompletion({
       messages: [
         {
           role: "system",
@@ -129,7 +128,6 @@ export async function POST(request: NextRequest) {
           content: `Texto extraído del PDF:\n\n${extractedText.slice(0, 15000)}`
         }
       ],
-      model: "llama-3.3-70b-versatile",
       response_format: { type: "json_object" }
     });
 
