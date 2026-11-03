@@ -13,7 +13,7 @@ import {
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Box, Coins, Lock, Map as MapIcon, Sparkles, Target, Wrench, Zap } from "lucide-react";
+import { Box, Castle, Coins, Lock, Map as MapIcon, Shirt, Sparkles, Target, Wrench, Zap } from "lucide-react";
 import type { WorldData } from "@/app/actions/world";
 import { XP_PER_ACTIVITY_ITEM, XP_PER_CHALLENGE, ACTIVITY_ITEM_COINS } from "@/lib/progress";
 import {
@@ -21,12 +21,16 @@ import {
   GENERATOR,
   GUIDE,
   SPAWN,
+  TOWER,
+  TOWER_KEY,
   WORLD_LIMIT,
   districtEnergy,
   isRepaired,
   placeMachines,
+  towerStatus,
   type PlacedMachine,
 } from "./layout";
+import { getSkin } from "@/lib/skins";
 import type { Vec2 } from "./CityScene";
 
 const CityScene = dynamic(() => import("./CityScene"), {
@@ -71,7 +75,23 @@ function readClientEnv(): ClientEnv {
 
 const noSubscribe = () => () => {};
 
-function guideMessage(data: WorldData, placed: PlacedMachine[], near: PlacedMachine | null) {
+type Tower = ReturnType<typeof towerStatus>;
+
+function towerHowTo(tower: Tower) {
+  return `Se abre cuando repares las ${tower.total} máquinas del Barrio Matemática (llevás ${tower.repaired}/${tower.total}).`;
+}
+
+function guideMessage(
+  data: WorldData,
+  placed: PlacedMachine[],
+  near: PlacedMachine | null,
+  nearTower: boolean,
+  tower: Tower,
+) {
+  if (nearTower)
+    return tower.open
+      ? `Esta es la Torre de Desafíos. Adentro están los desafíos que publica tu docente: cada uno que entregás suma ${XP_PER_CHALLENGE} de experiencia y 10 monedas.`
+      : `La Torre de Desafíos sigue sin energía. ${towerHowTo(tower)}`;
   if (!data.activitiesReady)
     return `Las máquinas están en mantenimiento. Mientras tanto, cada desafío que entregás suma ${XP_PER_CHALLENGE} de experiencia.`;
   if (near) {
@@ -80,10 +100,11 @@ function guideMessage(data: WorldData, placed: PlacedMachine[], near: PlacedMach
     return `Practicar no cambia tus avances. Jugar guarda cada acierto nuevo y da ${XP_PER_ACTIVITY_ITEM} de experiencia y ${ACTIVITY_ITEM_COINS} monedas.`;
   }
   const pending = placed.filter((m) => !isRepaired(m));
-  if (!pending.length) return "¡Volvió la luz al Barrio Matemática! El Barrio Lengua abre pronto.";
+  if (!pending.length)
+    return "¡Volvió la luz al Barrio Matemática y se abrió la Torre de Desafíos! Está al norte de la plaza: seguí la calle hacia arriba.";
   if (data.itemsSolved === 0)
-    return "La ciudad se quedó sin energía. Caminá hasta el Barrio Matemática, a la izquierda, y repará las máquinas resolviendo sus retos.";
-  return `Vas muy bien. Te falta reparar ${pending.map((m) => m.title).join(" y ")}.`;
+    return "La ciudad se quedó sin energía. Caminá hasta el Barrio Matemática, a la izquierda, y repará las máquinas resolviendo sus retos. Cuando las repares todas se abre la Torre de Desafíos, al norte.";
+  return `Vas muy bien. Te falta reparar ${pending.map((m) => m.title).join(" y ")} para abrir la Torre de Desafíos.`;
 }
 
 export default function WorldExperience({ data }: { data: WorldData }) {
@@ -108,6 +129,9 @@ export default function WorldExperience({ data }: { data: WorldData }) {
   const inputRef = useRef<Vec2>({ x: 0, z: 0 });
   const posRef = useRef<Vec2>({ ...SPAWN });
   const near = placed.find((m) => m.key === nearKey) ?? null;
+  const nearTower = nearKey === TOWER_KEY;
+  const tower = useMemo(() => towerStatus(placed, data.activitiesReady), [placed, data.activitiesReady]);
+  const skin = getSkin(data.skin);
 
   const chooseView = (next: View) => {
     setChosen(next);
@@ -118,8 +142,12 @@ export default function WorldExperience({ data }: { data: WorldData }) {
 
   // Teclado: WASD o flechas para moverse y E para entrar a la máquina cercana.
   const enter = useCallback((practice = true) => {
+    if (nearTower) {
+      if (tower.open) router.push("/desafios");
+      return;
+    }
     if (near) router.push(practice ? near.practiceHref : near.href);
-  }, [near, router]);
+  }, [near, nearTower, tower.open, router]);
 
   useEffect(() => {
     if (view !== "3d") return;
@@ -187,14 +215,18 @@ export default function WorldExperience({ data }: { data: WorldData }) {
       })),
     {
       id: "desafio",
-      label: "Entregar un desafío",
-      detail: data.challengesDone ? `${data.challengesDone} entregados` : "0/1",
+      label: tower.open ? "Torre: entregar un desafío" : "Abrir la Torre de Desafíos",
+      detail: !tower.open
+        ? `${tower.repaired}/${tower.total} máquinas`
+        : data.challengesDone
+          ? `${data.challengesDone} entregados`
+          : "0/1",
       done: data.challengesDone > 0,
-      href: "/desafios",
+      href: tower.open ? "/desafios" : null,
     },
   ];
   const missionsDone = missions.filter((m) => m.done).length;
-  const message = guideMessage(data, placed, near);
+  const message = guideMessage(data, placed, near, nearTower, tower);
 
   return (
     <div className="relative h-[calc(100dvh-4rem)] w-full overflow-hidden bg-[#070b1a] text-white lg:h-dvh">
@@ -209,10 +241,21 @@ export default function WorldExperience({ data }: { data: WorldData }) {
             inputRef={inputRef}
             posRef={posRef}
             onNearChange={setNearKey}
+            skin={skin}
+            tower={tower}
           />
         </div>
       )}
-      {view === "mapa" && <CityMap placed={placed} energy={energy} ready={data.activitiesReady} />}
+      {view === "mapa" && (
+        <CityMap
+          placed={placed}
+          energy={energy}
+          ready={data.activitiesReady}
+          tower={tower}
+          challengesAvailable={data.challengesAvailable}
+          challengesDone={data.challengesDone}
+        />
+      )}
 
       {/* Barra superior: nivel, experiencia y monedas. */}
       <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-wrap items-start justify-between gap-3 p-3 sm:p-4">
@@ -244,6 +287,12 @@ export default function WorldExperience({ data }: { data: WorldData }) {
             <Coins size={16} aria-hidden="true" /> {data.coins}
             <span className="sr-only">monedas Videla</span>
           </div>
+          <Link
+            href="/tienda#skins"
+            className="flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-2 text-xs font-bold text-slate-100 hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-cyan-300"
+          >
+            <Shirt size={15} aria-hidden="true" /> Skins
+          </Link>
         </div>
 
         <div className="pointer-events-auto flex gap-1 rounded-2xl bg-slate-950/75 p-1 shadow-xl backdrop-blur">
@@ -278,36 +327,98 @@ export default function WorldExperience({ data }: { data: WorldData }) {
           </span>
         </h2>
         <ul className="mt-3 space-y-2">
-          {missions.map((m) => (
-            <li key={m.id}>
-              <Link
-                href={m.href}
-                className="flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-cyan-300"
-              >
-                <span
-                  aria-hidden="true"
-                  className={`h-3 w-3 shrink-0 rounded-full border-2 ${m.done ? "border-emerald-400 bg-emerald-400" : "border-slate-400"}`}
-                />
+          {missions.map((m) => {
+            const content = (
+              <>
+                {m.href || m.done ? (
+                  <span
+                    aria-hidden="true"
+                    className={`h-3 w-3 shrink-0 rounded-full border-2 ${m.done ? "border-emerald-400 bg-emerald-400" : "border-slate-400"}`}
+                  />
+                ) : (
+                  <Lock size={12} className="shrink-0 text-red-300" aria-hidden="true" />
+                )}
                 <span className={m.done ? "text-slate-400 line-through" : ""}>{m.label}</span>
                 <span className="ml-auto text-xs text-slate-400">
                   {m.done ? "Hecho" : m.detail}
                 </span>
-              </Link>
-            </li>
-          ))}
+              </>
+            );
+            return (
+              <li key={m.id}>
+                {m.href ? (
+                  <Link
+                    href={m.href}
+                    className="flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-cyan-300"
+                  >
+                    {content}
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm text-slate-300">
+                    {content}
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
+        {!tower.open && (
+          <p className="mt-2 rounded-xl bg-red-500/10 px-2 py-1.5 text-[11px] leading-relaxed text-red-100">
+            <Castle size={12} className="mr-1 inline" aria-hidden="true" />
+            La Torre de Desafíos está al norte de la plaza. {towerHowTo(tower)}
+          </p>
+        )}
         <p className="mt-3 border-t border-white/10 pt-3 text-[11px] leading-relaxed text-slate-400">
           Desafío entregado: +{XP_PER_CHALLENGE} de experiencia. Reto nuevo en Jugar: +
           {XP_PER_ACTIVITY_ITEM} y {ACTIVITY_ITEM_COINS} monedas la primera vez.
         </p>
       </section>
 
-      {view === "3d" && <MiniMap placed={placed} posRef={posRef} />}
+      {view === "3d" && <MiniMap placed={placed} posRef={posRef} towerOpen={tower.open} />}
 
       {/* Guía y máquina cercana. */}
       <div
         className={`pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 p-3 pb-6 pr-20 sm:p-4 sm:pb-6 ${view === "3d" && touch ? "max-sm:bottom-auto max-sm:top-[8.5rem] max-sm:pr-3" : ""}`}
       >
+        {view === "3d" && nearTower && (
+          <div
+            className={`pointer-events-auto w-full max-w-md rounded-2xl border bg-slate-950/85 p-4 shadow-2xl backdrop-blur ${tower.open ? "border-amber-300/50" : "border-red-400/40"}`}
+          >
+            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-amber-200">
+              <Castle size={14} aria-hidden="true" /> Desafíos de tus docentes
+            </p>
+            <p className="mt-1 text-lg font-black">Torre de Desafíos</p>
+            {tower.open ? (
+              <>
+                <p className="text-sm text-slate-300">
+                  {data.challengesAvailable
+                    ? `${data.challengesAvailable} desafíos publicados · ${data.challengesDone} entregados`
+                    : "Tu docente todavía no publicó desafíos."}
+                </p>
+                <Link
+                  href="/desafios"
+                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-300 px-4 py-3 font-black text-slate-950 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >
+                  Entrar a la torre
+                  {!touch && <kbd className="rounded bg-slate-950/20 px-1.5 text-xs">E</kbd>}
+                </Link>
+              </>
+            ) : (
+              <>
+                <p className="mt-1 flex items-start gap-2 text-sm text-red-100">
+                  <Lock size={15} className="mt-0.5 shrink-0" aria-hidden="true" />
+                  <span>
+                    Cerrada. {towerHowTo(tower)}
+                    {tower.pending.length > 0 && ` Te falta: ${tower.pending.map((m) => m.title).join(", ")}.`}
+                  </span>
+                </p>
+                <p className="mt-2 text-[11px] text-slate-400">
+                  ¿Tenés una entrega urgente? Los desafíos siguen en el menú, en Desafíos.
+                </p>
+              </>
+            )}
+          </div>
+        )}
         {view === "3d" && near && (
           <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-cyan-300/40 bg-slate-950/85 p-4 shadow-2xl backdrop-blur">
             <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-cyan-200">
@@ -346,7 +457,7 @@ export default function WorldExperience({ data }: { data: WorldData }) {
         </div>
         {view === "3d" && !touch && (
           <p className="text-[11px] text-slate-400">
-            WASD o flechas para moverte · E practicar · J jugar
+            WASD o flechas para moverte · E practicar o entrar · J jugar
           </p>
         )}
       </div>
@@ -359,7 +470,15 @@ export default function WorldExperience({ data }: { data: WorldData }) {
 const MAP_SCALE = 100 / (WORLD_LIMIT * 2 + 6);
 const toMap = (v: number) => 50 + v * MAP_SCALE;
 
-function MiniMap({ placed, posRef }: { placed: PlacedMachine[]; posRef: RefObject<Vec2> }) {
+function MiniMap({
+  placed,
+  posRef,
+  towerOpen,
+}: {
+  placed: PlacedMachine[];
+  posRef: RefObject<Vec2>;
+  towerOpen: boolean;
+}) {
   const [pos, setPos] = useState<Vec2>({ ...SPAWN });
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -386,6 +505,10 @@ function MiniMap({ placed, posRef }: { placed: PlacedMachine[]; posRef: RefObjec
         ))}
         <circle cx={toMap(GENERATOR.x)} cy={toMap(GENERATOR.z)} r={3} fill="#38bdf8" />
         <circle cx={toMap(GUIDE.x)} cy={toMap(GUIDE.z)} r={1.8} fill="#facc15" />
+        <polygon
+          points={`${toMap(TOWER.x)},${toMap(TOWER.z) - 4} ${toMap(TOWER.x) + 3.5},${toMap(TOWER.z) + 3} ${toMap(TOWER.x) - 3.5},${toMap(TOWER.z) + 3}`}
+          fill={towerOpen ? "#facc15" : "#ef4444"}
+        />
         {placed.map((m) => (
           <rect
             key={m.key}
@@ -404,10 +527,59 @@ function MiniMap({ placed, posRef }: { placed: PlacedMachine[]; posRef: RefObjec
 }
 
 /** Vista sin 3D: liviana, para teléfonos lentos, teclado o menos movimiento. */
-function CityMap({ placed, energy, ready }: { placed: PlacedMachine[]; energy: Record<string, number>; ready: boolean }) {
+function CityMap({
+  placed,
+  energy,
+  ready,
+  tower,
+  challengesAvailable,
+  challengesDone,
+}: {
+  placed: PlacedMachine[];
+  energy: Record<string, number>;
+  ready: boolean;
+  tower: Tower;
+  challengesAvailable: number;
+  challengesDone: number;
+}) {
   return (
     <div className="absolute inset-0 overflow-y-auto px-4 pb-48 pt-28 md:pl-80 md:pr-6">
       <div className="mx-auto grid max-w-3xl gap-4 sm:grid-cols-2">
+        <section
+          aria-labelledby="torre-desafios"
+          className={`rounded-3xl border bg-slate-900/80 p-5 sm:col-span-2 ${tower.open ? "border-amber-300/40" : "border-red-400/30"}`}
+        >
+          <h2 id="torre-desafios" className="flex items-center gap-2 text-lg font-black">
+            <Castle size={18} className={tower.open ? "text-amber-300" : "text-red-300"} aria-hidden="true" />
+            Torre de Desafíos
+            <span
+              className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold ${tower.open ? "bg-amber-300/20 text-amber-200" : "bg-red-400/15 text-red-200"}`}
+            >
+              {tower.open ? "Abierta" : `Cerrada · ${tower.repaired}/${tower.total}`}
+            </span>
+          </h2>
+          <p className="mt-1 text-xs text-slate-400">Al norte de la plaza, al final de la calle central.</p>
+          {tower.open ? (
+            <>
+              <p className="mt-3 text-sm text-slate-300">
+                {challengesAvailable
+                  ? `${challengesAvailable} desafíos publicados por tus docentes · ${challengesDone} entregados.`
+                  : "Tu docente todavía no publicó desafíos."}
+              </p>
+              <Link
+                href="/desafios"
+                className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-amber-300 px-3 py-2 text-sm font-black text-slate-950 sm:w-auto"
+              >
+                Entrar a la torre
+              </Link>
+            </>
+          ) : (
+            <p className="mt-3 text-sm text-red-100">
+              {towerHowTo(tower)}
+              {tower.pending.length > 0 && ` Te falta: ${tower.pending.map((m) => m.title).join(", ")}.`}
+            </p>
+          )}
+        </section>
         {DISTRICTS.map((d) => {
           const machines = placed.filter((m) => m.area === d.area);
           const e = energy[d.id] ?? 0;

@@ -9,7 +9,7 @@ import { submitWorldAnswer } from "@/app/actions/world-play";
 import { ACTIVITY_ITEM_COINS, XP_PER_ACTIVITY_ITEM } from "@/lib/progress";
 
 /** Resultado con la recompensa que otorgó el servidor (solo la primera vez que se acierta). */
-export type CheckedAnswer = AnswerResult & { coinsEarned?: number };
+export type CheckedAnswer = AnswerResult & { coinsEarned?: number; bonusCoins?: number };
 
 export const GameModeContext = createContext<{
   activityKey: string;
@@ -77,7 +77,7 @@ export function useAnswerChecker(unit?: UnitContext) {
       setSaveError(`${res?.message ?? "No pudimos guardar tu respuesta"}. Probá de nuevo.`);
       return null;
     }
-    setResult({ ...res.result, coinsEarned: res.coinsEarned });
+    setResult({ ...res.result, coinsEarned: res.coinsEarned, bonusCoins: res.bonusCoins });
     return res.result;
   }
 
@@ -121,6 +121,11 @@ export function AnswerFeedback({
             {result.coinsEarned ? (
               <p className="mt-2 text-sm font-black text-amber-700 dark:text-amber-300">
                 +{result.coinsEarned} monedas Videla y +{XP_PER_ACTIVITY_ITEM} de experiencia
+              </p>
+            ) : null}
+            {result.bonusCoins ? (
+              <p className="mt-2 text-sm font-black text-emerald-700 dark:text-emerald-300">
+                ¡Juego completo! Premio: +{result.bonusCoins} monedas Videla para la Tienda
               </p>
             ) : null}
           </div>

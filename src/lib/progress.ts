@@ -4,6 +4,8 @@
 
 /** Monedas por acertar un reto de juego por primera vez (un desafío entregado da 10). */
 export const ACTIVITY_ITEM_COINS = 2;
+/** Premio único por completar todos los retos de un juego (máquina reparada). */
+export const GAME_COMPLETE_BONUS = 10;
 /** Experiencia por desafío entregado. */
 export const XP_PER_CHALLENGE = 50;
 /** Experiencia por reto de juego acertado (una vez por reto). */

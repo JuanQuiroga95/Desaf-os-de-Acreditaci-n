@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/session";
 import { activities, evaluateAnswer, getActivity } from "@/lib/activities";
 import { ACTIVITY_ITEM_COINS } from "@/lib/progress";
+import { claimGameBonus } from "@/lib/rewards";
 import { logSubjectHistory } from "./history";
 import { revalidatePath } from "next/cache";
 
@@ -209,7 +210,7 @@ export async function submitActivityAnswer(
     const result = evaluateAnswer(item, value);
     const userId = found.session.id;
     // Intento, acierto único y recompensa se guardan juntos o se revierten juntos.
-    const coinsEarned = await db.$transaction(async (tx) => {
+    const reward = await db.$transaction(async (tx) => {
       const previous = result.correct ? await tx.activityAttempt.findFirst({
         where: {
           userId,
@@ -222,20 +223,24 @@ export async function submitActivityAnswer(
       await tx.activityAttempt.create({
         data: { unitActivityId, userId, itemId, answer: value, correct: result.correct },
       });
-      if (!result.correct) return 0;
+      if (!result.correct) return { coins: 0, bonus: 0 };
       const claimed = await tx.gameCompletion.createMany({
         data: [{ userId, activityKey: found.activity.key, itemId }],
         skipDuplicates: true,
       });
-      if (!claimed.count || previous) return 0;
-      await tx.user.update({
-        where: { id: userId },
-        data: { coins: { increment: ACTIVITY_ITEM_COINS } },
-      });
-      return ACTIVITY_ITEM_COINS;
+      let coins = 0;
+      if (claimed.count && !previous) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { coins: { increment: ACTIVITY_ITEM_COINS } },
+        });
+        coins = ACTIVITY_ITEM_COINS;
+      }
+      const bonus = await claimGameBonus(tx, userId, found.activity.key);
+      return { coins, bonus };
     });
     revalidatePath("/mundo");
-    return { success: true as const, result, coinsEarned };
+    return { success: true as const, result, coinsEarned: reward.coins, bonusCoins: reward.bonus };
   } catch (error) {
     console.error("Error saving activity answer:", error);
     return { success: false as const, message: "No pudimos guardar tu respuesta" };

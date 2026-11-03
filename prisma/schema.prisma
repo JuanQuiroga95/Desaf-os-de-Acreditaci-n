@@ -32,6 +32,7 @@ model User {
   role        Role         @default(STUDENT)
   coins       Int          @default(0)
   avatarId    String?
+  worldSkin   String?
   themeColor  String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -47,6 +48,7 @@ model User {
   subjectHistory    SubjectHistory[]
   activityAttempts  ActivityAttempt[]
   gameCompletions   GameCompletion[]
+  ownedSkins        OwnedSkin[]
 }
 
 model Subject {
@@ -278,4 +280,14 @@ model GameCompletion {
   user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, activityKey, itemId])
+}
+
+// Skin del Mundo comprada en la Tienda (catálogo en src/lib/skins.ts).
+model OwnedSkin {
+  userId    String
+  skinId    String
+  createdAt DateTime @default(now())
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, skinId])
 }

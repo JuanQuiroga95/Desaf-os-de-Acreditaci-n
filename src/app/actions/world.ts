@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/session";
 import { activities } from "@/lib/activities";
 import { levelFromXp, XP_PER_ACTIVITY_ITEM, XP_PER_CHALLENGE } from "@/lib/progress";
+import { DEFAULT_SKIN_ID } from "@/lib/skins";
 
 export type WorldMachine = {
   key: string;
@@ -23,6 +24,10 @@ export type WorldData = {
   name: string;
   coins: number;
   challengesDone: number;
+  /** Desafíos publicados por los docentes en las materias del alumno. */
+  challengesAvailable: number;
+  /** Skin del personaje (catálogo en src/lib/skins.ts). */
+  skin: string;
   itemsSolved: number;
   xp: number;
   level: number;
@@ -40,9 +45,21 @@ export async function getWorldData(): Promise<
   try {
     const session = await requireAuth(["student"]);
     const userId = session.id;
-    const [user, challengesDone] = await Promise.all([
-      db.user.findUnique({ where: { id: userId }, select: { name: true, coins: true } }),
+    // Mismo criterio que el resto del sistema: sin inscripciones, ve todas las materias.
+    const enrollments = await db.enrollment.findMany({
+      where: { studentId: userId },
+      select: { subjectId: true },
+    });
+    const subjectIds = enrollments.map((e) => e.subjectId);
+    const [user, challengesDone, challengesAvailable] = await Promise.all([
+      db.user.findUnique({
+        where: { id: userId },
+        select: { name: true, coins: true, worldSkin: true },
+      }),
       db.progress.count({ where: { userId, status: "COMPLETED" } }),
+      db.challenge.count({
+        where: subjectIds.length ? { subjectId: { in: subjectIds } } : {},
+      }),
     ]);
     if (!user) return { success: false };
 
@@ -50,14 +67,7 @@ export async function getWorldData(): Promise<
     const publishedByKey = new Map<string, { id: string; label: string }>();
     const solvedByKey = new Map<string, Set<string>>();
     try {
-      // Mismo criterio que el resto del sistema: sin inscripciones, ve todas las materias.
-      const enrollments = await db.enrollment.findMany({
-        where: { studentId: userId },
-        select: { subjectId: true },
-      });
-      const unitFilter = enrollments.length
-        ? { subjectId: { in: enrollments.map((e) => e.subjectId) } }
-        : {};
+      const unitFilter = subjectIds.length ? { subjectId: { in: subjectIds } } : {};
       const [published, correct] = await Promise.all([
         db.unitActivity.findMany({
           where: { visible: true, unit: unitFilter },
@@ -126,6 +136,8 @@ export async function getWorldData(): Promise<
         name: user.name,
         coins: user.coins,
         challengesDone,
+        challengesAvailable,
+        skin: user.worldSkin ?? DEFAULT_SKIN_ID,
         itemsSolved,
         ...progress,
         machines,

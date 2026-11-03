@@ -11,7 +11,13 @@ import {
   Loader2,
   GraduationCap,
   CheckCircle2,
+  AlertCircle,
+  X,
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -36,6 +42,18 @@ function countAssistantMessages(messages: Message[]): number {
   return messages.filter((m) => m.role === "assistant").length;
 }
 
+type ApiResult = { ok: true; content: string } | { ok: false; error: string };
+
+function Markdown({ children }: { children: string }) {
+  return (
+    <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1.5 prose-headings:mb-2 prose-headings:mt-4 break-words">
+      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+        {children}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
 export default function SimulacroPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
@@ -50,6 +68,9 @@ export default function SimulacroPage() {
   const [sending, setSending] = useState(false);
   const [feedbackContent, setFeedbackContent] = useState("");
   const [loadingFeedback, setLoadingFeedback] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  /** Qué reintentar si la IA falla: arrancar, la última respuesta o la devolución. */
+  const [retry, setRetry] = useState<"start" | "send" | "feedback" | null>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -74,21 +95,35 @@ export default function SimulacroPage() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const callSimulateAPI = async (msgs: Message[], mode: "exam" | "feedback") => {
-    const res = await fetch("/api/simulate-exam", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-user-id": user?.id ?? "",
-      },
-      body: JSON.stringify({
-        messages: msgs,
-        subjectName: selectedSubject?.name ?? "",
-        mode,
-      }),
-    });
-    const data = await res.json();
-    return (data.content as string) ?? "";
+  const callSimulateAPI = async (msgs: Message[], mode: "exam" | "feedback"): Promise<ApiResult> => {
+    try {
+      const res = await fetch("/api/simulate-exam", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: msgs, subjectId: selectedSubject?.id ?? "", mode }),
+      });
+      const data = await res.json().catch(() => null);
+      const content = typeof data?.content === "string" ? data.content.trim() : "";
+      if (res.ok && content) return { ok: true, content };
+      return { ok: false, error: data?.error ?? "La IA no respondió. Probá de nuevo." };
+    } catch {
+      return { ok: false, error: "No hay conexión con el servidor. Revisá internet y reintentá." };
+    }
+  };
+
+  const fail = (message: string, what: "start" | "send" | "feedback") => {
+    setError(message);
+    setRetry(what);
+  };
+
+  const requestFeedback = async (msgs: Message[]) => {
+    setStep("feedback");
+    setLoadingFeedback(true);
+    setError(null);
+    const fb = await callSimulateAPI(msgs, "feedback");
+    setLoadingFeedback(false);
+    if (fb.ok) setFeedbackContent(fb.content);
+    else fail(fb.error, "feedback");
   };
 
   const handleStart = async () => {
@@ -97,36 +132,41 @@ export default function SimulacroPage() {
     setStep("exam");
     setMessages([]);
     setFeedbackContent("");
+    setError(null);
 
-    const firstMsg = await callSimulateAPI([], "exam");
-    const cleanFirst = firstMsg.replace("SIMULACRO_COMPLETO", "").trim();
-    setMessages([{ role: "assistant", content: cleanFirst }]);
+    const first = await callSimulateAPI([], "exam");
     setSending(false);
+    if (first.ok) setMessages([{ role: "assistant", content: first.content }]);
+    else fail(first.error, "start");
+  };
+
+  const askNext = async (history: Message[]) => {
+    setSending(true);
+    setError(null);
+    const reply = await callSimulateAPI(history, "exam");
+    setSending(false);
+    if (reply.ok) setMessages([...history, { role: "assistant", content: reply.content }]);
+    else fail(reply.error, "send");
   };
 
   const handleSend = async () => {
-    if (!userInput.trim() || sending) return;
+    if (!userInput.trim() || sending || retry === "send") return;
     const newMessages: Message[] = [...messages, { role: "user", content: userInput.trim() }];
     setMessages(newMessages);
     setUserInput("");
-    setSending(true);
 
-    const reply = await callSimulateAPI(newMessages, "exam");
-    const isComplete = reply.includes("SIMULACRO_COMPLETO");
-    const cleanReply = reply.replace("SIMULACRO_COMPLETO", "").trim();
+    // Después de la última respuesta va directo a la devolución.
+    const answered = newMessages.filter((m) => m.role === "user").length;
+    if (answered >= TOTAL_QUESTIONS) await requestFeedback(newMessages);
+    else await askNext(newMessages);
+  };
 
-    const updated: Message[] = [...newMessages, { role: "assistant", content: cleanReply }];
-    setMessages(updated);
-    setSending(false);
-
-    if (isComplete) {
-      // Trigger feedback
-      setLoadingFeedback(true);
-      setStep("feedback");
-      const fb = await callSimulateAPI(updated, "feedback");
-      setFeedbackContent(fb);
-      setLoadingFeedback(false);
-    }
+  const handleRetry = () => {
+    const what = retry;
+    setRetry(null);
+    if (what === "start") handleStart();
+    else if (what === "send") askNext(messages);
+    else if (what === "feedback") requestFeedback(messages);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -143,7 +183,27 @@ export default function SimulacroPage() {
     setFeedbackContent("");
     setSending(false);
     setLoadingFeedback(false);
+    setError(null);
+    setRetry(null);
   };
+
+  const errorBox = error && (
+    <div
+      role="alert"
+      className="flex flex-wrap items-center gap-3 rounded-[1.5rem] border border-red-500/40 bg-red-500/10 px-5 py-4 text-sm font-semibold"
+    >
+      <AlertCircle size={18} className="shrink-0 text-red-500" />
+      <span className="flex-1">{error}</span>
+      {retry && (
+        <button
+          onClick={handleRetry}
+          className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-xs font-black uppercase tracking-widest hover:border-primary/50"
+        >
+          <RotateCcw size={14} /> Reintentar
+        </button>
+      )}
+    </div>
+  );
 
   const questionNumber = Math.min(countAssistantMessages(messages), TOTAL_QUESTIONS);
 
@@ -272,7 +332,17 @@ export default function SimulacroPage() {
               <div className="shrink-0 px-4 py-2 rounded-full bg-primary/10 text-primary text-[9px] font-black uppercase tracking-widest border border-primary/20">
                 {selectedSubject?.name}
               </div>
+              <button
+                onClick={handleReset}
+                aria-label="Salir del simulacro"
+                title="Salir del simulacro"
+                className="shrink-0 rounded-full p-2 text-muted-foreground hover:bg-secondary hover:text-foreground"
+              >
+                <X size={16} />
+              </button>
             </div>
+
+            {errorBox}
 
             {/* Chat window */}
             <div className="bg-card border border-border rounded-[2.5rem] overflow-hidden flex flex-col" style={{ minHeight: "420px" }}>
@@ -285,18 +355,22 @@ export default function SimulacroPage() {
                     className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-[80%] px-5 py-4 rounded-[1.5rem] text-sm leading-relaxed font-medium whitespace-pre-wrap ${
+                      className={`max-w-[80%] px-5 py-4 rounded-[1.5rem] text-sm leading-relaxed font-medium ${m.role === "user" ? "whitespace-pre-wrap" : ""} ${
                         m.role === "user"
                           ? "bg-primary text-primary-foreground rounded-br-md"
                           : "bg-secondary border border-border text-foreground rounded-bl-md"
                       }`}
                     >
-                      {m.role === "assistant" && (
-                        <span className="text-[8px] font-black uppercase tracking-[0.25em] text-muted-foreground block mb-2">
-                          Profesor
-                        </span>
+                      {m.role === "assistant" ? (
+                        <>
+                          <span className="text-[8px] font-black uppercase tracking-[0.25em] text-muted-foreground block mb-2">
+                            Profesor
+                          </span>
+                          <Markdown>{m.content}</Markdown>
+                        </>
+                      ) : (
+                        m.content
                       )}
-                      {m.content}
                     </div>
                   </motion.div>
                 ))}
@@ -316,14 +390,15 @@ export default function SimulacroPage() {
                   value={userInput}
                   onChange={(e) => setUserInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  disabled={sending}
-                  placeholder="Escribí tu respuesta… (Enter para enviar)"
+                  disabled={sending || messages.length === 0}
+                  placeholder={messages.length ? "Escribí tu respuesta… (Enter para enviar)" : "Esperá la primera pregunta…"}
                   rows={2}
                   className="flex-1 bg-secondary border border-border rounded-[1.25rem] px-4 py-3 text-sm resize-none outline-none focus:border-primary/50 transition-colors placeholder:text-muted-foreground disabled:opacity-50 font-medium"
                 />
                 <button
                   onClick={handleSend}
-                  disabled={!userInput.trim() || sending}
+                  aria-label="Enviar respuesta"
+                  disabled={!userInput.trim() || sending || messages.length === 0}
                   className="shrink-0 w-12 h-12 rounded-[1rem] bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
                 >
                   <Send size={18} />
@@ -364,11 +439,11 @@ export default function SimulacroPage() {
                     El profesor está evaluando...
                   </span>
                 </div>
+              ) : error ? (
+                errorBox
               ) : (
-                <div className="prose prose-sm max-w-none text-foreground">
-                  <div className="text-sm leading-relaxed whitespace-pre-wrap font-medium text-foreground">
-                    {feedbackContent}
-                  </div>
+                <div className="text-sm leading-relaxed font-medium text-foreground">
+                  <Markdown>{feedbackContent}</Markdown>
                 </div>
               )}
             </div>

@@ -11,10 +11,14 @@ import {
   GENERATOR,
   GUIDE,
   INTERACT_RADIUS,
+  TOWER,
+  TOWER_INTERACT_RADIUS,
+  TOWER_KEY,
   WORLD_LIMIT,
   isRepaired,
   type PlacedMachine,
 } from "./layout";
+import type { Skin } from "@/lib/skins";
 
 export type Vec2 = { x: number; z: number };
 
@@ -25,12 +29,20 @@ type SceneProps = {
   inputRef: RefObject<Vec2>;
   posRef: RefObject<Vec2>;
   onNearChange: (key: string | null) => void;
+  skin: Skin;
+  tower: { open: boolean; repaired: number; total: number };
 };
 
 const SPEED = 6;
 const PLAYER_R = 0.5;
 
-function Player({ inputRef, posRef, machines, onNearChange }: Omit<SceneProps, "energy" | "hubEnergy">) {
+function Player({
+  inputRef,
+  posRef,
+  machines,
+  onNearChange,
+  skin,
+}: Omit<SceneProps, "energy" | "hubEnergy" | "tower">) {
   const group = useRef<THREE.Group>(null);
   const near = useRef<string | null>(null);
   const camTarget = useMemo(() => new THREE.Vector3(), []);
@@ -38,6 +50,7 @@ function Player({ inputRef, posRef, machines, onNearChange }: Omit<SceneProps, "
     () => [
       GENERATOR,
       GUIDE,
+      TOWER,
       ...machines.map((m) => ({ x: m.x, z: m.z, r: 1.2 })),
     ],
     [machines],
@@ -84,6 +97,8 @@ function Player({ inputRef, posRef, machines, onNearChange }: Omit<SceneProps, "
         nearest = m.key;
       }
     }
+    if (!nearest && Math.hypot(pos.x - TOWER.x, pos.z - TOWER.z) < TOWER_INTERACT_RADIUS)
+      nearest = TOWER_KEY;
     if (nearest !== near.current) {
       near.current = nearest;
       onNearChange(nearest);
@@ -92,23 +107,142 @@ function Player({ inputRef, posRef, machines, onNearChange }: Omit<SceneProps, "
 
   return (
     <group ref={group}>
+      <Avatar skin={skin} />
+    </group>
+  );
+}
+
+/** Personaje con la skin elegida en la Tienda. Mira hacia +z. */
+function Avatar({ skin }: { skin: Skin }) {
+  const a = skin.accessory;
+  return (
+    <group>
       <mesh position={[0, 0.7, 0]}>
         <capsuleGeometry args={[0.42, 0.6, 6, 12]} />
-        <meshStandardMaterial color="#f59e0b" roughness={0.5} />
+        <meshStandardMaterial
+          color={skin.body}
+          roughness={a === "corona" ? 0.3 : 0.5}
+          metalness={a === "corona" || a === "antena" ? 0.5 : 0}
+        />
       </mesh>
       <mesh position={[0, 1.55, 0]}>
         <sphereGeometry args={[0.34, 20, 20]} />
-        <meshStandardMaterial color="#fde68a" roughness={0.6} />
+        <meshStandardMaterial color={skin.head} roughness={0.6} />
       </mesh>
-      {/* Visera del casco de técnico: indica hacia dónde mira. */}
+      {/* Visor: indica hacia dónde mira. */}
       <mesh position={[0, 1.62, 0.26]}>
         <boxGeometry args={[0.42, 0.12, 0.14]} />
-        <meshStandardMaterial color="#0f172a" emissive="#38bdf8" emissiveIntensity={0.8} />
+        <meshStandardMaterial color="#0f172a" emissive={skin.visor} emissiveIntensity={0.9} />
       </mesh>
-      <mesh position={[0, 0.85, -0.42]}>
-        <boxGeometry args={[0.5, 0.55, 0.2]} />
-        <meshStandardMaterial color="#334155" />
-      </mesh>
+      {skin.pack && (
+        <mesh position={[0, 0.85, -0.42]}>
+          <boxGeometry args={[0.5, 0.55, 0.2]} />
+          <meshStandardMaterial color={skin.pack} />
+        </mesh>
+      )}
+      {a === "sombrero" && (
+        <group position={[0, 1.8, 0]}>
+          <mesh>
+            <cylinderGeometry args={[0.56, 0.56, 0.05, 24]} />
+            <meshStandardMaterial color={skin.accent} />
+          </mesh>
+          <mesh position={[0, 0.15, 0]}>
+            <cylinderGeometry args={[0.27, 0.31, 0.28, 20]} />
+            <meshStandardMaterial color={skin.accent} />
+          </mesh>
+        </group>
+      )}
+      {a === "antena" && (
+        <group position={[0, 1.88, 0]}>
+          <mesh position={[0, 0.14, 0]}>
+            <cylinderGeometry args={[0.025, 0.025, 0.3, 8]} />
+            <meshStandardMaterial color="#94a3b8" />
+          </mesh>
+          <mesh position={[0, 0.32, 0]}>
+            <sphereGeometry args={[0.08, 12, 12]} />
+            <meshStandardMaterial color={skin.accent} emissive={skin.accent} emissiveIntensity={2} />
+          </mesh>
+        </group>
+      )}
+      {a === "vincha" && (
+        <group>
+          <mesh position={[0, 1.7, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[0.33, 0.045, 8, 24]} />
+            <meshStandardMaterial color={skin.accent} />
+          </mesh>
+          {[-0.08, 0.08].map((x) => (
+            <mesh key={x} position={[x, 1.6, -0.42]} rotation={[0.5, 0, x * 3]}>
+              <boxGeometry args={[0.07, 0.3, 0.03]} />
+              <meshStandardMaterial color={skin.accent} />
+            </mesh>
+          ))}
+        </group>
+      )}
+      {a === "astronauta" && (
+        <group>
+          <mesh position={[0, 1.57, 0]}>
+            <sphereGeometry args={[0.47, 24, 24]} />
+            <meshStandardMaterial color={skin.accent} transparent opacity={0.3} roughness={0.1} />
+          </mesh>
+          <mesh position={[0, 1.15, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[0.3, 0.06, 8, 24]} />
+            <meshStandardMaterial color="#cbd5e1" metalness={0.4} />
+          </mesh>
+        </group>
+      )}
+      {a === "orejas" &&
+        [-0.2, 0.2].map((x) => (
+          <mesh key={x} position={[x, 1.86, 0]} rotation={[0, 0, -x * 1.2]}>
+            <coneGeometry args={[0.11, 0.24, 4]} />
+            <meshStandardMaterial color={skin.accent} />
+          </mesh>
+        ))}
+      {a === "mago" && (
+        <group position={[0, 1.8, 0]}>
+          <mesh>
+            <cylinderGeometry args={[0.5, 0.5, 0.04, 24]} />
+            <meshStandardMaterial color={skin.accent} />
+          </mesh>
+          <mesh position={[0, 0.38, 0]} rotation={[0.12, 0, 0]}>
+            <coneGeometry args={[0.3, 0.75, 20]} />
+            <meshStandardMaterial color={skin.accent} />
+          </mesh>
+          <mesh position={[0, 0.8, -0.05]}>
+            <octahedronGeometry args={[0.08, 0]} />
+            <meshStandardMaterial color="#facc15" emissive="#facc15" emissiveIntensity={2} />
+          </mesh>
+        </group>
+      )}
+      {a === "capa" && (
+        <mesh position={[0, 0.82, -0.47]} rotation={[0.18, 0, 0]}>
+          <boxGeometry args={[0.8, 1.15, 0.04]} />
+          <meshStandardMaterial color={skin.accent} side={THREE.DoubleSide} />
+        </mesh>
+      )}
+      {a === "corona" && (
+        <group position={[0, 1.88, 0]}>
+          <mesh>
+            <cylinderGeometry args={[0.24, 0.26, 0.12, 20, 1, true]} />
+            <meshStandardMaterial
+              color={skin.accent}
+              metalness={0.7}
+              roughness={0.25}
+              emissive={skin.accent}
+              emissiveIntensity={0.3}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+          {[0, 1, 2, 3, 4].map((i) => {
+            const ang = (i / 5) * Math.PI * 2;
+            return (
+              <mesh key={i} position={[Math.sin(ang) * 0.24, 0.13, Math.cos(ang) * 0.24]}>
+                <coneGeometry args={[0.05, 0.14, 4]} />
+                <meshStandardMaterial color={skin.accent} metalness={0.7} roughness={0.25} />
+              </mesh>
+            );
+          })}
+        </group>
+      )}
     </group>
   );
 }
@@ -195,6 +329,73 @@ function Generator({ energy }: { energy: number }) {
         />
       </mesh>
       <pointLight position={[0, 3.4, 0]} color="#38bdf8" intensity={2 + energy * 25} distance={14} />
+    </group>
+  );
+}
+
+/** Distancia del centro a la cara frontal de la torre (octógono que se angosta). */
+const towerFace = (y: number) => Math.cos(Math.PI / 8) * (1.35 - ((y - 0.4) / 5) * 0.35);
+
+/** Torre de Desafíos: cerrada hasta que el barrio recupera la energía. */
+function Tower({ open, repaired, total }: SceneProps["tower"]) {
+  const beacon = useRef<THREE.Mesh>(null);
+  useFrame((state) => {
+    if (!beacon.current) return;
+    beacon.current.rotation.y += open ? 0.02 : 0.004;
+    beacon.current.position.y = 6.4 + Math.sin(state.clock.elapsedTime * 1.2) * 0.12;
+  });
+  const glow = open ? "#facc15" : "#ef4444";
+  return (
+    <group position={[TOWER.x, 0, TOWER.z]}>
+      <mesh position={[0, 0.2, 0]}>
+        <boxGeometry args={[3.4, 0.4, 3.4]} />
+        <meshStandardMaterial color="#334155" />
+      </mesh>
+      {/* Girada media cara para que una cara plana mire a la plaza. */}
+      <mesh position={[0, 2.9, 0]} rotation={[0, Math.PI / 8, 0]}>
+        <cylinderGeometry args={[1.0, 1.35, 5, 8]} />
+        <meshStandardMaterial color="#475569" metalness={0.25} roughness={0.55} />
+      </mesh>
+      {/* Ventanas: se encienden de a una con cada máquina reparada. */}
+      {Array.from({ length: Math.max(total, 1) }, (_, i) => (
+        <mesh key={i} position={[0, 1.6 + i * 0.95, towerFace(1.6 + i * 0.95) + 0.04]}>
+          <boxGeometry args={[0.45, 0.45, 0.06]} />
+          <meshStandardMaterial
+            color="#0f172a"
+            emissive="#fde68a"
+            emissiveIntensity={open || i < repaired ? 1.6 : 0}
+          />
+        </mesh>
+      ))}
+      {/* Puerta mirando a la plaza. */}
+      <mesh position={[0, 0.95, 1.33]}>
+        <boxGeometry args={[0.95, 1.5, 0.08]} />
+        <meshStandardMaterial color={open ? "#78350f" : "#1e293b"} emissive={glow} emissiveIntensity={open ? 0.25 : 0.1} />
+      </mesh>
+      {!open &&
+        [0.55, 1.05].map((y) => (
+          <mesh key={y} position={[0, y, 1.45]} rotation={[0, 0, y > 1 ? 0.35 : -0.35]}>
+            <boxGeometry args={[1.4, 0.14, 0.06]} />
+            <meshStandardMaterial color="#facc15" />
+          </mesh>
+        ))}
+      <mesh position={[0, 5.6, 0]}>
+        <coneGeometry args={[1.25, 1.1, 8]} />
+        <meshStandardMaterial color="#1e293b" />
+      </mesh>
+      <mesh ref={beacon} position={[0, 6.4, 0]}>
+        <octahedronGeometry args={[0.45, 0]} />
+        <meshStandardMaterial color="#0f172a" emissive={glow} emissiveIntensity={open ? 2.4 : 0.9} />
+      </mesh>
+      <pointLight position={[0, 6.4, 0]} color={glow} intensity={open ? 14 : 3} distance={open ? 16 : 7} />
+      <Html position={[0, 7.5, 0]} center distanceFactor={12} zIndexRange={[20, 0]}>
+        <div className="pointer-events-none whitespace-nowrap rounded-lg bg-slate-950/80 px-2.5 py-1 text-center text-xs font-bold text-white shadow-lg">
+          Torre de Desafíos
+          <span className={`block text-[10px] font-semibold ${open ? "text-amber-200" : "text-red-200"}`}>
+            {open ? "abierta" : `cerrada · ${repaired}/${total} máquinas`}
+          </span>
+        </div>
+      </Html>
     </group>
   );
 }
@@ -336,7 +537,7 @@ function DistrictFloor({ x, z, color, energy, comingSoon, name }: {
 }
 
 export default function CityScene(props: SceneProps) {
-  const { machines, energy, hubEnergy } = props;
+  const { machines, energy, hubEnergy, tower } = props;
   return (
     <Canvas
       dpr={[1, 1.75]}
@@ -362,8 +563,14 @@ export default function CityScene(props: SceneProps) {
         <planeGeometry args={[2.4, 14]} />
         <meshStandardMaterial color="#1e293b" />
       </mesh>
+      {/* Calle hacia la Torre de Desafíos, al norte. */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, -6.5]}>
+        <planeGeometry args={[2.4, 7]} />
+        <meshStandardMaterial color={tower.open ? "#3f3a1e" : "#1e293b"} />
+      </mesh>
 
       <Generator energy={hubEnergy} />
+      <Tower {...tower} />
       <Guide />
       {DISTRICTS.map((d) => (
         <DistrictFloor

@@ -8,6 +8,12 @@ export const INTERACT_RADIUS = 2.8;
 export const GENERATOR = { x: 0, z: 0, r: 2.2 };
 export const GUIDE = { x: 3, z: 3.5, r: 0.9 };
 export const SPAWN = { x: 0, z: 6 };
+/** Torre de Desafíos: al norte de la plaza, al final de la calle central. */
+export const TOWER = { x: 0, z: -11, r: 1.6 };
+/** Clave de la torre en el aviso de "cerca de". */
+export const TOWER_KEY = "__torre__";
+/** Distancia para usar la puerta de la torre (es más ancha que una máquina). */
+export const TOWER_INTERACT_RADIUS = INTERACT_RADIUS + 0.9;
 
 export type District = {
   id: string;
@@ -51,3 +57,19 @@ export function districtEnergy(district: District, placed: PlacedMachine[]) {
 }
 
 export const isRepaired = (m: WorldMachine) => m.total > 0 && m.solved >= m.total;
+
+/**
+ * La torre se abre cuando el barrio que tiene juegos recupera toda su energía.
+ * Si las tablas de juegos no están disponibles, queda abierta para no frenar
+ * las entregas.
+ */
+export function towerStatus(placed: PlacedMachine[], activitiesReady: boolean) {
+  const machines = placed.filter((m) => !DISTRICTS.find((d) => d.area === m.area)?.comingSoon);
+  const repaired = machines.filter(isRepaired).length;
+  return {
+    open: !activitiesReady || !machines.length || repaired === machines.length,
+    repaired,
+    total: machines.length,
+    pending: machines.filter((m) => !isRepaired(m)),
+  };
+}
