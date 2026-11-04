@@ -7,6 +7,7 @@ import { PlusCircle, BookOpen, Clock, CheckCircle2, TrendingUp, HelpCircle, Fold
 import { getTeacherDashboard, updateSubjectName } from "@/app/actions/teacher";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import EditableTitle from "@/components/teacher/EditableTitle";
 
 export default function TeacherPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -59,7 +60,7 @@ export default function TeacherPage() {
     <div className="p-8 max-w-7xl mx-auto">
       <header className="mb-12 flex justify-between items-end">
         <div>
-          <h1 data-tour-id="docente-title" className="text-6xl font-black tracking-tighter mb-2 uppercase italic leading-none">Panel <span className="text-primary">Docente</span></h1>
+          <EditableTitle data-tour-id="docente-title" titleKey="dashboard" defaultTitle="Panel Docente" className="text-6xl font-black tracking-tighter mb-2 uppercase italic leading-none" />
           <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-[0.4em] leading-relaxed">
             Gestión Académica • <span className="text-foreground">{user.name}</span>
           </p>
@@ -124,7 +125,7 @@ export default function TeacherPage() {
                   </div>
                   <div className="flex gap-10 mb-6">
                     <div className="flex flex-col">
-                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Alumnos</span>
+                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Estudiantes</span>
                       <span className="text-4xl font-black tracking-tighter">{sub.studentsCount}</span>
                     </div>
                     <div className="flex flex-col">

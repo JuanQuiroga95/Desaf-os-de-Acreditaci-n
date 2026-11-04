@@ -6,6 +6,7 @@ import { AlertTriangle, ArrowLeft, CheckCircle2, TrendingDown, Mail, BookOpen, A
 import { getAtRiskStudents } from "@/app/actions/teacher";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import EditableTitle from "@/components/teacher/EditableTitle";
 
 type RiskLevel = "ALL" | "HIGH" | "MEDIUM" | "LOW";
 
@@ -72,9 +73,7 @@ export default function AlertasPage() {
         <Link href="/docente" className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest mb-4 hover:underline">
           <ArrowLeft size={14} /> Volver al Panel
         </Link>
-        <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">
-          Alertas de <span className="text-primary">Riesgo</span>
-        </h1>
+        <EditableTitle titleKey="alerts" defaultTitle="Alertas de Riesgo" />
         <p className="text-muted-foreground font-bold text-sm mt-2">
           Alumnos que requieren atención pedagógica prioritaria
         </p>

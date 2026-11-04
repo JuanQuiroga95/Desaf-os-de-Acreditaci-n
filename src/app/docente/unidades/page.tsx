@@ -32,6 +32,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
 import { createClient } from "@supabase/supabase-js";
+import EditableTitle from "@/components/teacher/EditableTitle";
 
 export default function UnidadesPage() {
   return (
@@ -243,7 +244,7 @@ function UnidadesContent() {
         </Link>
         <div className="flex justify-between items-end">
           <div>
-            <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">Unidades <span className="text-primary">Temáticas</span></h1>
+            <EditableTitle titleKey="units" defaultTitle="Unidades Temáticas" />
             <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-[0.4em] mt-2">Gestión de Contenidos y Encuentros</p>
           </div>
           {selectedSubjectId && (

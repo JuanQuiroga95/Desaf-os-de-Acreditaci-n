@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
+import EditableTitle from "@/components/teacher/EditableTitle";
 
 function TeacherNewChallengeContent() {
   const { user, isLoading: authLoading } = useAuth();
@@ -246,7 +247,7 @@ function TeacherNewChallengeContent() {
         <Link href="/docente" className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest mb-4 hover:underline">
           <ArrowLeft size={14} /> Volver al Panel
         </Link>
-        <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">Nuevo <span className="text-primary">Encuentro</span></h1>
+        <EditableTitle titleKey="new-challenge" defaultTitle="Nuevo Encuentro" />
       </header>
 
       <form onSubmit={handleSubmit} className="space-y-8">

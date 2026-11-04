@@ -3,8 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { GraduationCap, ArrowLeft, Search, Mail, BookOpen, TrendingUp, CheckCircle2 } from "lucide-react";
-import { getTeacherStudents } from "@/app/actions/teacher";
+import { GraduationCap, ArrowLeft, Search, Mail, TrendingUp, UserPlus } from "lucide-react";
+import { getTeacherStudents, getTeacherSubjects } from "@/app/actions/teacher";
+import EditableTitle from "@/components/teacher/EditableTitle";
+import AddStudentsModal from "@/components/teacher/AddStudentsModal";
 import Link from "next/link";
 
 export default function TeacherStudentsPage() {
@@ -12,6 +14,8 @@ export default function TeacherStudentsPage() {
   const [students, setStudents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
+  const [showAdd, setShowAdd] = useState(false);
 
   useEffect(() => {
     if (user?.role === "teacher") {
@@ -19,13 +23,14 @@ export default function TeacherStudentsPage() {
     }
   }, [user]);
 
-  const loadData = async () => {
+  const loadData = async (silent = false) => {
     try {
-      setIsLoading(true);
-      const res = await getTeacherStudents(user!.id);
+      if (!silent) setIsLoading(true);
+      const [res, subs] = await Promise.all([getTeacherStudents(user!.id), getTeacherSubjects(user!.id)]);
       if (res.success) {
         setStudents(res.students || []);
       }
+      setSubjects(subs.subjects || []);
     } catch (error) {
       console.error("Error cargando alumnos:", error);
     } finally {
@@ -38,19 +43,26 @@ export default function TeacherStudentsPage() {
     s.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (authLoading || isLoading) return <div className="p-20 text-center font-black animate-pulse uppercase tracking-widest text-primary">Cargando Alumnos...</div>;
+  if (authLoading || isLoading) return <div className="p-20 text-center font-black animate-pulse uppercase tracking-widest text-primary">Cargando Estudiantes...</div>;
   if (!user || user.role !== "teacher") return <div className="p-20 text-center font-black uppercase tracking-widest text-primary">Acceso Denegado</div>;
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      <header className="mb-12 flex justify-between items-end">
+      <header className="mb-12 flex flex-wrap gap-6 justify-between items-end">
         <div>
           <Link href="/docente" className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest mb-4 hover:underline">
             <ArrowLeft size={14} /> Volver al Panel
           </Link>
-          <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">Tus <span className="text-primary">Alumnos</span></h1>
+          <EditableTitle titleKey="students" defaultTitle="Estudiantes" />
         </div>
-        
+
+        <div className="flex flex-wrap items-center gap-3">
+        <button
+          onClick={() => setShowAdd(true)}
+          className="flex items-center gap-2 bg-primary text-white rounded-2xl py-4 px-6 font-black uppercase tracking-widest text-[11px] hover:opacity-90 shadow-lg shadow-primary/20"
+        >
+          <UserPlus size={18} /> Cargar estudiantes
+        </button>
         <div className="relative w-64">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
           <input 
@@ -61,7 +73,12 @@ export default function TeacherStudentsPage() {
             className="w-full bg-secondary/30 border border-border rounded-2xl py-4 pl-12 pr-4 font-bold outline-none focus:ring-2 focus:ring-primary/50"
           />
         </div>
+        </div>
       </header>
+
+      {showAdd && (
+        <AddStudentsModal subjects={subjects} onClose={() => setShowAdd(false)} onDone={() => loadData(true)} />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredStudents.map((s) => (
@@ -110,7 +127,7 @@ export default function TeacherStudentsPage() {
         {filteredStudents.length === 0 && (
           <div className="col-span-full p-20 text-center">
             <GraduationCap size={48} className="mx-auto mb-4 text-muted-foreground opacity-20" />
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">No se encontraron alumnos</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">No se encontraron estudiantes</p>
           </div>
         )}
       </div>

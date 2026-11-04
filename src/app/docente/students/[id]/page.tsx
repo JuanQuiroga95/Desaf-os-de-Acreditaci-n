@@ -51,7 +51,7 @@ export default function StudentLegajoPage({ params }: { params: Promise<{ id: st
     <div className="p-8 max-w-7xl mx-auto pb-24">
       <header className="mb-12">
         <Link href="/docente/students" className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest mb-4 hover:underline">
-          <ArrowLeft size={14} /> Volver a Alumnos
+          <ArrowLeft size={14} /> Volver a Estudiantes
         </Link>
         <div className="flex justify-between items-end">
           <div className="flex items-center gap-8">

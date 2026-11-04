@@ -8,6 +8,7 @@ import { getTeacherDashboard, gradeSubmission } from "@/app/actions/teacher";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
+import EditableTitle from "@/components/teacher/EditableTitle";
 
 export default function TeacherReviewsPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -132,7 +133,7 @@ export default function TeacherReviewsPage() {
           <Link href="/docente" className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest mb-4 hover:underline">
             <ArrowLeft size={14} /> Volver al Panel
           </Link>
-          <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">Centro de <span className="text-primary">Correcciones</span></h1>
+          <EditableTitle titleKey="reviews" defaultTitle="Centro de Correcciones" />
         </div>
         
         <div className="relative w-64">

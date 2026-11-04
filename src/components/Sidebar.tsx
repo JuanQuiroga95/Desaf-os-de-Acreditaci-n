@@ -37,6 +37,12 @@ import { useAuth } from "@/context/AuthContext";
 import { getStudentDashboard } from "@/app/actions/student";
 import confetti from "canvas-confetti";
 import { useToast } from "@/context/ToastContext";
+import { useTeacherTitle } from "@/components/teacher/EditableTitle";
+
+/** Nombre del menú: si el docente renombró esa sección, muestra su versión. */
+function TeacherNavLabel({ titleKey, fallback }: { titleKey: string; fallback: string }) {
+  return <>{useTeacherTitle(titleKey, fallback)}</>;
+}
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -143,13 +149,13 @@ export function Sidebar() {
       case "teacher":
         return [
           { name: "Mis Clases", href: "/docente", icon: LayoutDashboard },
-          { name: "Alumnos", href: "/docente/students", icon: Users },
-          { name: "Unidades", href: "/docente/unidades", icon: Layers },
-          { name: "Crear Encuentro", href: "/docente/new-challenge", icon: PlusCircle },
-          { name: "Correcciones", href: "/docente/reviews", icon: Trophy },
+          { name: "Estudiantes", href: "/docente/students", icon: Users, titleKey: "students" },
+          { name: "Unidades", href: "/docente/unidades", icon: Layers, titleKey: "units" },
+          { name: "Crear Encuentro", href: "/docente/new-challenge", icon: PlusCircle, titleKey: "new-challenge" },
+          { name: "Correcciones", href: "/docente/reviews", icon: Trophy, titleKey: "reviews" },
           { name: "Mensajes", href: "/mensajes", icon: MessageSquare },
-          { name: "Alertas", href: "/docente/alertas", icon: AlertTriangle },
-          { name: "Exportar Actas", href: "/docente/export", icon: Download },
+          { name: "Alertas", href: "/docente/alertas", icon: AlertTriangle, titleKey: "alerts" },
+          { name: "Exportar Actas", href: "/docente/export", icon: Download, titleKey: "export" },
           { name: "Manual de Uso", href: "/manual", icon: HelpCircle },
         ];
       default:
@@ -218,7 +224,9 @@ export function Sidebar() {
               )}
             >
               <Icon size={20} className={cn(isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
-              <span className="font-medium text-sm">{item.name}</span>
+              <span className="font-medium text-sm">
+                {"titleKey" in item && item.titleKey ? <TeacherNavLabel titleKey={item.titleKey} fallback={item.name} /> : item.name}
+              </span>
             </Link>
           );
         })}

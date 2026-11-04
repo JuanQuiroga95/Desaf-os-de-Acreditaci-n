@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Download, ArrowLeft, FileText, ChevronDown, Table2, RefreshCw } from "lucide-react";
 import { getTeacherSubjects, getSubjectGradesPreview } from "@/app/actions/teacher";
 import Link from "next/link";
+import EditableTitle from "@/components/teacher/EditableTitle";
 
 export default function ExportPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -113,9 +114,7 @@ export default function ExportPage() {
         <Link href="/docente" className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest mb-4 hover:underline">
           <ArrowLeft size={14} /> Volver al Panel
         </Link>
-        <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">
-          Exportar <span className="text-primary">Actas</span>
-        </h1>
+        <EditableTitle titleKey="export" defaultTitle="Exportar Actas" />
         <p className="text-muted-foreground font-bold text-sm mt-2">
           Formato compatible con planillas DGE Mendoza
         </p>
