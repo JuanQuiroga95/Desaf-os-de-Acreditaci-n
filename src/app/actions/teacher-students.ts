@@ -101,3 +101,53 @@ export async function createStudentsForTeacher(
   revalidatePath("/docente");
   return { success: true, results };
 }
+
+/**
+ * El docente corrige nombre/correo de un estudiante inscripto en alguna de
+ * sus materias (por ejemplo, un apellido mal escrito al cargarlo).
+ */
+export async function updateStudentForTeacher(
+  studentId: string,
+  data: { name: string; email: string },
+): Promise<{ success: boolean; error?: string }> {
+  let session;
+  try {
+    session = await requireAuth(["teacher", "admin"]);
+  } catch {
+    return { success: false, error: "Tu sesión venció. Volvé a iniciar sesión." };
+  }
+
+  const name = data.name.trim().replace(/\s+/g, " ");
+  const email = data.email.trim().toLowerCase();
+  if (!name) return { success: false, error: "El nombre no puede quedar vacío." };
+  if (!EMAIL_RE.test(email)) return { success: false, error: "El correo no es válido." };
+
+  const student = await db.user.findFirst({
+    where:
+      session.role === "admin"
+        ? { id: studentId, role: "STUDENT" }
+        : {
+            id: studentId,
+            role: "STUDENT",
+            enrollments: { some: { subject: { teachers: { some: { id: session.id } } } } },
+          },
+    select: { id: true, email: true },
+  });
+  if (!student) return { success: false, error: "Ese estudiante no está en tus materias." };
+
+  if (email !== student.email) {
+    const taken = await db.user.findUnique({ where: { email }, select: { id: true } });
+    if (taken) return { success: false, error: "Ese correo ya lo usa otra cuenta." };
+  }
+
+  try {
+    await db.user.update({ where: { id: student.id }, data: { name, email } });
+  } catch (error) {
+    console.error("Error actualizando estudiante:", error);
+    return { success: false, error: "No se pudo guardar." };
+  }
+
+  revalidatePath("/docente/students");
+  revalidatePath("/docente");
+  return { success: true };
+}

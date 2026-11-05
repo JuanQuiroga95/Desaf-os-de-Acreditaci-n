@@ -3,10 +3,11 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { GraduationCap, ArrowLeft, Search, Mail, TrendingUp, UserPlus } from "lucide-react";
+import { GraduationCap, ArrowLeft, Search, Mail, TrendingUp, UserPlus, Pencil } from "lucide-react";
 import { getTeacherStudents, getTeacherSubjects } from "@/app/actions/teacher";
 import EditableTitle from "@/components/teacher/EditableTitle";
 import AddStudentsModal from "@/components/teacher/AddStudentsModal";
+import EditStudentModal from "@/components/teacher/EditStudentModal";
 import Link from "next/link";
 
 export default function TeacherStudentsPage() {
@@ -16,6 +17,7 @@ export default function TeacherStudentsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [editing, setEditing] = useState<{ id: string; name: string; email: string } | null>(null);
 
   useEffect(() => {
     if (user?.role === "teacher") {
@@ -80,6 +82,10 @@ export default function TeacherStudentsPage() {
         <AddStudentsModal subjects={subjects} onClose={() => setShowAdd(false)} onDone={() => loadData(true)} />
       )}
 
+      {editing && (
+        <EditStudentModal student={editing} onClose={() => setEditing(null)} onSaved={() => loadData(true)} />
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredStudents.map((s) => (
           <div key={s.id} className="bg-card border border-border rounded-[2.5rem] p-8 hover:border-primary/50 transition-all group shadow-sm flex flex-col">
@@ -87,8 +93,18 @@ export default function TeacherStudentsPage() {
               <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center text-primary font-black text-2xl group-hover:bg-primary group-hover:text-white transition-all">
                 {s.name.charAt(0)}
               </div>
-              <div className="bg-green-500/10 text-green-500 p-2 rounded-xl">
-                <TrendingUp size={20} />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEditing({ id: s.id, name: s.name, email: s.email })}
+                  className="p-2 rounded-xl bg-secondary text-muted-foreground hover:bg-primary hover:text-white transition-all"
+                  title="Editar nombre o correo"
+                  aria-label={`Editar a ${s.name}`}
+                >
+                  <Pencil size={18} />
+                </button>
+                <div className="bg-green-500/10 text-green-500 p-2 rounded-xl">
+                  <TrendingUp size={20} />
+                </div>
               </div>
             </div>
             
